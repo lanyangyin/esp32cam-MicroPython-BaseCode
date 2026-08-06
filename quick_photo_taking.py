@@ -1,5 +1,5 @@
 """
-adjust_camera_settings.py - ESP32-CAM 快速拍照脚本
+quick_photo_taking.py - ESP32-CAM 快速拍照脚本
 
 本文件是一个独立的单次拍照脚本，适用于快速测试摄像头配置和拍照保存功能。
 它按顺序执行：关闭闪光灯 -> 初始化摄像头 -> 应用图像参数（翻转、白平衡、质量等）
@@ -20,7 +20,7 @@ adjust_camera_settings.py - ESP32-CAM 快速拍照脚本
     直接运行：import adjust_camera_settings
     或作为独立脚本执行。
 """
-# adjust_camera_settings.py
+# quick_photo_taking.py
 import camera  # type: ignore
 import time
 from machine import Pin
