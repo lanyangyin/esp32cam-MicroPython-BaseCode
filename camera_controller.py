@@ -1,4 +1,5 @@
 # camera_controller.py
+# pyrefly: ignore [missing-import]
 import camera
 import time
 
@@ -61,3 +62,17 @@ class CameraController:
             camera.deinit()
             self.initialized = False
             print("Camera deinitialized")
+
+    @staticmethod
+    def get_resolution(framesize):
+        """根据 framesize 枚举返回 (宽度, 高度)"""
+        # 常用分辨率映射（可根据需要补充）
+        res_map = {
+            camera.FRAME_QQVGA: (160, 120),
+            camera.FRAME_QVGA: (320, 240),
+            camera.FRAME_VGA: (640, 480),
+            camera.FRAME_XGA: (1024, 768),
+            camera.FRAME_SVGA: (800, 600),
+            camera.FRAME_UXGA: (1600, 1200),  # 部分型号可能不支持
+        }
+        return res_map.get(framesize, (640, 480))  # 默认 VGA

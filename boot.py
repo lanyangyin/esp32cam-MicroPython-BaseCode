@@ -13,6 +13,7 @@ led.value(0)
 # 挂载 SD 卡
 try:
     sd = machine.SDCard()
+    # pyrefly: ignore [missing-attribute]
     uos.mount(sd, "/sd")
     uos.listdir("/sd")
     print("SD mounted（sd挂载）")

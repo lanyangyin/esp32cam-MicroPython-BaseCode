@@ -1,4 +1,5 @@
 # adjust_camera_settings.py
+# pyrefly: ignore [missing-import]
 import camera
 import time
 from machine import Pin
@@ -6,6 +7,7 @@ from machine import Pin
 # ========== 1. 关闭闪光灯 ==========
 led = Pin(4, Pin.OUT)
 led.value(0)   # 低电平关闭（根据你的实际极性调整）
+# pyrefly: ignore [missing-attribute]
 time.sleep_ms(50)
 
 # ========== 2. 初始化摄像头 ==========
@@ -48,6 +50,7 @@ camera.quality(10)    # 10 ~ 63，数值越小画质越好（文件越大）
 
 # ========== 4. 开闪光灯并拍照 ==========
 led.value(1)          # 开灯（根据你的实际电平极性）
+# pyrefly: ignore [missing-attribute]
 time.sleep_ms(200)    # 等待曝光稳定
 
 buf = camera.capture()

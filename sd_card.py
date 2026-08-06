@@ -9,16 +9,25 @@ class SDCardManager:
         self.slot = slot
         self.mounted = False
 
+    # sd_card.py 改进（增加已挂载检查）
     def mount(self):
-        """挂载 SD 卡，若已挂载则忽略"""
         if self.mounted:
             return True
+        # 检查是否已经挂载（可尝试 listdir 看是否报错）
         try:
-            # 某些 MicroPython 版本使用 machine.SDCard(slot=2)
+            uos.listdir(self.mount_point)
+            self.mounted = True
+            print("SD already mounted")
+            return True
+        except:
+            pass
+        # 否则尝试挂载
+        try:
             sd = machine.SDCard(slot=self.slot)
+            # pyrefly: ignore [missing-attribute]
             uos.mount(sd, self.mount_point)
             self.mounted = True
-            print("SD card mounted at", self.mount_point)
+            print("SD card mounted")
             return True
         except Exception as e:
             print("SD mount failed:", e)
