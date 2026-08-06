@@ -142,15 +142,15 @@ if __name__ == "__main__":
     else:
         print("❌ 分析失败")
 
-    # 测试快速估计
-    print("\n2. 快速估计 (quick_brightness_from_camera):")
-    start = time.ticks_ms()
-    avg = quick_brightness_from_camera(framesize=camera.FRAME_QVGA)
-    elapsed = time.ticks_diff(time.ticks_ms(), start)
-    if avg is not None:
-        print(f"✅ 估计成功: 亮度 = {avg:.1f} (耗时 {elapsed} ms)")
-    else:
-        print("❌ 估计失败")
+    # # 测试快速估计
+    # print("\n2. 快速估计 (quick_brightness_from_camera):")
+    # start = time.ticks_ms()
+    # avg = quick_brightness_from_camera(framesize=camera.FRAME_QVGA)
+    # elapsed = time.ticks_diff(time.ticks_ms(), start)
+    # if avg is not None:
+    #     print(f"✅ 估计成功: 亮度 = {avg:.1f} (耗时 {elapsed} ms)")
+    # else:
+    #     print("❌ 估计失败")
 
     # 速度对比（实测参考）
     # 精确分析（QVGA, step=2）约 0.3~0.5 秒，快速估计约 0.3~0.5 秒（主要耗时在图像捕获）
