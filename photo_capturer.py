@@ -1,6 +1,40 @@
+"""
+photo_capturer.py - 高级拍照流程模块
+
+本模块提供集成了闪光灯、摄像头和 SD 卡的高级拍照功能。
+核心类 PhotoCapturer 封装了完整的拍照流程，包括环境光分析、闪光灯控制、
+图像捕获和文件保存。
+
+核心功能：
+    1. 一键拍照：take_photo() - 开灯 -> 等待 -> 捕获 -> 关灯 -> 保存
+    2. 分析+拍照：take_photo_with_analysis() - 先分析环境光，再拍照
+    3. 环境光分析：capture_analysis() - 捕获灰度图并分析亮度
+    4. 资源管理：cleanup() - 释放摄像头和闪光灯
+
+设计特点：
+    - 使用全局单例（flash、sd_card、camera），避免重复创建资源
+    - 摄像头参数在初始化时配置，支持运行时覆盖
+    - 闪光灯控制由本模块管理（开灯/关灯），确保正确时序
+    - 灰度分析独立于拍照流程，可单独调用
+
+依赖关系：
+    - flash: 闪光灯单例
+    - sd_card: SD 卡单例
+    - camera_controller: 摄像头单例
+    - config: 调试开关
+
+典型用法：
+    capturer = PhotoCapturer(
+        flash_pin=4,
+        flash_on_value=1,
+        camera_params={"framesize": camera.FRAME_XGA, "quality": 10}
+    )
+    saved_path = capturer.take_photo()
+    capturer.cleanup()
+"""
 # photo_capturer.py
-import time  # ✅ 添加缺失的导入
-import camera
+import time
+import camera  # type: ignore
 from flash import get_flash
 from sd_card import get_sd_card
 from camera_controller import get_camera, CameraController
@@ -48,6 +82,7 @@ class PhotoCapturer:
         if cam.initialized:
             _debug_log("Deinitializing existing camera for setup")
             cam.deinit()
+            time.sleep_ms(100)  # 等待硬件完全释放
         cam.init(**params)
 
     def take_photo(self, filename=None, pre_flash_delay=200,
@@ -223,7 +258,17 @@ class PhotoCapturer:
 
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":
+    from camera_controller import reset_camera
+    from flash import reset_flash
+    from sd_card import reset_sd_card
+
     print("\n--- PhotoCapturer 模块测试 ---")
+    # 清理所有资源
+    reset_camera()
+    reset_flash()
+    reset_sd_card()
+    time.sleep_ms(200)
+
     start = time.ticks_ms()
 
     # 创建实例
@@ -245,7 +290,6 @@ if __name__ == "__main__":
     saved = capturer.take_photo(filename=test_filename, pre_flash_delay=100, auto_deinit=True)
     if saved:
         print("✅ 拍照成功:", saved)
-        # 删除测试文件（可选）
         try:
             import uos
             uos.remove(saved)
@@ -255,10 +299,8 @@ if __name__ == "__main__":
     else:
         print("❌ 拍照失败")
 
-    # 测试分析+拍照（不保存实际文件，仅演示）
-    print("\n测试分析+拍照（不保存文件）...")
-    # 这里我们不实际保存，只演示流程，可以传入一个不会保存的文件名或 None
-    # 但为了测试，我们仍然保存但使用临时文件名
+    # 测试分析+拍照
+    print("\n测试分析+拍照...")
     test_filename2 = "test_analysis_{}.jpg".format(time.time())
     path2, analysis = capturer.take_photo_with_analysis(
         filename=test_filename2,
@@ -267,7 +309,6 @@ if __name__ == "__main__":
     )
     if path2:
         print("✅ 分析+拍照成功:", path2)
-        # 删除
         try:
             import uos
             uos.remove(path2)

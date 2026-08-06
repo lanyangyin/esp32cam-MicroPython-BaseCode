@@ -1,5 +1,30 @@
+"""
+camera_resolutions.py - 摄像头分辨率映射工具
+
+本模块提供摄像头分辨率常量的名称、值和尺寸的对应关系。
+
+核心功能：
+    1. 动态构建分辨率映射表：从 camera 模块读取支持的常量
+    2. 分辨率尺寸查询：get_resolution(framesize) 返回 (宽, 高)
+    3. 名称反向查询：get_name_by_value(framesize) 返回常量名称
+    4. 列表打印：list_resolutions() 输出表格
+
+设计思路：
+    - 自动适配固件支持的分辨率（如 HQVGA 可能存在也可能不存在）
+    - 提供统一的尺寸查询接口，避免在多个模块中重复定义
+
+依赖关系：
+    - camera: 摄像头模块（提供分辨率常量）
+    - config: 调试开关
+
+典型用法：
+    import camera_resolutions as res
+    w, h = res.get_resolution(camera.FRAME_XGA)
+    print(f"XGA 尺寸: {w}x{h}")
+    res.list_resolutions()
+"""
 # camera_resolutions.py
-import camera
+import camera  # type: ignore
 from config import DEBUG
 
 def _debug_log(msg):

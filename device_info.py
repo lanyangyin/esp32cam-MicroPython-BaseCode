@@ -1,3 +1,29 @@
+"""
+device_info.py - 设备硬件信息报告模块
+
+本模块用于获取和打印 ESP32-CAM 的硬件资源信息，包括：
+    1. 芯片信息：平台、固件版本、CPU 频率
+    2. 内存信息：已分配堆内存、可用堆内存
+    3. PSRAM 信息：检测是否存在并分配测试
+    4. Flash 信息：总大小
+    5. 内部文件系统（/）总大小和可用空间
+    6. SD 卡信息：总大小、已使用、可用空间（如果已挂载）
+
+本模块可作为系统诊断工具，帮助开发者了解当前设备的资源状态。
+
+依赖关系：
+    - gc: 垃圾回收（获取内存信息）
+    - esp: Flash 大小查询
+    - esp32: ESP32 特有功能
+    - os: 文件系统统计
+    - machine: 系统信息
+    - sys: 平台信息
+    - config: 调试开关
+
+典型用法：
+    import device_info
+    device_info.print_info()
+"""
 # device_info.py
 import gc, esp, esp32, os, machine, sys
 import time

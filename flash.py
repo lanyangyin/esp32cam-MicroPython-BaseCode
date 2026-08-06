@@ -1,3 +1,32 @@
+"""
+flash.py - 闪光灯控制模块（单例模式）
+
+本模块提供 ESP32-CAM 板载闪光灯（GPIO 4）的控制功能。
+采用单例模式管理闪光灯实例，确保全局只有一个控制对象。
+
+核心功能：
+    1. 单例管理：get_flash() 获取全局唯一实例，支持引脚和电平配置
+    2. 开关控制：on() 打开，off() 关闭
+    3. 闪烁功能：blink() 执行一次闪烁
+    4. 重置功能：reset_flash() 释放并重置单例
+
+设计特点：
+    - 创建失败自动重试（释放旧实例后重试）
+    - 引脚和电平极性可配置（适配不同硬件）
+    - 调试日志通过 config.DEBUG 控制
+
+依赖关系：
+    - machine.Pin: GPIO 控制
+    - config: 调试开关
+
+典型用法：
+    from flash import get_flash
+
+    flash = get_flash(pin=4, on_value=1)
+    flash.on()
+    time.sleep_ms(200)
+    flash.off()
+"""
 # flash.py
 from machine import Pin
 import time

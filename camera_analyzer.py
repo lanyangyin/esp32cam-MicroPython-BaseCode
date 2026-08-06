@@ -1,6 +1,30 @@
+"""
+camera_analyzer.py - 环境光亮度分析模块
+
+本模块提供从摄像头捕获灰度图像并分析环境亮度的功能。
+核心函数 analyze_brightness_from_camera() 封装了完整的流程：
+    捕获灰度图 -> 获取分辨率 -> 调用纯分析函数 -> 返回亮度数据
+
+设计原则：
+    - 本模块不控制闪光灯，调用者需自行管理（通常分析前应关闭闪光灯）
+    - 内部调用 camera_controller.capture_grayscale() 获取灰度图
+    - 调用 utils.analyze_brightness() 执行纯数据分析
+    - 分析完成后自动释放摄像头资源
+
+依赖关系：
+    - camera_controller: 提供 capture_grayscale() 和分辨率查询
+    - utils: 提供 analyze_brightness() 纯分析函数
+    - config: 调试开关
+
+典型用法：
+    result = analyze_brightness_from_camera(framesize=camera.FRAME_XGA, step=2)
+    if result:
+        print(f"平均亮度: {result['average_brightness']:.1f}")
+"""
 # camera_analyzer.py
-import camera
-from camera_controller import get_camera, CameraController
+import camera  # type: ignore
+from camera_controller import capture_grayscale, CameraController
+from utils import analyze_brightness
 from config import DEBUG
 
 def _debug_log(msg):
@@ -12,102 +36,54 @@ def analyze_brightness_from_camera(framesize=camera.FRAME_XGA, step=2):
     捕获一帧灰度图像，分析环境亮度、动态范围和主体亮度。
 
     本函数不控制闪光灯，调用者需自行管理（通常分析前应关闭闪光灯以测量环境光）。
-    使用单例摄像头，捕获后自动释放。
 
     参数：
         framesize (int): 图像分辨率，如 camera.FRAME_XGA, FRAME_VGA 等。
         step (int): 采样步长，步长 2 表示每隔一个像素采样，速度提升约 4 倍。
 
     返回：
-        dict: 包含 'average_brightness' (float), 'dynamic_range' (int), 'center_brightness' (float)，
+        dict: 包含 'average_brightness', 'dynamic_range', 'center_brightness'，
               若失败则返回 None。
     """
     _debug_log("Starting analysis with framesize={}, step={}".format(framesize, step))
-    cam = get_camera()
-    if cam.initialized:
-        _debug_log("Deinitializing existing camera")
-        cam.deinit()
 
-    try:
-        _debug_log("Initializing camera in grayscale mode")
-        cam.init(
-            framesize=framesize,
-            format=camera.GRAYSCALE,
-            quality=10,
-            flip=1,
-            mirror=0,
-            whitebalance=camera.WB_CLOUDY,
-        )
-        _debug_log("Capturing grayscale image...")
-        gray_buf = cam.capture()
-        if gray_buf is None:
-            _debug_log("Gray capture failed")
-            return None
-
-        w, h = CameraController.get_resolution(framesize)
-        if w is None or h is None:
-            import math
-            total = len(gray_buf)
-            w = int(math.sqrt(total * 4 / 3))
-            h = total // w
-            if w * h != total:
-                w, h = 640, 480
-        _debug_log("Image size: {}x{}".format(w, h))
-
-        # 快速采样分析
-        total = 0
-        min_val = 255
-        max_val = 0
-        count = 0
-
-        center_x_start = w // 4
-        center_x_end = w - center_x_start
-        center_y_start = h // 4
-        center_y_end = h - center_y_start
-        center_sum = 0
-        center_count = 0
-
-        for y in range(0, h, step):
-            row_start = y * w
-            for x in range(0, w, step):
-                idx = row_start + x
-                if idx >= len(gray_buf):
-                    break
-                val = gray_buf[idx]
-                total += val
-                count += 1
-                if val < min_val:
-                    min_val = val
-                if val > max_val:
-                    max_val = val
-                if center_x_start <= x < center_x_end and center_y_start <= y < center_y_end:
-                    center_sum += val
-                    center_count += 1
-
-        avg = total / count
-        dynamic = max_val - min_val
-        center_avg = center_sum / center_count if center_count else avg
-
-        _debug_log("Analysis complete: avg={:.1f}, dynamic={}, center={:.1f}".format(avg, dynamic, center_avg))
-        return {
-            'average_brightness': avg,
-            'dynamic_range': dynamic,
-            'center_brightness': center_avg,
-        }
-    except Exception as e:
-        _debug_log("Analysis error: {}".format(e))
+    # 捕获灰度图像
+    gray_buf = capture_grayscale(framesize=framesize, whitebalance=camera.WB_CLOUDY)
+    if gray_buf is None:
+        _debug_log("Failed to capture grayscale image")
         return None
-    finally:
-        cam.deinit()
-        _debug_log("Camera released")
+
+    # 获取图像尺寸
+    w, h = CameraController.get_resolution(framesize)
+    if w is None or h is None:
+        # 从缓冲区推断
+        import math
+        total = len(gray_buf)
+        w = int(math.sqrt(total * 4 / 3))
+        h = total // w
+        if w * h != total:
+            w, h = 640, 480  # 安全回退
+        _debug_log("Inferred size: {}x{}".format(w, h))
+    else:
+        _debug_log("Resolution: {}x{}".format(w, h))
+
+    # 调用纯分析函数
+    result = analyze_brightness(gray_buf, w, h, step)
+    if result:
+        _debug_log("Analysis complete: avg={:.1f}, dynamic={}, center={:.1f}".format(
+            result['average_brightness'], result['dynamic_range'], result['center_brightness']))
+    return result
 
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":
     import time
-    print("\n--- camera_analyzer 模块测试 ---")
-    start = time.ticks_ms()
+    from camera_controller import reset_camera
 
-    # 测试分析（使用小分辨率）
+    print("\n--- camera_analyzer 模块测试 ---")
+    reset_camera()
+    time.sleep_ms(200)
+
+    start = time.ticks_ms()
     result = analyze_brightness_from_camera(
         framesize=camera.FRAME_QVGA,
         step=2
@@ -119,7 +95,6 @@ if __name__ == "__main__":
         print(f"  中心亮度: {result['center_brightness']:.1f}")
     else:
         print("❌ 分析失败")
-
     elapsed = time.ticks_diff(time.ticks_ms(), start)
     print("测试完成，耗时 {} ms".format(elapsed))
 

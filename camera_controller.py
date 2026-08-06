@@ -1,6 +1,35 @@
+"""
+camera_controller.py - ESP32-CAM 摄像头核心控制模块
+
+本模块是摄像头硬件的底层封装，提供：
+    1. 单例模式管理摄像头实例（避免重复初始化）
+    2. 摄像头初始化、参数配置、图像捕获、资源释放
+    3. 高级捕获函数：capture_image() 捕获 JPEG，capture_grayscale() 捕获灰度图
+    4. 硬件复位和重试机制（解决 Camera Init Failed 问题）
+
+设计特点：
+    - 单例管理：get_camera() 确保全局只有一个摄像头实例
+    - 自动重试：init() 内部包含 3 次重试，每次失败后强制释放硬件
+    - 资源安全：capture_xxx() 函数捕获后自动释放摄像头
+    - 调试支持：通过 config.DEBUG 控制日志输出
+
+依赖关系：
+    - camera: MicroPython 摄像头模块（硬件驱动）
+    - config: 全局调试开关
+
+典型用法：
+    # 获取摄像头实例
+    cam = get_camera()
+    cam.init(framesize=camera.FRAME_XGA, quality=10)
+    buf = cam.capture()
+    cam.deinit()
+
+    # 快捷函数
+    jpeg_data = capture_image(framesize=camera.FRAME_VGA)
+    gray_data = capture_grayscale(framesize=camera.FRAME_QVGA)
+"""
 # camera_controller.py
-# pyrefly: ignore [missing-import]
-import camera
+import camera  # type: ignore
 import time
 from config import DEBUG
 
@@ -37,13 +66,18 @@ def get_camera(**init_kwargs):
         return _camera_instance
     except Exception as e:
         _debug_log("Creation failed: {}".format(e))
+        # 强制释放硬件
+        try:
+            camera.deinit()
+        except:
+            pass
         if _camera_instance is not None:
             try:
                 _camera_instance.deinit()
             except:
                 pass
             _camera_instance = None
-        # 重试
+        # 重试一次
         try:
             _camera_instance = CameraController()
             _camera_instance.init(**init_kwargs)
@@ -54,8 +88,14 @@ def get_camera(**init_kwargs):
             raise
 
 def reset_camera():
-    """强制释放并重置摄像头单例。"""
+    """强制释放并重置摄像头单例，并强制调用 camera.deinit() 确保硬件释放。"""
     global _camera_instance
+    # 无论实例是否存在，都强制调用底层 deinit
+    try:
+        camera.deinit()
+        _debug_log("Force camera.deinit() called")
+    except:
+        pass
     if _camera_instance is not None:
         _debug_log("Resetting camera singleton")
         try:
@@ -97,6 +137,54 @@ def capture_image(framesize=camera.FRAME_XGA, quality=10,
     _debug_log("capture_image: done, size={}".format(len(buf) if buf else 0))
     return buf
 
+def capture_grayscale(framesize=camera.FRAME_XGA, quality=10,
+                      flip=1, mirror=0, whitebalance=camera.WB_CLOUDY):
+    """
+    捕获一帧灰度图像，返回原始灰度字节数据。
+
+    本函数不涉及闪光灯控制，仅用于获取灰度图。
+    使用单例摄像头，捕获后自动释放。
+
+    参数：
+        framesize (int): 分辨率，如 camera.FRAME_XGA 等。
+        quality (int): 仅用于兼容，灰度模式通常忽略此参数。
+        flip (int): 上下翻转，1 翻转，0 不翻转。
+        mirror (int): 左右镜像，1 镜像，0 不镜像。
+        whitebalance (int): 白平衡模式，默认 camera.WB_CLOUDY。
+                             灰度图对白平衡不敏感，但保留配置。
+
+    返回：
+        bytes: 灰度图像数据（每个像素一个字节），失败返回 None。
+    """
+    cam = get_camera()
+    if cam.initialized:
+        _debug_log("capture_grayscale: deinit existing camera")
+        cam.deinit()
+
+    try:
+        _debug_log("capture_grayscale: initializing camera in grayscale mode")
+        cam.init(
+            framesize=framesize,
+            format=camera.GRAYSCALE,
+            quality=quality,
+            flip=flip,
+            mirror=mirror,
+            whitebalance=whitebalance,
+        )
+        _debug_log("capture_grayscale: capturing...")
+        gray_buf = cam.capture()
+        if gray_buf is None:
+            _debug_log("capture_grayscale: capture failed")
+            return None
+        _debug_log("capture_grayscale: success, size={}".format(len(gray_buf)))
+        return gray_buf
+    except Exception as e:
+        _debug_log("capture_grayscale: error: {}".format(e))
+        return None
+    finally:
+        cam.deinit()
+        _debug_log("capture_grayscale: camera released")
+
 # ---------- CameraController 类 ----------
 class CameraController:
     """
@@ -116,7 +204,7 @@ class CameraController:
              whitebalance=camera.WB_CLOUDY, effect=camera.EFFECT_NONE):
         """
         初始化摄像头并应用图像参数。
-        内部包含重试机制，失败时会尝试重新初始化最多 3 次。
+        内部包含重试机制，失败时会尝试重新初始化最多 3 次，并在失败时强制释放硬件。
 
         参数：
             framesize (int): 图像分辨率，如 camera.FRAME_XGA, camera.FRAME_VGA 等。
@@ -136,14 +224,16 @@ class CameraController:
             若初始化失败，抛出异常并打印错误信息。
         """
         max_retries = 3
-        retry_delay = 150  # 毫秒
+        retry_delay = 200  # 毫秒
         last_exception = None
 
         for attempt in range(max_retries):
             if self.initialized:
                 _debug_log("init: deinit existing (attempt {})".format(attempt + 1))
                 self.deinit()
+                time.sleep_ms(50)
 
+            # 尝试初始化
             _debug_log("init: calling camera.init() with framesize={} (attempt {})".format(framesize, attempt + 1))
             try:
                 camera.init(0,
@@ -154,6 +244,11 @@ class CameraController:
             except Exception as e:
                 _debug_log("camera.init failed: {}".format(e))
                 last_exception = e
+                # 强制释放硬件
+                try:
+                    camera.deinit()
+                except:
+                    pass
                 if attempt < max_retries - 1:
                     _debug_log("Retrying in {} ms...".format(retry_delay))
                     time.sleep_ms(retry_delay)
@@ -203,7 +298,10 @@ class CameraController:
         """释放摄像头资源，关闭摄像头设备。"""
         if self.initialized:
             _debug_log("deinit: calling camera.deinit()")
-            camera.deinit()
+            try:
+                camera.deinit()
+            except:
+                pass
             self.initialized = False
             _debug_log("Camera deinitialized")
 
@@ -231,6 +329,10 @@ class CameraController:
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":
     print("\n--- CameraController 模块测试 ---")
+    # 开始前强制重置，确保硬件释放
+    reset_camera()
+    time.sleep_ms(200)
+
     start = time.ticks_ms()
 
     # 测试单例
@@ -238,10 +340,10 @@ if __name__ == "__main__":
     c2 = get_camera()
     print("单例验证: c1 is c2 =", c1 is c2)
 
-    # 测试基本捕获（注意：实际运行需要摄像头硬件）
+    # 测试 JPEG 捕获
     try:
-        print("尝试捕获一张 JPEG 图像（分辨率 VGA）...")
-        img = capture_image(framesize=camera.FRAME_VGA, quality=15)
+        print("尝试捕获一张 JPEG 图像（分辨率 XGA）...")
+        img = capture_image(framesize=camera.FRAME_XGA, quality=15)
         if img:
             print("捕获成功，图像大小: {} bytes".format(len(img)))
         else:
@@ -249,8 +351,20 @@ if __name__ == "__main__":
     except Exception as e:
         print("捕获异常:", e)
 
+    # 测试灰度捕获
+    try:
+        print("尝试捕获灰度图像...")
+        gray = capture_grayscale(framesize=camera.FRAME_QVGA)
+        if gray:
+            print("灰度捕获成功，大小: {} bytes".format(len(gray)))
+        else:
+            print("灰度捕获失败")
+    except Exception as e:
+        print("灰度捕获异常:", e)
+
     # 重置
     reset_camera()
+    time.sleep_ms(100)
     c3 = get_camera()
     print("重置后新实例:", c3 is not c1)
 

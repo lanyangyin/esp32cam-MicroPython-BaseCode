@@ -1,8 +1,33 @@
+"""
+app.py - ESP32-CAM 主应用程序入口
+
+本文件是项目的应用入口，演示了三种拍照/分析模式：
+1. 仅拍照（不分析）：打开闪光灯，拍一张 JPEG 并保存到 SD 卡
+2. 拍照并分析环境光（先分析后拍照）：先关闭闪光灯分析环境亮度，再开灯拍照
+3. 独立环境光分析（不拍照）：仅获取环境亮度数据，用于决策判断
+
+本文件依赖以下模块：
+    - photo_capturer: 提供高级拍照功能
+    - camera_analyzer: 提供独立环境光分析
+    - config: 全局调试开关
+    - camera_controller: 摄像头重置函数
+
+设计思路：
+    - 每次运行前强制重置摄像头硬件，确保干净状态
+    - 通过 set_debug(True) 启用所有模块的调试日志
+    - 第 2、3 模式相互独立，可根据需要注释/取消注释
+
+用法：
+    在 REPL 中执行：
+    import app
+    app.main()
+"""
 # app.py
 from photo_capturer import PhotoCapturer
-import camera
+import camera  # type: ignore
 import camera_analyzer
 from config import set_debug
+from camera_controller import reset_camera  # 导入重置函数
 
 # 启用调试日志（可改为 False 关闭所有模块调试输出）
 set_debug(True)
@@ -14,6 +39,12 @@ def main():
     2. 拍照并分析环境光（先分析后拍照）
     3. 独立环境光分析（不拍照）
     """
+    # ---------- 关键：每次运行前强制重置摄像头硬件，确保干净状态 ----------
+    print("\n[Main] Resetting camera hardware before start...")
+    reset_camera()
+    import time
+    time.sleep_ms(200)
+
     # ---------- 1. 仅拍照 ----------
     print("\n--- 1. 仅拍照 ---")
     capturer = PhotoCapturer(

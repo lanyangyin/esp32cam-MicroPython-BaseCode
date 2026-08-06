@@ -1,3 +1,33 @@
+"""
+sd_card.py - SD 卡管理模块（单例模式）
+
+本模块提供 SD 卡的挂载、文件列表和文件保存功能。
+采用单例模式管理 SD 卡实例，确保全局只有一个管理对象。
+
+核心功能：
+    1. 单例管理：get_sd_card() 获取全局唯一实例，支持挂载点配置
+    2. 自动挂载：mount() 自动检测是否已挂载，避免重复挂载
+    3. 文件保存：save_file() 保存二进制数据，自动生成时间戳文件名
+    4. 文件列表：list_files() 列出根目录文件
+    5. 重置功能：reset_sd_card() 卸载并重置单例
+
+设计特点：
+    - 创建失败自动重试（卸载后重试）
+    - 自动检测挂载状态（通过 listdir 判断）
+    - 文件名自动补全路径（确保以 /sd/ 开头）
+
+依赖关系：
+    - machine.SDCard: SD 卡驱动
+    - uos: 文件系统操作
+    - config: 调试开关
+
+典型用法：
+    from sd_card import get_sd_card
+
+    sd = get_sd_card()
+    sd.save_file(image_data, "photo.jpg")
+    files = sd.list_files()
+"""
 # sd_card.py
 import machine
 import uos
