@@ -6,6 +6,6 @@
     <option name="backgroundUploadsDownloads" value="true" />
     <option name="legacyVolumeSupportEnabled" value="true" />
     <option name="pluginEnabled" value="true" />
-    <option name="portName" value="COM25" />
+    <option name="portName" value="COM27" />
   </component>
 </project>
