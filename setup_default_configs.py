@@ -20,7 +20,6 @@ setup_default_configs.py - 默认配置文件生成脚本
     - 提供详细的执行日志
 """
 import json
-import os
 import time
 
 
@@ -178,14 +177,9 @@ def create_flash_guide(output_path="/sd/flash_guide.json", force=False):
     }
 
     try:
-        # 确保目录存在
-        dir_path = os.path.dirname(output_path)
-        if dir_path and not os.path.exists(dir_path):
-            # MicroPython 可能不支持 os.makedirs，这里尝试创建
-            pass
-
+        # MicroPython 的 json.dump 不支持 indent 参数，直接写入紧凑格式
         with open(output_path, 'w') as f:
-            json.dump(default_config, f, indent=4)
+            json.dump(default_config, f)
 
         print("[Setup] Flash guide config created at {}".format(output_path))
         print("[Setup] Version: {}".format(default_config['_version']))
@@ -215,11 +209,11 @@ def create_all(output_dir="/sd", force=False):
     print("  创建默认配置文件")
     print("="*50)
 
+    # 使用字符串拼接构建路径（MicroPython 兼容）
+    flash_guide_path = output_dir + "/flash_guide.json" if output_dir else "flash_guide.json"
+
     results = {
-        'flash_guide': create_flash_guide(
-            os.path.join(output_dir, "flash_guide.json"),
-            force
-        )
+        'flash_guide': create_flash_guide(flash_guide_path, force)
     }
 
     print("\n" + "="*50)
@@ -236,18 +230,17 @@ if __name__ == "__main__":
     print("\n--- 默认配置文件生成工具 ---")
     print("本脚本将生成项目所需的默认配置文件。")
 
-    # 询问是否覆盖
     import sys
 
-    # 检查是否存在 flash_guide.json
+    # 检查是否存在 flash_guide.json（使用 /sd 路径）
     try:
-        with open("flash_guide.json", 'r') as f:
+        with open("/sd/flash_guide.json", 'r') as f:
             exists = True
     except:
         exists = False
 
     if exists:
-        print("\n⚠️  flash_guide.json 已存在")
+        print("\n⚠️  /sd/flash_guide.json 已存在")
         response = input("是否覆盖？(y/N): ")
         if response.lower() != 'y':
             print("已取消")

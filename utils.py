@@ -429,6 +429,7 @@ def load_image_from_file(filepath):
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":
     import time
+    import gc
 
     print("\n--- utils 工具测试 ---")
 
@@ -450,54 +451,70 @@ if __name__ == "__main__":
         print(f"  耗时: {elapsed} ms")
     else:
         print("  分析失败")
+    # 释放
+    del test_data
+    gc.collect()
 
-    # 测试新增生成函数
+    # 测试新增生成函数（逐个生成并演示）
     print("\n2. 生成测试图片函数测试:")
 
     # 2.1 均匀图
     print("  - 均匀图 (value=128):")
-    uniform = create_uniform_image(10, 10, 128)
-    print(f"    长度: {len(uniform)}, 前5个值: {uniform[:5]}")
+    img = create_uniform_image(10, 10, 128)
+    print(f"    长度: {len(img)}, 前5个值: {img[:5]}")
+    del img
+    gc.collect()
 
     # 2.2 渐变图
     grad_h = create_gradient_image(10, 10, 'horizontal')
     print("  - 水平渐变图: 首行前5个值:", grad_h[:5])
+    del grad_h
     grad_v = create_gradient_image(10, 10, 'vertical')
     print("  - 垂直渐变图: 前5个值 (第一列):", grad_v[0], grad_v[10], grad_v[20], grad_v[30], grad_v[40])
+    del grad_v
+    gc.collect()
 
     # 2.3 棋盘格
     checker = create_checkerboard_image(10, 10, 3)
     print("  - 棋盘格 (10x10, block=3): 首行前5个值:", checker[:5])
+    del checker
+    gc.collect()
 
     # 2.4 中心亮
     center_bright = create_center_bright_image(10, 10, 0.3, 200, 50)
     print("  - 中心亮图 (10x10): 中心点值 (索引 5*10+5=55):", center_bright[55])
     print("    角落值 (索引 0):", center_bright[0])
+    del center_bright
+    gc.collect()
 
     # 2.5 中心暗
     center_dark = create_center_dark_image(10, 10, 0.3, 50, 200)
     print("  - 中心暗图 (10x10): 中心点值 (索引 55):", center_dark[55])
     print("    角落值 (索引 0):", center_dark[0])
+    del center_dark
+    gc.collect()
 
-    # 2.6 多彩模拟（通过不同灰度区域组合，模拟彩色图片的亮度分布）
+    # 2.6 多彩模拟（3x3 不同灰度块）
     print("  - 多彩区域模拟 (3x3 不同灰度块):")
     multi_data = bytearray(30 * 30)
     for y in range(30):
         for x in range(30):
-            # 分成 3x3 网格，每个格子不同灰度
             cell_x = x // 10
             cell_y = y // 10
             values = [40, 120, 200, 80, 160, 240, 30, 100, 180]
             multi_data[y*30 + x] = values[cell_y * 3 + cell_x]
-    # 显示中心几个值
     print("    中心区域 (10x10) 的首行值:", multi_data[10*30:10*30+10])
+    del multi_data
+    gc.collect()
 
-    # 3. 使用生成图片进行亮度分析
+    # 3. 使用生成图片进行亮度分析（逐个生成并分析）
     print("\n3. 使用生成图片进行亮度分析:")
     test_img = create_gradient_image(320, 240, 'horizontal')
     result = analyze_brightness(test_img, 320, 240, step=2)
     if result:
         print(f"  水平渐变图: avg={result['average_brightness']:.1f}, dynamic={result['dynamic_range']}")
+    del test_img
+    gc.collect()
 
     # 4. 加载文件测试（如果有图片文件）
     try:
@@ -513,6 +530,8 @@ if __name__ == "__main__":
                 print(f"  文件: {test_file}, 大小: {info['size_bytes']} bytes, 格式: {info['format']}")
                 if info['is_jpeg']:
                     print("  (JPEG 文件加载成功，可用于保存或传输)")
+                del img_data
+                gc.collect()
             else:
                 print("  加载文件失败")
         else:

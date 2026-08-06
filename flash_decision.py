@@ -229,12 +229,13 @@ def get_recommended_settings(brightness_info, guide_path=DEFAULT_GUIDE_PATH):
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":
     import time
+    import gc
 
     print("\n" + "="*50)
     print("  flash_decision 模块测试")
     print("="*50)
 
-    # ========== 1. 使用模拟图片测试决策 ==========
+    # ========== 1. 使用模拟图片测试决策（逐个生成并释放） ==========
     print("\n--- 1. 模拟图片测试（无硬件依赖） ---")
     from utils import (
         create_uniform_image, create_gradient_image,
@@ -243,26 +244,27 @@ if __name__ == "__main__":
     )
 
     test_width, test_height = 160, 120  # 用较小尺寸加速
-    scenarios = []
 
-    # 各种亮度场景
-    scenarios.append(("极暗（全黑）", create_uniform_image(test_width, test_height, 5)))
-    scenarios.append(("暗（均匀灰）", create_uniform_image(test_width, test_height, 40)))
-    scenarios.append(("中灰", create_uniform_image(test_width, test_height, 128)))
-    scenarios.append(("亮（均匀灰）", create_uniform_image(test_width, test_height, 200)))
-    scenarios.append(("极亮（全白）", create_uniform_image(test_width, test_height, 250)))
-    scenarios.append(("渐变（从暗到亮）", create_gradient_image(test_width, test_height, 'horizontal')))
-    scenarios.append(("中心亮（聚光）", create_center_bright_image(test_width, test_height, 0.25, 220, 30)))
-    scenarios.append(("中心暗（逆光）", create_center_dark_image(test_width, test_height, 0.25, 30, 220)))
+    # 定义场景 (名称, 生成函数, 参数字典)
+    scenarios = [
+        ("极暗（全黑）", create_uniform_image, {'value': 5}),
+        ("暗（均匀灰）", create_uniform_image, {'value': 40}),
+        ("中灰", create_uniform_image, {'value': 128}),
+        ("亮（均匀灰）", create_uniform_image, {'value': 200}),
+        ("极亮（全白）", create_uniform_image, {'value': 250}),
+        ("渐变（水平）", create_gradient_image, {'direction': 'horizontal'}),
+        ("中心亮（聚光）", create_center_bright_image, {'center_radius_ratio': 0.25, 'center_value': 220, 'surround_value': 30}),
+        ("中心暗（逆光）", create_center_dark_image, {'center_radius_ratio': 0.25, 'center_value': 30, 'surround_value': 220}),
+    ]
 
     print("  {:^20} | {:^8} | {:^8} | {:^6} | {:^6}".format(
         "场景", "平均亮度", "动态范围", "闪光灯", "重拍"))
     print("  " + "-"*60)
 
-    for name, img_data in scenarios:
+    for name, gen_func, kwargs in scenarios:
+        img_data = gen_func(test_width, test_height, **kwargs)
         result = analyze_brightness(img_data, test_width, test_height, step=2)
         if result:
-            # 使用决策函数
             decision = evaluate_flash_decision({
                 'average_brightness': result['average_brightness'],
                 'dynamic_range': result['dynamic_range'],
@@ -275,6 +277,9 @@ if __name__ == "__main__":
                 "✅" if decision['flash'] else "❌",
                 "✅" if decision['retry'] else "❌"
             ))
+        # 释放
+        del img_data
+        gc.collect()
 
     # ========== 2. 使用预设测试用例 ==========
     print("\n--- 2. 预设测试用例 ---")
@@ -306,7 +311,7 @@ if __name__ == "__main__":
     print("\n--- 3. SD 卡图片测试（如果存在） ---")
     try:
         import uos
-        from utils import load_image_from_file, get_image_info, analyze_brightness
+        from utils import load_image_from_file, get_image_info
 
         files = uos.listdir('/sd')
         jpg_files = [f for f in files if f.lower().endswith('.jpg') or f.lower().endswith('.jpeg')]
@@ -318,10 +323,11 @@ if __name__ == "__main__":
                 info = get_image_info(img_data)
                 print("  文件信息: 格式={}, 大小={} bytes, 尺寸={}x{}".format(
                     info['format'], info['size_bytes'], info['width'], info['height']))
-                # 注意：JPEG 是压缩数据，无法直接用于亮度分析
-                # 可以读取 PGM 或原始灰度文件，但这里简化处理
+                # 注意：JPEG 是压缩格式，无法直接用于亮度分析
                 print("  ⚠️ JPEG 是压缩格式，无法直接分析亮度（需要解码）")
                 print("  提示: 使用 utils.create_* 生成的图片已覆盖测试场景")
+                del img_data
+                gc.collect()
             else:
                 print("  ❌ 加载失败")
         else:

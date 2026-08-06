@@ -120,102 +120,37 @@ def quick_brightness_from_camera(framesize=camera.FRAME_XGA):
 if __name__ == "__main__":
     import time
     from camera_controller import reset_camera
-    from utils import (
-        create_gradient_image, create_checkerboard_image,
-        create_center_bright_image, create_center_dark_image,
-        analyze_brightness, quick_brightness_estimate,
-        load_image_from_file, get_image_info
+
+    print("\n--- camera_analyzer 模块测试 ---")
+    reset_camera()
+    time.sleep_ms(200)
+
+    # 测试精确分析
+    print("\n1. 精确分析 (analyze_brightness_from_camera):")
+    start = time.ticks_ms()
+    result = analyze_brightness_from_camera(
+        framesize=camera.FRAME_QVGA,
+        step=2
     )
+    elapsed = time.ticks_diff(time.ticks_ms(), start)
+    if result:
+        print("✅ 分析成功:")
+        print(f"  平均亮度: {result['average_brightness']:.1f}")
+        print(f"  动态范围: {result['dynamic_range']}")
+        print(f"  中心亮度: {result['center_brightness']:.1f}")
+        print(f"  耗时: {elapsed} ms")
+    else:
+        print("❌ 分析失败")
 
-    print("\n" + "="*50)
-    print("  camera_analyzer 模块测试")
-    print("="*50)
-
-    # ========== 1. 模拟图片测试（无需摄像头） ==========
-    print("\n--- 1. 模拟图片测试（无硬件依赖） ---")
-    test_width, test_height = 320, 240
-
-    test_scenarios = [
-        ("水平渐变图", create_gradient_image(test_width, test_height, 'horizontal')),
-        ("垂直渐变图", create_gradient_image(test_width, test_height, 'vertical')),
-        ("棋盘格", create_checkerboard_image(test_width, test_height, 20)),
-        ("中心亮（聚光效果）", create_center_bright_image(test_width, test_height, 0.25, 220, 30)),
-        ("中心暗（逆光效果）", create_center_dark_image(test_width, test_height, 0.25, 30, 220)),
-    ]
-
-    for name, img_data in test_scenarios:
-        print("\n  [{}]".format(name))
-        # 精确分析
-        result = analyze_brightness(img_data, test_width, test_height, step=2)
-        if result:
-            print(f"    精确分析: avg={result['average_brightness']:.1f}, "
-                  f"dynamic={result['dynamic_range']}, center={result['center_brightness']:.1f}")
-        # 快速估计
-        quick = quick_brightness_estimate(img_data, test_width, test_height)
-        if quick is not None:
-            print(f"    快速估计: {quick:.1f}")
-
-    # ========== 2. 从 SD 卡加载图片测试 ==========
-    print("\n--- 2. SD 卡图片加载测试 ---")
-    try:
-        import uos
-        files = uos.listdir('/sd')
-        jpg_files = [f for f in files if f.lower().endswith('.jpg') or f.lower().endswith('.jpeg')]
-        if jpg_files:
-            test_file = '/sd/' + jpg_files[0]
-            print("  加载文件: {}".format(test_file))
-            img_data = load_image_from_file(test_file)
-            if img_data:
-                info = get_image_info(img_data)
-                print("  文件信息: 格式={}, 大小={} bytes, 尺寸={}x{}".format(
-                    info['format'], info['size_bytes'], info['width'], info['height']))
-                # 注意：JPEG 是压缩数据，不能直接用于亮度分析
-                # 这里仅演示文件加载成功
-            else:
-                print("  ❌ 加载失败")
-        else:
-            print("  ⚠️ 未找到 JPEG 文件，跳过")
-    except Exception as e:
-        print("  ⚠️ SD 卡读取失败: {}".format(e))
-
-    # ========== 3. 真实摄像头测试（可选） ==========
-    print("\n--- 3. 真实摄像头测试（需要硬件） ---")
-    try:
-        reset_camera()
-        time.sleep_ms(200)
-
-        # 测试精确分析（使用 QVGA 加速）
-        print("  精确分析 (QVGA, step=2):")
-        start = time.ticks_ms()
-        result = analyze_brightness_from_camera(
-            framesize=camera.FRAME_QVGA,
-            step=2
-        )
-        elapsed = time.ticks_diff(time.ticks_ms(), start)
-        if result:
-            print("    ✅ 成功: avg={:.1f}, dynamic={}, center={:.1f}, 耗时={} ms".format(
-                result['average_brightness'], result['dynamic_range'],
-                result['center_brightness'], elapsed))
-        else:
-            print("    ❌ 分析失败")
-
-        # 测试快速估计
-        print("  快速估计 (QVGA):")
-        start = time.ticks_ms()
-        avg = quick_brightness_from_camera(framesize=camera.FRAME_QVGA)
-        elapsed = time.ticks_diff(time.ticks_ms(), start)
-        if avg is not None:
-            print("    ✅ 成功: 亮度={:.1f}, 耗时={} ms".format(avg, elapsed))
-        else:
-            print("    ❌ 估计失败")
-
-    except Exception as e:
-        print("  ⚠️ 摄像头测试失败（可能无硬件）: {}".format(e))
-        print("  提示: 前两项测试无需摄像头，已正常完成。")
-
-    print("\n" + "="*50)
-    print("  测试完成")
-    print("="*50)
+    # 测试快速估计
+    print("\n2. 快速估计 (quick_brightness_from_camera):")
+    start = time.ticks_ms()
+    avg = quick_brightness_from_camera(framesize=camera.FRAME_QVGA)
+    elapsed = time.ticks_diff(time.ticks_ms(), start)
+    if avg is not None:
+        print(f"✅ 估计成功: 亮度 = {avg:.1f} (耗时 {elapsed} ms)")
+    else:
+        print("❌ 估计失败")
 
     # 速度对比（实测参考）
     # 精确分析（QVGA, step=2）约 0.3~0.5 秒，快速估计约 0.3~0.5 秒（主要耗时在图像捕获）

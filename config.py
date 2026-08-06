@@ -91,13 +91,28 @@ def update_flash_guide_config(new_config, save_to_file=True):
     if save_to_file:
         try:
             with open(FLASH_GUIDE_PATH, 'w') as f:
-                json.dump(merged, f, indent=4)
+                json.dump(merged, f)  # 移除 indent=4
             if DEBUG:
                 print("[Config] Saved flash guide to {}".format(FLASH_GUIDE_PATH))
         except Exception as e:
             if DEBUG:
                 print("[Config] Failed to save flash guide: {}".format(e))
     return merged
+
+
+def reset_flash_guide():
+    global _cached_flash_guide
+    default = _get_conservative_default()
+    _cached_flash_guide = default
+    try:
+        with open(FLASH_GUIDE_PATH, 'w') as f:
+            json.dump(default, f)  # 移除 indent=4
+        if DEBUG:
+            print("[Config] Reset flash guide to conservative default")
+    except Exception as e:
+        if DEBUG:
+            print("[Config] Failed to reset flash guide: {}".format(e))
+    return default
 
 
 def add_flash_rule(rule_type, rule_data):
