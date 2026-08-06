@@ -1,0 +1,126 @@
+{
+    "_comment": "闪光灯智能决策规则配置文件",
+    "_version": "1.0.0",
+    "_description": "根据环境亮度信息自动判断是否开启闪光灯及是否需要重拍",
+
+    "rules": {
+        "flash_decision": {
+            "_comment": "闪光灯开启决策规则",
+            "thresholds": {
+                "average_brightness": {
+                    "_comment": "平均亮度阈值（0-255，数值越小越暗）",
+                    "very_dark": 30,
+                    "dark": 60,
+                    "low": 100,
+                    "normal": 150
+                },
+                "dynamic_range": {
+                    "_comment": "动态范围阈值（最大灰度 - 最小灰度）",
+                    "low_contrast": 50,
+                    "medium_contrast": 100,
+                    "high_contrast": 150
+                },
+                "center_brightness": {
+                    "_comment": "中心区域亮度阈值（主体亮度）",
+                    "dark_subject": 40,
+                    "normal_subject": 80
+                }
+            },
+            "decision_logic": {
+                "_comment": "决策逻辑配置",
+                "flash_conditions": [
+                    {
+                        "id": "very_dark_scene",
+                        "description": "场景极暗：平均亮度 < 30",
+                        "condition": "avg < 30",
+                        "action": "flash_on"
+                    },
+                    {
+                        "id": "dark_scene",
+                        "description": "场景较暗：平均亮度 < 60 且 中心亮度 < 40",
+                        "condition": "avg < 60 and center < 40",
+                        "action": "flash_on"
+                    },
+                    {
+                        "id": "dark_subject",
+                        "description": "主体偏暗：平均亮度 < 80 且 中心亮度 < 50",
+                        "condition": "avg < 80 and center < 50",
+                        "action": "flash_on"
+                    },
+                    {
+                        "id": "backlit_scene",
+                        "description": "逆光场景：动态范围 > 100 且 平均亮度 < 100",
+                        "condition": "dynamic > 100 and avg < 100",
+                        "action": "flash_on"
+                    }
+                ],
+                "retry_conditions": [
+                    {
+                        "id": "too_dark",
+                        "description": "画面过暗：平均亮度 < 20",
+                        "condition": "avg < 20",
+                        "action": "retry_with_flash"
+                    },
+                    {
+                        "id": "overexposed",
+                        "description": "画面过曝：平均亮度 > 230",
+                        "condition": "avg > 230",
+                        "action": "retry_lower_exposure"
+                    },
+                    {
+                        "id": "low_contrast",
+                        "description": "对比度过低：动态范围 < 30 且 平均亮度 < 80",
+                        "condition": "dynamic < 30 and avg < 80",
+                        "action": "retry_adjust_settings"
+                    }
+                ],
+                "default_action": {
+                    "_comment": "默认行为（不满足任何条件时）",
+                    "flash": "off",
+                    "retry": false
+                }
+            }
+        }
+    },
+
+    "camera_settings": {
+        "_comment": "不同场景下的推荐摄像头参数",
+        "scene_profiles": {
+            "normal": {
+                "description": "正常光照场景",
+                "brightness": 0,
+                "contrast": 0,
+                "saturation": 0,
+                "quality": 10
+            },
+            "dark": {
+                "description": "暗光场景（开启闪光灯）",
+                "brightness": 1,
+                "contrast": 1,
+                "saturation": 0,
+                "quality": 8
+            },
+            "very_dark": {
+                "description": "极暗场景（开启闪光灯 + 提高亮度）",
+                "brightness": 2,
+                "contrast": 1,
+                "saturation": -1,
+                "quality": 8
+            },
+            "backlit": {
+                "description": "逆光场景",
+                "brightness": 1,
+                "contrast": 2,
+                "saturation": 0,
+                "quality": 10
+            }
+        }
+    },
+
+    "logging": {
+        "_comment": "日志配置",
+        "enabled": true,
+        "log_file": "/sd/flash_decision.log",
+        "max_entries": 1000
+    }
+}
