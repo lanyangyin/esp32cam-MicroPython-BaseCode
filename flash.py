@@ -7,8 +7,9 @@ flash.py - 闪光灯控制模块（单例模式）
 核心功能：
     1. 单例管理：get_flash() 获取全局唯一实例，支持引脚和电平配置
     2. 开关控制：on() 打开，off() 关闭
-    3. 闪烁功能：blink() 执行一次闪烁
-    4. 重置功能：reset_flash() 释放并重置单例
+    3. 闪烁功能：blink(times, on_time, off_time) 闪烁指定次数
+    4. 补光功能：pulse(duration) 短时点亮（用于拍照预闪）
+    5. 重置功能：reset_flash() 释放并重置单例
 
 设计特点：
     - 创建失败自动重试（释放旧实例后重试）
@@ -23,15 +24,11 @@ flash.py - 闪光灯控制模块（单例模式）
     from flash import get_flash
 
     flash = get_flash(pin=4, on_value=1)
-    flash.on()
-    time.sleep_ms(200)
-    flash.off()
+    flash.blink(times=3, on_time=200, off_time=200)  # 闪烁3次
+    flash.pulse(500)                                 # 点亮500ms
 """
 import time
-
-# flash.py
 from machine import Pin
-
 from config import DEBUG
 
 
@@ -39,8 +36,10 @@ def _debug_log(msg):
     if DEBUG:
         print("[Flash] " + msg)
 
+
 # ---------- 单例管理 ----------
 _flash_instance = None
+
 
 def get_flash(pin=4, on_value=1):
     """
@@ -83,6 +82,7 @@ def get_flash(pin=4, on_value=1):
             _debug_log("Retry failed: {}".format(e2))
             raise
 
+
 def reset_flash():
     """强制释放并重置闪光灯单例（用于调试或重新配置）。"""
     global _flash_instance
@@ -94,11 +94,12 @@ def reset_flash():
             pass
         _flash_instance = None
 
+
 # ---------- Flash 类 ----------
 class Flash:
     """
     ESP32-CAM 闪光灯控制类。
-    支持设置 GPIO 引脚和电平极性，提供开、关、闪烁功能。
+    支持设置 GPIO 引脚和电平极性，提供开、关、闪烁、补光功能。
     """
 
     def __init__(self, pin=4, on_value=1):
@@ -126,19 +127,34 @@ class Flash:
         self.pin.value(self.off_value)
         _debug_log("Flash OFF")
 
-    def blink(self, on_time=200, off_time=200):
+    def blink(self, times=1, on_time=200, off_time=200):
         """
-        闪烁一次（开灯 -> 等待 -> 关灯 -> 等待）。
+        闪烁指定次数。
 
         参数：
+            times (int): 闪烁次数，默认 1。
             on_time (int): 开灯持续时间（毫秒），默认 200ms。
             off_time (int): 关灯后等待时间（毫秒），默认 200ms。
         """
-        _debug_log("Blinking: ON {}ms, OFF {}ms".format(on_time, off_time))
+        _debug_log("Blinking {} times: ON {}ms, OFF {}ms".format(times, on_time, off_time))
+        for _ in range(times):
+            self.on()
+            time.sleep_ms(on_time)
+            self.off()
+            time.sleep_ms(off_time)
+
+    def pulse(self, duration=200):
+        """
+        短时补光（拍照预闪），点亮指定时间后自动关闭。
+
+        参数：
+            duration (int): 点亮持续时间（毫秒），默认 200ms。
+        """
+        _debug_log("Pulse for {} ms".format(duration))
         self.on()
-        time.sleep_ms(on_time)
+        time.sleep_ms(duration)
         self.off()
-        time.sleep_ms(off_time)
+
 
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":
@@ -150,13 +166,14 @@ if __name__ == "__main__":
     f2 = get_flash()
     print("单例验证: f1 is f2 =", f1 is f2)
 
-    # 测试开/关
-    print("闪烁测试...")
-    f1.blink(100, 100)
-    time.sleep_ms(200)
-    f1.on()
-    time.sleep_ms(300)
-    f1.off()
+    # 测试闪烁（3次）
+    print("闪烁测试 (3次)...")
+    f1.blink(times=3, on_time=200, off_time=200)
+    time.sleep_ms(500)
+
+    # 测试补光
+    print("补光测试 (500ms)...")
+    f1.pulse(500)
 
     # 测试重置
     reset_flash()
