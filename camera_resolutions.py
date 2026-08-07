@@ -23,13 +23,16 @@ camera_resolutions.py - 摄像头分辨率映射工具
     print(f"XGA 尺寸: {w}x{h}")
     res.list_resolutions()
 """
-# camera_resolutions.py
+
 import camera  # type: ignore
+
 from config import DEBUG
+
 
 def _debug_log(msg):
     if DEBUG:
         print("[Resolutions] " + msg)
+
 
 # ---------- 分辨率常量名称列表 ----------
 RESOLUTION_NAMES = [
@@ -77,6 +80,7 @@ def get_resolution(framesize):
     """
     return RESOLUTION_SIZE.get(framesize, (None, None))
 
+
 def get_name_by_value(framesize):
     """
     根据常量值查找对应的分辨率名称。
@@ -91,6 +95,7 @@ def get_name_by_value(framesize):
         if val == framesize:
             return name
     return None
+
 
 def list_resolutions():
     """
@@ -108,6 +113,7 @@ def list_resolutions():
             size_str = f"{w}×{h}" if w else "unknown"
             print(f"│ {name:<11} │ {val:<10} │ {size_str:<8} │")
     print("└─────────────┴────────────┴──────────┘")
+
 
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":

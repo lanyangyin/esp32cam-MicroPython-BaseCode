@@ -20,9 +20,10 @@ quick_photo_taking.py - ESP32-CAM 快速拍照脚本
     直接运行：import adjust_camera_settings
     或作为独立脚本执行。
 """
+import time
+
 # quick_photo_taking.py
 import camera  # type: ignore
-import time
 from machine import Pin
 
 # ========== 1. 关闭闪光灯 ==========

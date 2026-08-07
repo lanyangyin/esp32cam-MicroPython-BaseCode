@@ -27,10 +27,13 @@ flash.py - 闪光灯控制模块（单例模式）
     time.sleep_ms(200)
     flash.off()
 """
+import time
+
 # flash.py
 from machine import Pin
-import time
+
 from config import DEBUG
+
 
 def _debug_log(msg):
     if DEBUG:

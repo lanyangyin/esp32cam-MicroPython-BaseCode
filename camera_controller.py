@@ -28,10 +28,13 @@ camera_controller.py - ESP32-CAM 摄像头核心控制模块
     jpeg_data = capture_image(framesize=camera.FRAME_VGA)
     gray_data = capture_grayscale(framesize=camera.FRAME_QVGA)
 """
+import time
+
 # camera_controller.py
 import camera  # type: ignore
-import time
+
 from config import DEBUG
+
 
 def _debug_log(msg):
     if DEBUG:

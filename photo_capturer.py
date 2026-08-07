@@ -36,6 +36,7 @@ photo_capturer.py - 高级拍照流程模块
     saved_path = capturer.smart_capture()
     capturer.cleanup()
 """
+import math
 import time
 
 import camera  # type: ignore
@@ -333,7 +334,6 @@ class PhotoCapturer:
             framesize = self.camera_params.get("framesize", camera.FRAME_XGA)
             w, h = CameraController.get_resolution(framesize)
             if w is None or h is None:
-                import math
                 total = len(gray_buf)
                 w = int(math.sqrt(total * 4 / 3))
                 h = total // w
@@ -404,7 +404,6 @@ class PhotoCapturer:
             # 获取尺寸
             w, h = CameraController.get_resolution(self.camera_params.get("framesize", camera.FRAME_XGA))
             if w is None or h is None:
-                import math
                 total = len(gray_buf)
                 w = int(math.sqrt(total * 4 / 3))
                 h = total // w

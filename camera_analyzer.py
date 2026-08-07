@@ -36,10 +36,14 @@ camera_analyzer.py - 环境光亮度分析模块
     if avg is not None:
         print(f"亮度: {avg:.1f}, JPEG 大小: {len(jpeg_data)} bytes")
 """
+import math
+
 import camera  # type: ignore
+
 from camera_controller import capture_grayscale, capture_image, CameraController
-from utils import analyze_brightness, quick_brightness_estimate
 from config import DEBUG
+from utils import analyze_brightness, quick_brightness_estimate
+
 
 def _debug_log(msg):
     if DEBUG:
@@ -72,7 +76,6 @@ def analyze_brightness_from_camera(framesize=camera.FRAME_XGA, step=2):
 
     w, h = CameraController.get_resolution(framesize)
     if w is None or h is None:
-        import math
         total = len(gray_buf)
         w = int(math.sqrt(total * 4 / 3))
         h = total // w
@@ -114,7 +117,6 @@ def quick_brightness_from_camera(framesize=camera.FRAME_XGA):
 
     w, h = CameraController.get_resolution(framesize)
     if w is None or h is None:
-        import math
         total = len(gray_buf)
         w = int(math.sqrt(total * 4 / 3))
         h = total // w

@@ -22,12 +22,13 @@ app.py - ESP32-CAM 主应用程序入口
     import app
     app.main()
 """
+import camera  # type: ignore
+
+import camera_analyzer
+from camera_controller import reset_camera  # 导入重置函数
+from config import set_debug
 # app.py
 from photo_capturer import PhotoCapturer
-import camera  # type: ignore
-import camera_analyzer
-from config import set_debug
-from camera_controller import reset_camera  # 导入重置函数
 
 # 启用调试日志（可改为 False 关闭所有模块调试输出）
 set_debug(True)

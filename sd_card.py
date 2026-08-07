@@ -28,17 +28,21 @@ sd_card.py - SD 卡管理模块（单例模式）
     sd.save_file(image_data, "photo.jpg")
     files = sd.list_files()
 """
-# sd_card.py
+
 import machine
 import uos
+
 from config import DEBUG
+
 
 def _debug_log(msg):
     if DEBUG:
         print("[SD] " + msg)
 
+
 # ---------- 单例管理 ----------
 _sd_instance = None
+
 
 def get_sd_card(mount_point="/sd", slot=2):
     """
@@ -82,6 +86,7 @@ def get_sd_card(mount_point="/sd", slot=2):
             _debug_log("Retry failed: {}".format(e2))
             raise
 
+
 def reset_sd_card():
     """强制释放并重置 SD 卡单例。"""
     global _sd_instance
@@ -92,6 +97,7 @@ def reset_sd_card():
         except:
             pass
         _sd_instance = None
+
 
 # ---------- SDCardManager 类 ----------
 class SDCardManager:
@@ -175,7 +181,6 @@ class SDCardManager:
         if not self.mounted:
             self.mount()
         if filename is None:
-            import time
             filename = "photo_{}.jpg".format(time.time())
         # 确保以挂载点开头
         if not filename.startswith(self.mount_point):
@@ -188,6 +193,7 @@ class SDCardManager:
         except Exception as e:
             _debug_log("Save error: {}".format(e))
             return None
+
 
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":

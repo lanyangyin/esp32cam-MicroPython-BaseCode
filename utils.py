@@ -34,6 +34,8 @@ utils.py - 通用工具函数库
 """
 import struct
 
+import uos
+
 
 def analyze_brightness(gray_data, width, height, step=2):
     """
@@ -518,7 +520,6 @@ if __name__ == "__main__":
 
     # 4. 加载文件测试（如果有图片文件）
     try:
-        import uos
         files = uos.listdir('/sd')
         jpg_files = [f for f in files if f.lower().endswith('.jpg') or f.lower().endswith('.jpeg')]
         if jpg_files:

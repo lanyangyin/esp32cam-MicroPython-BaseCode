@@ -25,9 +25,15 @@ device_info.py - 设备硬件信息报告模块
     device_info.print_info()
 """
 # device_info.py
-import gc, esp, esp32, os, machine, sys
+import esp
+import gc
+import machine
+import os
+import sys
 import time
+
 from config import DEBUG
+
 
 def _debug_log(msg):
     if DEBUG:

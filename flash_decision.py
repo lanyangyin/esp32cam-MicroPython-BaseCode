@@ -16,6 +16,7 @@ flash_decision.py - 智能闪光灯决策模块
     - 与重拍决策完全解耦
 """
 import json
+
 from config import DEBUG as GLOBAL_DEBUG
 
 # 默认配置文件路径

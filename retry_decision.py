@@ -17,7 +17,6 @@ retry_decision.py - 重拍决策模块（重新获取亮度信息）
     - 配置文件驱动，便于调整阈值
     - 通过 config 模块统一管理配置
 """
-import json
 from config import DEBUG as GLOBAL_DEBUG
 from config import get_retry_guide_config
 

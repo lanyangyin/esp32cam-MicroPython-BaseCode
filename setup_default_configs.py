@@ -158,8 +158,6 @@ if __name__ == "__main__":
     print("\n--- 默认配置文件生成工具 ---")
     print("本脚本将生成项目所需的默认配置文件。")
 
-    import sys
-
     # 检查文件是否存在
     flash_exists = False
     retry_exists = False
@@ -180,6 +178,5 @@ if __name__ == "__main__":
             print("  - /sd/flash_guide.json")
         if retry_exists:
             print("  - /sd/retry_guide.json")
-
 
     create_all(force=True)
