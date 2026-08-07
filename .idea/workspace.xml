@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="import 优化">
+      <change afterPath="$PROJECT_DIR$/ble.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera_driver/analysis.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera_driver/capture.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera_driver/controller.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera_driver/resolutions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera_driver/singleton.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/debug.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/defaults.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/flash_config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/retry_config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/decision/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/decision/engine.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/decision/flash.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/decision/retry.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/brightness.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/device_info.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/file_io.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/image_encoders.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/image_info.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/test_images.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/wifi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_analyzer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_controller.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_resolutions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/device_info.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/flash.py" beforeDir="false" afterPath="$PROJECT_DIR$/flash.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flash_decision.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo_capturer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/retry_decision.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {}
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "git@github.com:lanyangyin/esp32cam-MicroPython-BaseCode.git",
+    "accountId": "1f36d2a3-4565-4fe4-a034-3ebc7da19b25"
+  }
+}]]></component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0" />
+      <entry key="M2" value="1.0" />
+      <entry key="M5" value="1.0000000000000389" />
+      <entry key="M10" value="1.0000003490949796" />
+      <entry key="M15" value="1.000076119847821" />
+      <entry key="M30" value="1.0188661668143124" />
+      <entry key="H1" value="1.3459746867322993" />
+      <entry key="H2" value="2.8392521755760853" />
+      <entry key="H4" value="6.502992357065042" />
+      <entry key="D1" value="24.82127759156786" />
+      <entry key="W1" value="34.841773736541576" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="1.5212171342887423E-275" />
+      <entry key="S10" value="3.900278367358851E-138" />
+      <entry key="S30" value="1.574098365926796E-46" />
+      <entry key="S60" value="1.254630768762984E-23" />
+      <entry key="M2" value="3.5420767478457946E-12" />
+      <entry key="M5" value="2.6284709819093566E-5" />
+      <entry key="M10" value="0.005126861595468866" />
+      <entry key="M15" value="0.029732703197996348" />
+      <entry key="M30" value="0.17243182032330204" />
+      <entry key="H1" value="0.41554154379917296" />
+      <entry key="H2" value="0.6623028685794496" />
+      <entry key="H4" value="0.981787214410928" />
+      <entry key="D1" value="3.1800152651428193" />
+      <entry key="W1" value="4.665417822900712" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.9138314502294005" />
+      <entry key="MS500" value="0.9821395952633915" />
+      <entry key="S2" value="0.995504677670617" />
+      <entry key="S5" value="0.9981994402866303" />
+      <entry key="S10" value="0.9990993145261537" />
+      <entry key="S30" value="0.9996996813264409" />
+      <entry key="S60" value="0.999849829387614" />
+      <entry key="M2" value="0.9999249118782201" />
+      <entry key="M5" value="0.9999962016984176" />
+      <entry key="M10" value="1.0051075985640887" />
+      <entry key="M15" value="1.0297810326623282" />
+      <entry key="M30" value="1.1912364492687635" />
+      <entry key="H1" value="1.7613829131521905" />
+      <entry key="H2" value="3.5012978802948616" />
+      <entry key="H4" value="7.484425484366542" />
+      <entry key="D1" value="28.001081102494467" />
+      <entry key="W1" value="39.50715100557711" />
+    </decayedShown>
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="3HWaUcvUlWKe2gSBaN5oox5yrjY" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.camera_analyzer.executor": "Run",
+    "Python.device_info.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "D:/Documents/ESP/ESP32-CAM/esp32cam-MicroPython-BaseCode/old",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.jshint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.jshint": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "dev.micropythontools.configurable"
+  },
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/新建临时文件": [
+      "TEXT"
+    ]
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\old" />
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode" />
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\photo" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\图片" />
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\old" />
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.device_info">
+    <configuration name="camera_analyzer" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="esp32cam-MicroPython-BaseCode" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/camera_analyzer.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="device_info" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="esp32cam-MicroPython-BaseCode" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/device_info.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.device_info" />
+        <item itemvalue="Python.camera_analyzer" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-6fa658e1df1a-5bd6d13a2a75-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-262.8665.369" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="" />
+      <created>1749768217230</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1749768217230</updated>
+    </task>
+    <task id="LOCAL-00001" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1785994143041</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1785994143041</updated>
+    </task>
+    <task id="LOCAL-00002" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1786001130640</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1786001130640</updated>
+    </task>
+    <task id="LOCAL-00003" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1786026324487</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1786026324487</updated>
+    </task>
+    <task id="LOCAL-00004" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1786027561481</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1786027561481</updated>
+    </task>
+    <task id="LOCAL-00005" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1786032161335</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1786032161335</updated>
+    </task>
+    <task id="LOCAL-00006" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1786037043665</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1786037043665</updated>
+    </task>
+    <task id="LOCAL-00007" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1786037082148</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1786037082148</updated>
+    </task>
+    <task id="LOCAL-00008" summary="获取亮度信息">
+      <option name="closed" value="true" />
+      <created>1786043309944</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1786043309944</updated>
+    </task>
+    <task id="LOCAL-00009" summary="闪光灯测试">
+      <option name="closed" value="true" />
+      <created>1786046503769</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1786046503769</updated>
+    </task>
+    <task id="LOCAL-00010" summary="闪光灯策略">
+      <option name="closed" value="true" />
+      <created>1786057151147</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1786057151147</updated>
+    </task>
+    <task id="LOCAL-00011" summary="闪光灯策略">
+      <option name="closed" value="true" />
+      <created>1786064122748</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1786064122748</updated>
+    </task>
+    <task id="LOCAL-00012" summary="闪光灯策略">
+      <option name="closed" value="true" />
+      <created>1786064907320</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1786064907320</updated>
+    </task>
+    <task id="LOCAL-00013" summary="import 优化">
+      <option name="closed" value="true" />
+      <created>1786065440603</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1786065440603</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="获取亮度信息" />
+    <MESSAGE value="闪光灯测试" />
+    <MESSAGE value="闪光灯策略" />
+    <MESSAGE value="import 优化" />
+    <option name="LAST_COMMIT_MESSAGE" value="import 优化" />
+  </component>
+</project>
