@@ -7,11 +7,11 @@
 """
 import camera  # type: ignore
 from .singleton import get_camera
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[CameraCtrl] " + msg)
+    debug_log(msg, module="CameraCtrl")
 
 def capture_image(framesize=camera.FRAME_XGA, quality=10,
                   format=camera.JPEG, fb_location=camera.PSRAM,

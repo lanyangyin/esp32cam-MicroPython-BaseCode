@@ -6,11 +6,11 @@
 所有分辨率尺寸均来自 ESP32 camera 驱动和 OV3660 传感器数据手册。
 """
 import camera  # type: ignore
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[Resolutions] " + msg)
+    debug_log(msg, module="Resolutions")
 
 # 所有支持的分辨率常量名称列表
 RESOLUTION_NAMES = [

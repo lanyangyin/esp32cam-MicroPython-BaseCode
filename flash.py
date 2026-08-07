@@ -29,12 +29,11 @@ flash.py - 闪光灯控制模块（单例模式）
 """
 import time
 from machine import Pin
-from config import DEBUG
+from config import debug_log
 
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[Flash] " + msg)
+    debug_log(msg, module="Flash")
 
 
 # ---------- 单例管理 ----------

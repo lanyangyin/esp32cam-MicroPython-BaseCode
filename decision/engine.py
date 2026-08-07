@@ -1,10 +1,10 @@
 # decision/engine.py
 """共享评估引擎"""
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[DecisionEngine] " + msg)
+    debug_log(msg, module="DecisionEngine")
 
 def evaluate_condition(condition_str, brightness_info):
     """评估条件字符串，支持 avg, dynamic, center 变量"""

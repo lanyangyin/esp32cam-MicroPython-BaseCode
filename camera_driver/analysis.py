@@ -4,12 +4,12 @@ import math
 import camera  # type: ignore
 from .capture import capture_grayscale, capture_image   # 改为相对导入
 from .controller import CameraController                # 改为相对导入
-from config import DEBUG
 from utils.brightness import analyze_brightness, quick_brightness_estimate  # 依赖 utils 是正常的
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[Analyzer] " + msg)
+    debug_log(msg, module="Analyzer")
 
 def analyze_brightness_from_camera(framesize=camera.FRAME_XGA, step=2):
     _debug_log("Starting analysis with framesize={}, step={}".format(framesize, step))

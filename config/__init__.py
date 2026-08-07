@@ -1,9 +1,9 @@
 # config/__init__.py
 """
 配置管理包
-统一导出调试开关、闪光灯配置、重拍配置等
+统一导出调试开关、闪光灯配置、重拍配置、日志工具等
 """
-from .debug import DEBUG, set_debug
+from .debug import DEBUG, set_debug, LOG_TO_FILE, set_log_to_file, debug_log
 from .flash_config import (
     get_flash_guide_config,
     update_flash_guide_config,
@@ -26,6 +26,9 @@ from .retry_config import (
 __all__ = [
     "DEBUG",
     "set_debug",
+    "LOG_TO_FILE",
+    "set_log_to_file",
+    "debug_log",
     "get_flash_guide_config",
     "update_flash_guide_config",
     "add_flash_rule",

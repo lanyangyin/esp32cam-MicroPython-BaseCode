@@ -2,12 +2,12 @@
 """灰度图像分析工具（原 PhotoCapturer 的 _analyze_gray 和 capture_analysis）"""
 from camera_driver import get_camera, CameraController, capture_grayscale
 from flash import get_flash
-from config import DEBUG
 import camera  # type: ignore
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[Photo] " + msg)
+    debug_log(msg, module="Photo")
 
 def analyze_gray(gray_data, width, height):
     """

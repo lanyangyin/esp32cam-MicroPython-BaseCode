@@ -32,12 +32,11 @@ sd_card.py - SD 卡管理模块（单例模式）
 import machine
 import uos
 
-from config import DEBUG
+from config import debug_log
 
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[SD] " + msg)
+    debug_log(msg, module="SD")
 
 
 # ---------- 单例管理 ----------

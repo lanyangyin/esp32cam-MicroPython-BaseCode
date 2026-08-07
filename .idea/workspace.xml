@@ -4,43 +4,28 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="import 优化">
-      <change afterPath="$PROJECT_DIR$/ble.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/camera_driver/analysis.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/camera_driver/capture.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/camera_driver/controller.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/camera_driver/resolutions.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/camera_driver/singleton.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config/debug.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config/defaults.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config/flash_config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config/retry_config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/decision/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/decision/engine.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/decision/flash.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/decision/retry.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/brightness.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/device_info.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/file_io.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/image_encoders.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/image_info.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/test_images.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/wifi.py" afterDir="false" />
+    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="结构优化">
+      <change afterPath="$PROJECT_DIR$/complete_test_entry.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_analyzer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_controller.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_resolutions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/device_info.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ble.py" beforeDir="false" afterPath="$PROJECT_DIR$/ble.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_driver/analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_driver/capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/capture.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_driver/controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/controller.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_driver/resolutions.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/resolutions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/camera_driver/singleton.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/singleton.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/debug.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/debug.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/decision/engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/decision/flash.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/flash.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/decision/retry.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/retry.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/flash.py" beforeDir="false" afterPath="$PROJECT_DIR$/flash.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flash_decision.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/photo_capturer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/retry_decision.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/analyzers.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/analyzers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/capturer.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/capturer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/smart_flow.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/smart_flow.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sd_card.py" beforeDir="false" afterPath="$PROJECT_DIR$/sd_card.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/device_info.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/device_info.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/wifi.py" beforeDir="false" afterPath="$PROJECT_DIR$/wifi.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,53 +65,53 @@
       <entry key="S30" value="1.0" />
       <entry key="S60" value="1.0" />
       <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0000000000000389" />
-      <entry key="M10" value="1.0000003490949796" />
-      <entry key="M15" value="1.000076119847821" />
-      <entry key="M30" value="1.0188661668143124" />
-      <entry key="H1" value="1.3459746867322993" />
-      <entry key="H2" value="2.8392521755760853" />
-      <entry key="H4" value="6.502992357065042" />
-      <entry key="D1" value="24.82127759156786" />
-      <entry key="W1" value="34.841773736541576" />
+      <entry key="M5" value="1.0000002739431757" />
+      <entry key="M10" value="1.0005233958116282" />
+      <entry key="M15" value="1.0064946162570776" />
+      <entry key="M30" value="1.0805891922054014" />
+      <entry key="H1" value="1.2840169788044078" />
+      <entry key="H2" value="1.561203156550215" />
+      <entry key="H4" value="2.3802868669133015" />
+      <entry key="D1" value="18.859650845109044" />
+      <entry key="W1" value="34.97563940249741" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="1.5212171342887423E-275" />
-      <entry key="S10" value="3.900278367358851E-138" />
-      <entry key="S30" value="1.574098365926796E-46" />
-      <entry key="S60" value="1.254630768762984E-23" />
-      <entry key="M2" value="3.5420767478457946E-12" />
-      <entry key="M5" value="2.6284709819093566E-5" />
-      <entry key="M10" value="0.005126861595468866" />
-      <entry key="M15" value="0.029732703197996348" />
-      <entry key="M30" value="0.17243182032330204" />
-      <entry key="H1" value="0.41554154379917296" />
-      <entry key="H2" value="0.6623028685794496" />
-      <entry key="H4" value="0.981787214410928" />
-      <entry key="D1" value="3.1800152651428193" />
-      <entry key="W1" value="4.665417822900712" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="1.2789166901118481E-263" />
+      <entry key="M2" value="3.576194471937801E-132" />
+      <entry key="M5" value="2.6385689715062795E-53" />
+      <entry key="M10" value="5.136700274988096E-27" />
+      <entry key="M15" value="2.9770729977674025E-18" />
+      <entry key="M30" value="1.725420513305837E-9" />
+      <entry key="H1" value="4.1567434482345186E-5" />
+      <entry key="H2" value="0.006624086912998504" />
+      <entry key="H4" value="0.098186564623498" />
+      <entry key="D1" value="2.1665480247068865" />
+      <entry key="W1" value="4.416536727533264" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9138314502294005" />
-      <entry key="MS500" value="0.9821395952633915" />
-      <entry key="S2" value="0.995504677670617" />
-      <entry key="S5" value="0.9981994402866303" />
-      <entry key="S10" value="0.9990993145261537" />
-      <entry key="S30" value="0.9996996813264409" />
-      <entry key="S60" value="0.999849829387614" />
-      <entry key="M2" value="0.9999249118782201" />
-      <entry key="M5" value="0.9999962016984176" />
-      <entry key="M10" value="1.0051075985640887" />
-      <entry key="M15" value="1.0297810326623282" />
-      <entry key="M30" value="1.1912364492687635" />
-      <entry key="H1" value="1.7613829131521905" />
-      <entry key="H2" value="3.5012978802948616" />
-      <entry key="H4" value="7.484425484366542" />
-      <entry key="D1" value="28.001081102494467" />
-      <entry key="W1" value="39.50715100557711" />
+      <entry key="MS100" value="4.8337308329664984E-12" />
+      <entry key="MS500" value="0.005455775517450774" />
+      <entry key="S2" value="0.27177789035055416" />
+      <entry key="S5" value="0.5938621541060636" />
+      <entry key="S10" value="0.7706245221286846" />
+      <entry key="S30" value="0.9168133773991453" />
+      <entry key="S60" value="0.9575037218722157" />
+      <entry key="M2" value="0.9785211913250605" />
+      <entry key="M5" value="0.9913527465912978" />
+      <entry key="M10" value="0.9961902391988839" />
+      <entry key="M15" value="1.0036037181186" />
+      <entry key="M30" value="1.0791424704562955" />
+      <entry key="H1" value="1.283334596302491" />
+      <entry key="H2" value="1.5674624459464068" />
+      <entry key="H4" value="2.4782568149857505" />
+      <entry key="D1" value="21.026024384266115" />
+      <entry key="W1" value="39.392133422356366" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -152,7 +137,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "D:/Documents/ESP/ESP32-CAM/esp32cam-MicroPython-BaseCode/old",
+    "last_opened_file_path": "D:/Documents/ESP/ESP32-CAM/esp32cam-MicroPython-BaseCode",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.jshint": "true",
     "node.js.detected.package.tslint": "true",
@@ -170,8 +155,8 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\old" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode" />
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\old" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\photo" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -355,7 +340,23 @@
       <option name="project" value="LOCAL" />
       <updated>1786065440603</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="结构优化">
+      <option name="closed" value="true" />
+      <created>1786120573116</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1786120573116</updated>
+    </task>
+    <task id="LOCAL-00015" summary="结构优化">
+      <option name="closed" value="true" />
+      <created>1786120590694</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1786120590694</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -377,6 +378,7 @@
     <MESSAGE value="闪光灯测试" />
     <MESSAGE value="闪光灯策略" />
     <MESSAGE value="import 优化" />
-    <option name="LAST_COMMIT_MESSAGE" value="import 优化" />
+    <MESSAGE value="结构优化" />
+    <option name="LAST_COMMIT_MESSAGE" value="结构优化" />
   </component>
 </project>

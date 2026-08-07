@@ -1,15 +1,15 @@
 # decision/flash.py
 """闪光灯决策"""
 import json
-from config import DEBUG
 from .engine import evaluate_condition
+from config import debug_log
+
+
+def _debug_log(msg):
+    debug_log(msg, module="FlashDecision")
 
 DEFAULT_GUIDE_PATH = "/sd/flash_guide.json"
 _cached_guide = None
-
-def _debug_log(msg):
-    if DEBUG:
-        print("[FlashDecision] " + msg)
 
 def _get_conservative_default():
     return {

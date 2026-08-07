@@ -5,13 +5,13 @@ import camera  # type: ignore
 from camera_driver import get_camera, capture_image
 from flash import get_flash
 from sd_card import get_sd_card
-from config import DEBUG
 from .analyzers import capture_analysis
 from .smart_flow import smart_capture_flow
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[PhotoCapturer] " + msg)
+    debug_log(msg, module="PhotoCapturer")
 
 class PhotoCapturer:
     def __init__(self, flash_pin=4, flash_on_value=1,

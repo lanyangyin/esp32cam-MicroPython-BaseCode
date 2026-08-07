@@ -17,11 +17,12 @@ wifi.py - WiFi 网络管理模块（单例模式）
 """
 import time
 import network
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[WiFi] " + msg)
+    debug_log(msg, module="WiFi")
+
 
 # ---------- 单例管理 ----------
 _wifi_instance = None

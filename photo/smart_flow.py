@@ -8,11 +8,11 @@ from flash import get_flash
 from sd_card import get_sd_card
 from decision import should_use_flash, should_retry
 from utils.brightness import analyze_brightness, quick_brightness_estimate
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[SmartFlow] " + msg)
+    debug_log(msg, module="SmartFlow")
 
 def smart_capture_flow(capturer, filename=None, quality=10,
                        pre_flash_delay=200, retry_analysis_limit=6,

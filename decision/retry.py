@@ -2,13 +2,13 @@
 """重拍决策（重新获取亮度信息）"""
 from config import get_retry_guide_config
 from .engine import evaluate_condition
-from config import DEBUG
+from config import debug_log
 
-_cached_guide = None
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[RetryDecision] " + msg)
+    debug_log(msg, module="RetryDecision")
+
+_cached_guide = None
 
 def load_retry_guide():
     global _cached_guide

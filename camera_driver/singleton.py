@@ -3,11 +3,11 @@
 import time
 import camera  # type: ignore
 from .controller import CameraController
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[CameraCtrl] " + msg)
+    debug_log(msg, module="CameraCtrl")
 
 _camera_instance = None
 

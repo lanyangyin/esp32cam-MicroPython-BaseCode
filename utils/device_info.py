@@ -5,11 +5,11 @@ import gc
 import machine
 import os
 import sys
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[DeviceInfo] " + msg)
+    debug_log(msg, module="DeviceInfo")
 
 def get_sd_info(mount_point="/sd"):
     try:

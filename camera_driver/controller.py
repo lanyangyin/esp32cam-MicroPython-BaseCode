@@ -2,11 +2,12 @@
 """CameraController 类"""
 import time
 import camera  # type: ignore
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[CameraCtrl] " + msg)
+    debug_log(msg, module="CameraCtrl")
+
 
 class CameraController:
     def __init__(self):

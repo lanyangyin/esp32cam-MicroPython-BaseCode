@@ -15,11 +15,12 @@ ble.py - 蓝牙低功耗（BLE）模块（单例模式）
 """
 import time
 import bluetooth
-from config import DEBUG
+from config import debug_log
+
 
 def _debug_log(msg):
-    if DEBUG:
-        print("[BLE] " + msg)
+    debug_log(msg, module="BLE")
+
 
 # ---------- 单例管理 ----------
 _ble_instance = None
