@@ -2,11 +2,12 @@
 """CameraController 类"""
 import time
 import camera  # type: ignore
-from config import debug_log
+from config import debug_log, LEVEL_INFO, LEVEL_WARNING
+from .resolutions import get_resolution as _get_resolution, get_name_by_value as _get_name
 
 
-def _debug_log(msg):
-    debug_log(msg, module="CameraCtrl")
+def _debug_log(msg, level=LEVEL_INFO):
+    debug_log(msg, level=level, module="CameraCtrl")
 
 
 class CameraController:
@@ -20,6 +21,11 @@ class CameraController:
              whitebalance=camera.WB_CLOUDY, effect=camera.EFFECT_NONE):
         max_retries = 3
         retry_delay = 200
+
+        # 记录请求的分辨率名称
+        req_name = _get_name(framesize) or str(framesize)
+        _debug_log("Requested framesize: {} ({})".format(req_name, framesize))
+
         for attempt in range(max_retries):
             if self.initialized:
                 _debug_log("init: deinit existing (attempt {})".format(attempt + 1))
@@ -33,7 +39,7 @@ class CameraController:
                             framesize=framesize,
                             xclk_freq=xclk_freq)
             except Exception as e:
-                _debug_log("camera.init failed: {}".format(e))
+                _debug_log("camera.init failed: {}".format(e), level=LEVEL_WARNING)
                 try:
                     camera.deinit()
                 except:
@@ -45,6 +51,7 @@ class CameraController:
                     raise
             else:
                 break
+
         _debug_log("Applying image settings...")
         camera.flip(flip)
         camera.mirror(mirror)
@@ -54,10 +61,24 @@ class CameraController:
         camera.whitebalance(whitebalance)
         camera.speffect(effect)
         camera.quality(quality)
-        self.initialized = True
+
+        # 保存请求的帧大小（实际可能因内存限制被降级，但我们无法可靠获取，保留请求值）
         self.framesize = framesize
+        self.initialized = True
         self.quality = quality
-        _debug_log("Camera initialized with framesize={}, quality={}".format(framesize, quality))
+
+        # 尝试获取实际帧大小（仅用于记录，若失败则忽略）
+        try:
+            # 某些固件允许不带参数获取当前值，有些需要传0
+            actual = camera.framesize()
+            if actual != framesize:
+                _debug_log("Note: camera driver may have adjusted framesize to {}".format(actual))
+        except Exception as e:
+            # 忽略错误，不影响功能
+            _debug_log("Could not query actual framesize: {}".format(e), level=LEVEL_WARNING)
+
+        _debug_log("Camera initialized with requested framesize={} ({}), quality={}".format(
+            self.framesize, _get_name(self.framesize) or "unknown", quality))
 
     def capture(self):
         if not self.initialized:
@@ -82,12 +103,4 @@ class CameraController:
 
     @staticmethod
     def get_resolution(framesize):
-        res_map = {
-            camera.FRAME_QQVGA: (160, 120),
-            camera.FRAME_QVGA: (320, 240),
-            camera.FRAME_VGA: (640, 480),
-            camera.FRAME_XGA: (1024, 768),
-            camera.FRAME_SVGA: (800, 600),
-            camera.FRAME_UXGA: (1600, 1200),
-        }
-        return res_map.get(framesize, (640, 480))
+        return _get_resolution(framesize)
