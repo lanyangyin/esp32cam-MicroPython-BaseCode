@@ -5,27 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="结构优化">
-      <change afterPath="$PROJECT_DIR$/complete_test_entry.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ble.py" beforeDir="false" afterPath="$PROJECT_DIR$/ble.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_driver/analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/analysis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_driver/capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/capture.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_driver/controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/controller.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_driver/resolutions.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/resolutions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_driver/singleton.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/singleton.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/complete_test_entry.py" beforeDir="false" afterPath="$PROJECT_DIR$/complete_test_entry.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/debug.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/debug.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/decision/engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/decision/flash.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/flash.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/decision/retry.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/retry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flash.py" beforeDir="false" afterPath="$PROJECT_DIR$/flash.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/photo/analyzers.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/analyzers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/photo/capturer.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/capturer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/photo/smart_flow.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/smart_flow.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sd_card.py" beforeDir="false" afterPath="$PROJECT_DIR$/sd_card.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/device_info.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/device_info.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wifi.py" beforeDir="false" afterPath="$PROJECT_DIR$/wifi.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -356,7 +341,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786120590694</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="结构优化">
+      <option name="closed" value="true" />
+      <created>1786129529689</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1786129529689</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

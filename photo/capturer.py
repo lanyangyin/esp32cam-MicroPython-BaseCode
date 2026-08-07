@@ -7,7 +7,7 @@ from flash import get_flash
 from sd_card import get_sd_card
 from .analyzers import capture_analysis
 from .smart_flow import smart_capture_flow
-from config import debug_log
+from config import debug_log, LEVEL_INFO, LEVEL_WARNING
 
 
 def _debug_log(msg):
@@ -94,15 +94,19 @@ class PhotoCapturer:
         """委托给 analyzers 模块"""
         return capture_analysis(self.camera_params, framesize, flash_off)
 
+    # 在文件开头导入 LEVEL_INFO
+    from config import debug_log, LEVEL_INFO
+
+    # 在 take_photo_with_analysis 方法中：
     def take_photo_with_analysis(self, filename=None, pre_flash_delay=200,
                                  post_flash_delay=0, auto_deinit=True):
         _debug_log("take_photo_with_analysis")
-        print("Analyzing scene...")
+        debug_log("Analyzing scene...", level=LEVEL_INFO, module="PhotoCapturer")
         analysis = self.capture_analysis(flash_off=True)
         if analysis:
-            print("Analysis result:", analysis)
+            debug_log("Analysis result: {}".format(analysis), level=LEVEL_INFO, module="PhotoCapturer")
         else:
-            print("Analysis skipped or failed")
+            debug_log("Analysis skipped or failed", level=LEVEL_WARNING, module="PhotoCapturer")
         path = self.take_photo(
             filename=filename,
             pre_flash_delay=pre_flash_delay,
