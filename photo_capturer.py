@@ -9,7 +9,8 @@ photo_capturer.py - 高级拍照流程模块
     1. 一键拍照：take_photo() - 开灯 -> 等待 -> 捕获 -> 关灯 -> 保存
     2. 分析+拍照：take_photo_with_analysis() - 先分析环境光，再拍照
     3. 环境光分析：capture_analysis() - 捕获灰度图并分析亮度
-    4. 资源管理：cleanup() - 释放摄像头和闪光灯
+    4. 智能拍照：smart_capture() - 自动重试、闪光灯决策、质量评估
+    5. 资源管理：cleanup() - 释放摄像头和闪光灯
 
 设计特点：
     - 使用全局单例（flash、sd_card、camera），避免重复创建资源
@@ -22,6 +23,9 @@ photo_capturer.py - 高级拍照流程模块
     - sd_card: SD 卡单例
     - camera_controller: 摄像头单例
     - config: 调试开关
+    - utils: 提供亮度分析函数
+    - retry_decision: 重拍决策
+    - flash_decision: 闪光灯决策
 
 典型用法：
     capturer = PhotoCapturer(
@@ -29,20 +33,26 @@ photo_capturer.py - 高级拍照流程模块
         flash_on_value=1,
         camera_params={"framesize": camera.FRAME_XGA, "quality": 10}
     )
-    saved_path = capturer.take_photo()
+    saved_path = capturer.smart_capture()
     capturer.cleanup()
 """
-# photo_capturer.py
 import time
+
 import camera  # type: ignore
-from flash import get_flash
-from sd_card import get_sd_card
-from camera_controller import get_camera, CameraController
+
+from camera_controller import get_camera, CameraController, capture_grayscale, capture_image
 from config import DEBUG
+from flash import get_flash
+from flash_decision import should_use_flash
+from retry_decision import should_retry
+from sd_card import get_sd_card
+from utils import analyze_brightness, quick_brightness_estimate
+
 
 def _debug_log(msg):
     if DEBUG:
         print("[PhotoCapturer] " + msg)
+
 
 class PhotoCapturer:
     """
@@ -256,6 +266,258 @@ class PhotoCapturer:
         )
         return path, analysis
 
+    # ---------- 新增：智能拍照 ----------
+    def smart_capture(self, filename=None, quality=10,
+                      pre_flash_delay=200, retry_analysis_limit=6,
+                      retry_capture_limit=5, brightness_threshold=2.5,
+                      auto_deinit=True):
+        """
+        智能拍照：自动进行亮度分析、重试、闪光灯决策，确保获得合格照片。
+
+        流程：
+            1. 预分析阶段（最多 retry_analysis_limit 次）：
+               - 捕获灰度图，获取完整亮度信息（avg, dynamic, center）
+               - 调用 retry_decision 判断是否需要重新获取亮度信息
+               - 若不需要，则跳出循环；否则继续
+               - 若循环结束，使用最后一次的亮度信息
+
+            2. 闪光灯决策：根据最终亮度信息决定是否开启闪光灯
+
+            3. 拍照阶段（最多 retry_capture_limit 次）：
+               - 若需要闪光灯则开启，否则保持关闭
+               - 捕获灰度图（反映当前光照条件），快速估计亮度
+               - 若亮度 > brightness_threshold，则拍摄 JPEG 并保存，退出循环
+               - 若亮度 <= threshold，则继续循环
+               - 若循环结束，则最后拍摄一张 JPEG 保存（即使亮度低）
+
+        参数：
+            filename (str): 保存的文件名，若为 None 则自动生成。
+            quality (int): JPEG 质量（10~63），默认 10。
+            pre_flash_delay (int): 开灯后等待曝光稳定的时间（毫秒），默认 200。
+            retry_analysis_limit (int): 预分析阶段最大重试次数，默认 6。
+            retry_capture_limit (int): 拍照阶段最大重试次数，默认 5。
+            brightness_threshold (float): 亮度阈值，默认 2.5。
+            auto_deinit (bool): 完成后是否自动释放摄像头，默认 True。
+
+        返回：
+            str: 保存的文件路径，若失败返回 None。
+        """
+        # 1. 初始化闪光灯和 SD 卡（放在最前面，确保后续可用）
+        _debug_log("smart_capture called, filename={}".format(filename))
+        print("\n[智能拍照] 启动...")
+
+        flash = get_flash(pin=self.flash_pin, on_value=self.flash_on_value)
+        sd = get_sd_card(mount_point=self.sd_mount_point)
+
+        # 2. 预分析阶段（关闭闪光灯进行）
+        _debug_log("=== 预分析阶段（最多 {} 次）===".format(retry_analysis_limit))
+        final_brightness = None
+
+        for attempt in range(1, retry_analysis_limit + 1):
+            _debug_log("预分析尝试 {}/{}".format(attempt, retry_analysis_limit))
+            print("  预分析 {}/{}...".format(attempt, retry_analysis_limit))
+
+            # 关闭闪光灯
+            flash.off()
+
+            # 捕获灰度图
+            gray_buf = capture_grayscale(
+                framesize=self.camera_params.get("framesize", camera.FRAME_XGA),
+                whitebalance=camera.WB_CLOUDY
+            )
+            if gray_buf is None:
+                _debug_log("灰度捕获失败，重试")
+                continue
+
+            # 获取分辨率
+            framesize = self.camera_params.get("framesize", camera.FRAME_XGA)
+            w, h = CameraController.get_resolution(framesize)
+            if w is None or h is None:
+                import math
+                total = len(gray_buf)
+                w = int(math.sqrt(total * 4 / 3))
+                h = total // w
+                if w * h != total:
+                    w, h = 640, 480
+
+            # 完整亮度分析
+            brightness_info = analyze_brightness(gray_buf, w, h, step=2)
+            if brightness_info is None:
+                _debug_log("亮度分析失败，重试")
+                continue
+
+            _debug_log("亮度信息: avg={:.1f}, dynamic={}, center={:.1f}".format(
+                brightness_info['average_brightness'],
+                brightness_info['dynamic_range'],
+                brightness_info['center_brightness']
+            ))
+
+            # 判断是否需要重新获取亮度信息
+            if should_retry(brightness_info):
+                _debug_log("触发重拍（亮度信息异常），继续预分析")
+                if attempt == retry_analysis_limit:
+                    print("  预分析达到最大次数，使用最后一次亮度信息")
+                    final_brightness = brightness_info
+                continue
+            else:
+                _debug_log("亮度信息正常，预分析完成")
+                final_brightness = brightness_info
+                break
+
+        # 如果循环结束仍未得到有效亮度，使用保守默认
+        if final_brightness is None:
+            _debug_log("预分析全部失败，使用保守默认亮度（avg=0）")
+            final_brightness = {"average_brightness": 0, "dynamic_range": 0, "center_brightness": 0}
+
+        # 3. 闪光灯决策
+        need_flash = should_use_flash(final_brightness)
+        _debug_log("闪光灯决策: {}".format("需要" if need_flash else "不需要"))
+        print("  闪光灯: {}".format("✅ 开启" if need_flash else "❌ 关闭"))
+
+        # 4. 拍照阶段
+        _debug_log("=== 拍照阶段（最多 {} 次）===".format(retry_capture_limit))
+        jpeg_data = None
+        final_path = None
+
+        for attempt in range(1, retry_capture_limit + 1):
+            _debug_log("拍照尝试 {}/{}".format(attempt, retry_capture_limit))
+            print("  拍照 {}/{}...".format(attempt, retry_capture_limit))
+
+            # 控制闪光灯
+            if need_flash:
+                flash.on()
+                time.sleep_ms(pre_flash_delay)
+                _debug_log("闪光灯已开启")
+            else:
+                flash.off()
+                _debug_log("闪光灯已关闭")
+
+            # 捕获灰度图（用于亮度评估）
+            gray_buf = capture_grayscale(
+                framesize=self.camera_params.get("framesize", camera.FRAME_XGA),
+                whitebalance=camera.WB_CLOUDY
+            )
+            if gray_buf is None:
+                _debug_log("灰度捕获失败，重试")
+                continue
+
+            # 获取尺寸
+            w, h = CameraController.get_resolution(self.camera_params.get("framesize", camera.FRAME_XGA))
+            if w is None or h is None:
+                import math
+                total = len(gray_buf)
+                w = int(math.sqrt(total * 4 / 3))
+                h = total // w
+                if w * h != total:
+                    w, h = 640, 480
+
+            # 快速亮度估计
+            est_avg = quick_brightness_estimate(gray_buf, w, h)
+            if est_avg is None:
+                _debug_log("快速估计失败，重试")
+                continue
+
+            _debug_log("快速估计亮度: {:.1f}".format(est_avg))
+            print("    亮度估计: {:.1f} (阈值 {:.1f})".format(est_avg, brightness_threshold))
+
+            # 判断亮度是否合格
+            if est_avg > brightness_threshold:
+                _debug_log("亮度合格，拍摄 JPEG")
+                print("    ✅ 亮度合格，正在保存照片...")
+
+                # 拍摄 JPEG（保持当前闪光灯状态）
+                if need_flash:
+                    flash.on()
+                    time.sleep_ms(pre_flash_delay)
+                else:
+                    flash.off()
+
+                jpeg_data = capture_image(
+                    framesize=self.camera_params.get("framesize", camera.FRAME_XGA),
+                    quality=quality,
+                    format=camera.JPEG,
+                    flip=self.camera_params.get("flip", 1),
+                    mirror=self.camera_params.get("mirror", 0),
+                    whitebalance=camera.WB_CLOUDY
+                )
+                flash.off()  # 拍摄后关闭
+
+                if jpeg_data is None:
+                    _debug_log("JPEG 捕获失败，重试")
+                    continue
+
+                # 保存文件
+                if filename is None:
+                    import time
+                    filename = "smart_photo_{}.jpg".format(time.time())
+                if not filename.startswith(self.sd_mount_point):
+                    filename = self.sd_mount_point + "/" + filename.lstrip("/")
+
+                try:
+                    with open(filename, "wb") as f:
+                        f.write(jpeg_data)
+                    final_path = filename
+                    _debug_log("照片已保存: {} ({} bytes)".format(filename, len(jpeg_data)))
+                    print("  ✅ 照片已保存: {} ({} bytes)".format(filename, len(jpeg_data)))
+                    break
+                except Exception as e:
+                    _debug_log("保存失败: {}".format(e))
+                    print("  ❌ 保存失败: {}".format(e))
+                    final_path = None
+                    break
+            else:
+                _debug_log("亮度偏低，继续重试")
+                print("    ❌ 亮度偏低，继续重试...")
+                flash.off()
+
+        # 如果循环结束仍未保存成功，强制保存一张
+        if final_path is None:
+            _debug_log("拍照阶段结束，未保存任何照片，尝试最后一次保存")
+            print("  ⚠️ 所有尝试均未合格，保存最后一次 JPEG...")
+
+            if need_flash:
+                flash.on()
+                time.sleep_ms(pre_flash_delay)
+            else:
+                flash.off()
+
+            jpeg_data = capture_image(
+                framesize=self.camera_params.get("framesize", camera.FRAME_XGA),
+                quality=quality,
+                format=camera.JPEG,
+                flip=self.camera_params.get("flip", 1),
+                mirror=self.camera_params.get("mirror", 0),
+                whitebalance=camera.WB_CLOUDY
+            )
+            flash.off()
+
+            if jpeg_data is not None:
+                if filename is None:
+                    import time
+                    filename = "smart_photo_fallback_{}.jpg".format(time.time())
+                if not filename.startswith(self.sd_mount_point):
+                    filename = self.sd_mount_point + "/" + filename.lstrip("/")
+                try:
+                    with open(filename, "wb") as f:
+                        f.write(jpeg_data)
+                    final_path = filename
+                    _debug_log("备用照片已保存: {} ({} bytes)".format(filename, len(jpeg_data)))
+                    print("  ✅ 备用照片已保存: {} ({} bytes)".format(filename, len(jpeg_data)))
+                except Exception as e:
+                    _debug_log("备用保存失败: {}".format(e))
+                    print("  ❌ 备用保存失败: {}".format(e))
+
+        # 释放摄像头
+        if auto_deinit:
+            cam = get_camera()
+            if cam.initialized:
+                cam.deinit()
+                _debug_log("摄像头已释放")
+
+        print("[智能拍照] 完成")
+        return final_path
+
+
 # ---------- 独立测试入口 ----------
 if __name__ == "__main__":
     from camera_controller import reset_camera
@@ -284,41 +546,18 @@ if __name__ == "__main__":
         }
     )
 
-    # 测试仅拍照（使用临时文件名）
-    test_filename = "test_photo_{}.jpg".format(time.time())
-    print("测试拍照保存为: {}".format(test_filename))
-    saved = capturer.take_photo(filename=test_filename, pre_flash_delay=100, auto_deinit=True)
-    if saved:
-        print("✅ 拍照成功:", saved)
-        try:
-            import uos
-            uos.remove(saved)
-            print("测试文件已删除")
-        except Exception as e:
-            print("删除测试文件失败:", e)
-    else:
-        print("❌ 拍照失败")
-
-    # 测试分析+拍照
-    print("\n测试分析+拍照...")
-    test_filename2 = "test_analysis_{}.jpg".format(time.time())
-    path2, analysis = capturer.take_photo_with_analysis(
-        filename=test_filename2,
-        pre_flash_delay=100,
-        auto_deinit=True
+    # 测试智能拍照
+    print("\n--- 测试智能拍照 (smart_capture) ---")
+    saved_path = capturer.smart_capture(
+        quality=15,
+        retry_analysis_limit=6,
+        retry_capture_limit=5,
+        brightness_threshold=2.5
     )
-    if path2:
-        print("✅ 分析+拍照成功:", path2)
-        try:
-            import uos
-            uos.remove(path2)
-            print("测试文件已删除")
-        except:
-            pass
-        if analysis:
-            print("分析结果:", analysis)
+    if saved_path:
+        print("✅ 智能拍照成功:", saved_path)
     else:
-        print("❌ 分析+拍照失败")
+        print("❌ 智能拍照失败")
 
     capturer.cleanup()
     elapsed = time.ticks_diff(time.ticks_ms(), start)
