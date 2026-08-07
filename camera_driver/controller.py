@@ -69,8 +69,7 @@ class CameraController:
 
         # 尝试获取实际帧大小（仅用于记录，若失败则忽略）
         try:
-            # 某些固件允许不带参数获取当前值，有些需要传0
-            actual = camera.framesize()
+            actual = camera.framesize(0)
             if actual != framesize:
                 _debug_log("Note: camera driver may have adjusted framesize to {}".format(actual))
         except Exception as e:
@@ -81,14 +80,16 @@ class CameraController:
             self.framesize, _get_name(self.framesize) or "unknown", quality))
 
     def capture(self):
+        """捕获一帧，失败时立即返回 None（无重试）"""
         if not self.initialized:
             raise RuntimeError("Camera not initialized")
+
         _debug_log("capture: calling camera.capture()")
         buf = camera.capture()
-        if buf is None:
+        if buf is None or buf is False:
             _debug_log("capture: failed")
-        else:
-            _debug_log("capture: success, size={}".format(len(buf)))
+            return None
+        _debug_log("capture: success, size={}".format(len(buf)))
         return buf
 
     def deinit(self):
