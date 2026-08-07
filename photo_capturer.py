@@ -448,7 +448,6 @@ class PhotoCapturer:
 
                 # 保存文件
                 if filename is None:
-                    import time
                     filename = "smart_photo_{}.jpg".format(time.time())
                 if not filename.startswith(self.sd_mount_point):
                     filename = self.sd_mount_point + "/" + filename.lstrip("/")
@@ -493,7 +492,6 @@ class PhotoCapturer:
 
             if jpeg_data is not None:
                 if filename is None:
-                    import time
                     filename = "smart_photo_fallback_{}.jpg".format(time.time())
                 if not filename.startswith(self.sd_mount_point):
                     filename = self.sd_mount_point + "/" + filename.lstrip("/")
