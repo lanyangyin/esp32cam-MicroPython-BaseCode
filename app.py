@@ -12,7 +12,7 @@ from sd_card import get_sd_card
 set_debug(True)
 
 # 固定拍照分辨率（可在此修改）
-FRAMESIZE = camera.FRAME_QSXGA  # 2560x1920
+FRAMESIZE = camera.FRAME_VGA  # 2560x1920
 
 def main():
     debug_log("📷 ESP32-CAM 拍照程序启动", level=LEVEL_INFO, module="app")
