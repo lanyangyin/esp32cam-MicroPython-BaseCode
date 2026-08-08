@@ -1,10 +1,15 @@
 # photo/__init__.py
-from .capturer import PhotoCapturer
-from .photo_taker import smart_capture_with_analysis
-from .simple_capture import simple_capture_with_downgrade
+"""
+Photo 模块：提供各种拍照功能。
+"""
+from .photo_capturer import PhotoCapturer
+from .smart_photo_taker import take_smart_photo
+from .downgrade_capture import take_photo_with_downgrade
+from .manual_photo_taker import take_photo_manual
 
 __all__ = [
     "PhotoCapturer",
-    "smart_capture_with_analysis",
-    "simple_capture_with_downgrade",
+    "take_smart_photo",
+    "take_photo_with_downgrade",
+    "take_photo_manual",
 ]

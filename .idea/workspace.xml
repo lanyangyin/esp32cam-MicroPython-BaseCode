@@ -5,12 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="视频模块帧率检测">
+      <change afterPath="$PROJECT_DIR$/photo/manual_photo_taker.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video/recorder.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video/recorder_fast.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_fast.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video/recorder_frames.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_frames.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video/recorder_time.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_time.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video/recorder_timestamp.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_timestamp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/capturer.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/photo_capturer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/photo_taker.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/smart_photo_taker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/session.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/resource_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/simple_capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/downgrade_capture.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/smart_flow.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/smart_capture_flow.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -509,7 +511,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786218617150</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="视频模块帧率检测">
+      <option name="closed" value="true" />
+      <created>1786219549295</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1786219549295</updated>
+    </task>
+    <option name="localTasksCounter" value="38" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

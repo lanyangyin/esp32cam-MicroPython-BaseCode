@@ -1,5 +1,7 @@
-# photo/smart_flow.py
-"""智能拍照流程（原 PhotoCapturer.smart_capture 的主体）"""
+# photo/smart_capture_flow.py
+"""
+智能拍照流程（被 PhotoCapturer.smart_capture 调用）。
+"""
 import math
 import time
 import camera  # type: ignore
@@ -12,14 +14,30 @@ from config import debug_log
 
 
 def _debug_log(msg):
-    debug_log(msg, module="SmartFlow")
+    debug_log(msg, module="SmartCaptureFlow")
 
-def smart_capture_flow(capturer, filename=None, quality=10,
-                       pre_flash_delay=200, retry_analysis_limit=6,
-                       retry_capture_limit=5, brightness_threshold=2.5,
-                       auto_deinit=True):
-    """执行智能拍照流程"""
-    _debug_log("smart_capture called, filename={}".format(filename))
+
+def run_smart_capture_flow(capturer, filename=None, quality=10,
+                           pre_flash_delay=200, retry_analysis_limit=6,
+                           retry_capture_limit=5, brightness_threshold=2.5,
+                           auto_deinit=True):
+    """
+    执行智能拍照流程（分析 + 自动闪光灯决策 + 拍照校验）。
+
+    Args:
+        capturer (PhotoCapturer): PhotoCapturer 实例，提供硬件配置。
+        filename (str, optional): 保存文件名。
+        quality (int): JPEG 质量。
+        pre_flash_delay (int): 闪光灯预闪延时。
+        retry_analysis_limit (int): 分析阶段最大重试次数。
+        retry_capture_limit (int): 拍照阶段最大重试次数。
+        brightness_threshold (float): 亮度阈值。
+        auto_deinit (bool): 完成后是否释放摄像头。
+
+    Returns:
+        str or None: 保存的文件路径。
+    """
+    _debug_log("run_smart_capture_flow called, filename={}".format(filename))
     print("\n[智能拍照] 启动...")
 
     flash = get_flash(pin=capturer.flash_pin, on_value=capturer.flash_on_value)
@@ -213,3 +231,12 @@ def smart_capture_flow(capturer, filename=None, quality=10,
 
     print("[智能拍照] 完成")
     return final_path
+
+
+# ---------- 测试入口 ----------
+if __name__ == "__main__":
+    from config import set_debug
+    set_debug(True)
+    print("智能拍照流程测试（需 PhotoCapturer 实例）")
+    # 这里无法直接测试，因为需要 capturer 对象
+    print("请从 PhotoCapturer.smart_capture 调用")

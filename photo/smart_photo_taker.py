@@ -1,4 +1,4 @@
-# photo/photo_taker.py
+# photo/smart_photo_taker.py
 """
 智能拍照流程：先分析亮度，决定是否开闪光灯，再拍照并校验是否黑照。
 """
@@ -17,7 +17,7 @@ from utils import get_image_dimensions
 from camera_driver import CameraController
 
 
-def smart_capture_with_analysis(
+def take_smart_photo(
     analysis_framesize=camera.FRAME_QVGA,
     photo_framesize=camera.FRAME_XGA,
     flash_pin=4,
@@ -28,12 +28,9 @@ def smart_capture_with_analysis(
     sd_mount_point="/sd"
 ):
     """
-    完整的智能拍照流程：
-    1. 分析阶段：最多 retry_analysis_limit 次捕获灰度图，快速估计亮度，若亮度信息异常则重试。
-    2. 闪光灯决策：根据最终亮度决定是否开闪光灯。
-    3. 拍照阶段：最多 retry_capture_limit 次捕获 JPEG，每次检查是否为黑照，如果是则重试；否则保存并返回路径。
+    完整的智能拍照流程（自动决定闪光灯）。
 
-    参数：
+    Args:
         analysis_framesize (int): 用于亮度分析的分辨率（默认 QVGA，速度快）。
         photo_framesize (int): 最终照片的分辨率。
         flash_pin (int): 闪光灯 GPIO 引脚。
@@ -43,23 +40,23 @@ def smart_capture_with_analysis(
         quality (int): JPEG 质量（10~63）。
         sd_mount_point (str): SD 卡挂载点。
 
-    返回：
+    Returns:
         tuple: (saved_path, actual_width, actual_height, brightness_info)
                若失败，saved_path 为 None。
     """
-    debug_log("智能拍照流程启动", level=LEVEL_INFO, module="PhotoTaker")
+    debug_log("智能拍照流程启动", level=LEVEL_INFO, module="SmartPhotoTaker")
 
     # ---------- 1. 分析阶段 ----------
     final_brightness = None
     for attempt in range(1, retry_analysis_limit + 1):
-        debug_log("分析阶段 尝试 {}/{}".format(attempt, retry_analysis_limit), level=LEVEL_INFO, module="PhotoTaker")
+        debug_log("分析阶段 尝试 {}/{}".format(attempt, retry_analysis_limit), level=LEVEL_INFO, module="SmartPhotoTaker")
         reset_camera()
         gc.collect()
         time.sleep_ms(200)
 
         gray_buf = capture_grayscale(framesize=analysis_framesize, whitebalance=camera.WB_CLOUDY)
         if gray_buf is None:
-            debug_log("灰度捕获失败", level=LEVEL_WARNING, module="PhotoTaker")
+            debug_log("灰度捕获失败", level=LEVEL_WARNING, module="SmartPhotoTaker")
             continue
 
         w, h = CameraController.get_resolution(analysis_framesize)
@@ -70,42 +67,39 @@ def smart_capture_with_analysis(
             if w * h != total:
                 w, h = 320, 240
 
-        # 完整分析以获取 avg, dynamic, center
         brightness_info = analyze_brightness(gray_buf, w, h, step=2)
         if brightness_info is None:
-            debug_log("亮度分析失败", level=LEVEL_WARNING, module="PhotoTaker")
+            debug_log("亮度分析失败", level=LEVEL_WARNING, module="SmartPhotoTaker")
             continue
 
-        # 新增：详细输出亮度信息
         debug_log("亮度信息: avg={:.1f}, dynamic={}, center={:.1f}".format(
             brightness_info['average_brightness'],
             brightness_info['dynamic_range'],
             brightness_info['center_brightness']
-        ), level=LEVEL_INFO, module="PhotoTaker")
+        ), level=LEVEL_INFO, module="SmartPhotoTaker")
 
         if should_retry(brightness_info):
-            # 新增：输出重试原因（从 retry_decision 获取）
-            retry_reason = get_retry_reason(brightness_info)  # 需要导入
+            retry_reason = get_retry_reason(brightness_info)
             debug_log("亮度信息异常，需要重试分析: {}".format(retry_reason), level=LEVEL_WARNING,
-                      module="PhotoTaker")
+                      module="SmartPhotoTaker")
             if attempt == retry_analysis_limit:
                 final_brightness = brightness_info
-                debug_log("达到最大分析重试次数，使用最后一次亮度信息", level=LEVEL_WARNING, module="PhotoTaker")
+                debug_log("达到最大分析重试次数，使用最后一次亮度信息", level=LEVEL_WARNING, module="SmartPhotoTaker")
                 break
             else:
                 continue
         else:
             final_brightness = brightness_info
-            debug_log("亮度信息正常，分析完成", level=LEVEL_INFO, module="PhotoTaker")
+            debug_log("亮度信息正常，分析完成", level=LEVEL_INFO, module="SmartPhotoTaker")
             break
 
     if final_brightness is None:
-        debug_log("分析阶段全部失败，使用保守默认亮度（avg=0）", level=LEVEL_ERROR, module="PhotoTaker")
+        debug_log("分析阶段全部失败，使用保守默认亮度（avg=0）", level=LEVEL_ERROR, module="SmartPhotoTaker")
         final_brightness = {"average_brightness": 0, "dynamic_range": 0, "center_brightness": 0}
 
     # ---------- 2. 闪光灯决策 ----------
     need_flash = should_use_flash(final_brightness)
-    debug_log("闪光灯决策: {}".format("需要" if need_flash else "不需要"), level=LEVEL_INFO, module="PhotoTaker")
+    debug_log("闪光灯决策: {}".format("需要" if need_flash else "不需要"), level=LEVEL_INFO, module="SmartPhotoTaker")
 
     # ---------- 3. 拍照阶段 ----------
     flash = get_flash(pin=flash_pin, on_value=flash_on_value)
@@ -116,7 +110,7 @@ def smart_capture_with_analysis(
         photo_w, photo_h = 0, 0
 
     for attempt in range(1, retry_capture_limit + 1):
-        debug_log("拍照阶段 尝试 {}/{}".format(attempt, retry_capture_limit), level=LEVEL_INFO, module="PhotoTaker")
+        debug_log("拍照阶段 尝试 {}/{}".format(attempt, retry_capture_limit), level=LEVEL_INFO, module="SmartPhotoTaker")
 
         if need_flash:
             flash.on()
@@ -135,15 +129,12 @@ def smart_capture_with_analysis(
         flash.off()
 
         if jpeg_data is None:
-            debug_log("JPEG 捕获失败", level=LEVEL_WARNING, module="PhotoTaker")
+            debug_log("JPEG 捕获失败", level=LEVEL_WARNING, module="SmartPhotoTaker")
             continue
 
         if is_black_photo(jpeg_data, photo_framesize):
-            debug_log("检测到黑照（尺寸过小），重试", level=LEVEL_WARNING, module="PhotoTaker")
+            debug_log("检测到黑照（尺寸过小），重试", level=LEVEL_WARNING, module="SmartPhotoTaker")
             continue
-
-        # 照片有效，保存
-        debug_log("照片大小正常，保存", level=LEVEL_INFO, module="PhotoTaker")
 
         # 照片有效，保存
         filename = "/sd/photo_{}.jpg".format(int(time.time()))
@@ -153,23 +144,26 @@ def smart_capture_with_analysis(
             if w_actual == 0 or h_actual == 0:
                 w_actual, h_actual = photo_w, photo_h
             debug_log("✅ 照片保存成功: {} ({}×{}, {} bytes)".format(
-                saved_path, w_actual, h_actual, len(jpeg_data)), level=LEVEL_INFO, module="PhotoTaker")
+                saved_path, w_actual, h_actual, len(jpeg_data)), level=LEVEL_INFO, module="SmartPhotoTaker")
             return saved_path, w_actual, h_actual, final_brightness
         else:
-            debug_log("照片保存失败", level=LEVEL_ERROR, module="PhotoTaker")
+            debug_log("照片保存失败", level=LEVEL_ERROR, module="SmartPhotoTaker")
             return None, 0, 0, final_brightness
 
-    debug_log("拍照阶段全部失败，无法保存照片", level=LEVEL_ERROR, module="PhotoTaker")
+    debug_log("拍照阶段全部失败，无法保存照片", level=LEVEL_ERROR, module="SmartPhotoTaker")
     return None, 0, 0, final_brightness
 
 
-
+# ---------- 测试入口 ----------
 if __name__ == "__main__":
-    saved_path, w, h, brightness = smart_capture_with_analysis(
+    from config import set_debug
+    set_debug(True)
+    print("智能拍照测试（需硬件）")
+    saved_path, w, h, brightness = take_smart_photo(
         analysis_framesize=camera.FRAME_QVGA,
         photo_framesize=camera.FRAME_XGA,
-        retry_analysis_limit=6,
-        retry_capture_limit=6
+        retry_analysis_limit=2,
+        retry_capture_limit=2
     )
     if saved_path:
         print("照片保存成功: {}, 尺寸: {}x{}, 亮度: {:.1f}".format(
