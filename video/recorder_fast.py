@@ -65,7 +65,7 @@ class FastRecorder:
                         format=camera.JPEG,
                         fb_location=camera.PSRAM,
                         framesize=self.framesize,
-                        xclk_freq=camera.XCLK_10MHz)
+                        xclk_freq=camera.XCLK_20MHz)
             camera.flip(1)
             camera.mirror(0)
             camera.saturation(0)
