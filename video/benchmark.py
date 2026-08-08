@@ -9,6 +9,7 @@ import gc
 import uos
 import camera
 from .fast_recorder import FastRecorder
+from camera_driver.resolutions import get_resolution
 
 # 要测试的分辨率（名称和常量）
 RESOLUTIONS = [
@@ -32,6 +33,7 @@ RESOLUTIONS = [
     ("FRAME_QXGA", camera.FRAME_QXGA),
 ]
 
+# 每个分辨率录制时长（秒）
 DEFAULT_DURATION = 5
 
 def run_benchmark(duration=DEFAULT_DURATION):
@@ -42,12 +44,10 @@ def run_benchmark(duration=DEFAULT_DURATION):
     返回：
         dict: {分辨率名称: (帧数, 耗时秒, 帧率)}
     """
-    # 按分辨率常量值排序（从低到高）
-    sorted_res = sorted(RESOLUTIONS, key=lambda x: x[1])
-
     print("\n开始帧率基准测试...")
     print("每个分辨率录制 {} 秒".format(duration))
 
+    # 创建临时目录存储测试文件
     test_dir = "/sd/benchmark"
     try:
         uos.mkdir(test_dir)
@@ -56,7 +56,7 @@ def run_benchmark(duration=DEFAULT_DURATION):
 
     results = {}
 
-    for name, framesize in sorted_res:
+    for name, framesize in RESOLUTIONS:
         print("\n测试 {}...".format(name))
         try:
             recorder = FastRecorder(
@@ -76,6 +76,7 @@ def run_benchmark(duration=DEFAULT_DURATION):
             print("  测试失败: {}".format(e))
             results[name] = (0, 0, 0)
 
+        # 回收内存
         gc.collect()
 
     # 清理测试文件
@@ -89,14 +90,24 @@ def run_benchmark(duration=DEFAULT_DURATION):
     except Exception as e:
         print("清理失败: {}".format(e))
 
+    # 按帧率排序（降序）
+    sorted_results = sorted(results.items(), key=lambda x: x[1][2], reverse=True)
+
     # 打印汇总表格
-    print("\n" + "="*60)
-    print("基准测试结果汇总")
-    print("="*60)
-    print("{:<15} {:>8} {:>10} {:>10}".format("分辨率", "帧数", "耗时(s)", "帧率(fps)"))
-    for name, (frames, elapsed, fps) in results.items():
-        print("{:<15} {:>8} {:>10.2f} {:>10.2f}".format(name, frames, elapsed, fps))
-    print("="*60)
+    print("\n" + "="*80)
+    print("基准测试结果汇总 (按帧率降序)")
+    print("="*80)
+    print("{:<20} {:>12} {:>8} {:>10} {:>12}".format("分辨率", "尺寸", "帧数", "耗时(s)", "帧率(fps)"))
+    for name, (frames, elapsed, fps) in sorted_results:
+        # 获取分辨率尺寸
+        framesize = getattr(camera, name)
+        w, h = get_resolution(framesize)
+        if w is None or h is None:
+            size_str = "未知"
+        else:
+            size_str = "{}×{}".format(w, h)
+        print("{:<20} {:>12} {:>8} {:>10.2f} {:>12.2f}".format(name, size_str, frames, elapsed, fps))
+    print("="*80)
 
     return results
 

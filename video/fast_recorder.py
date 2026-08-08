@@ -169,7 +169,7 @@ if __name__ == "__main__":
     import camera
 
     recorder = FastRecorder(
-        framesize=camera.FRAME_HVGA,
+        framesize=camera.FRAME_XGA,
         quality=10,
         use_flash=False,
         keep_camera_open=True
