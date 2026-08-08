@@ -12,6 +12,7 @@ from .recorder_fast import FastRecorder
 from .recorder_time import RecorderTime
 from .recorder_timestamp import RecorderTimestamp
 from .recorder import Recorder
+from .recorder_frames import RecorderFrames  # 导入按帧数录制器
 from camera_driver.resolutions import get_resolution
 
 # 要测试的分辨率（名称和常量）
@@ -36,49 +37,61 @@ RESOLUTIONS = [
     ("FRAME_QXGA", camera.FRAME_QXGA),
 ]
 
-# 每个分辨率录制时长（秒）
-DEFAULT_DURATION = 5
+# 每个分辨率录制时长（秒）或帧数
+DEFAULT_DURATION = 5          # 适用于时长类录制器
+DEFAULT_FRAMES = 200          # 适用于帧数类录制器（RecorderFrames）
 
-def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast', xclk_freq=camera.XCLK_10MHz):
+def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast',
+                  xclk_freq=camera.XCLK_10MHz, target_frames=DEFAULT_FRAMES):
     """
     执行帧率基准测试。
 
     参数：
-        duration (int): 每个分辨率的录制秒数
-        recorder_type (str): 录制器类型，可选 'fast', 'time', 'timestamp', 'recorder'
+        duration (int): 每个分辨率的录制秒数（仅对时长类录制器有效）
+        recorder_type (str): 录制器类型，可选 'fast', 'time', 'timestamp', 'recorder', 'frames'
             - 'fast'      : 使用 FastRecorder（极速，可保持摄像头常开，无日志）
             - 'time'      : 使用 RecorderTime（按时间录制，14秒GC，序号文件名）
             - 'timestamp' : 使用 RecorderTimestamp（按时间录制，14秒GC，时间戳文件名）
             - 'recorder'  : 使用 Recorder（通用录制器，有日志和闪光灯支持）
+            - 'frames'    : 使用 RecorderFrames（按帧数录制，50帧GC，固定帧数）
         xclk_freq (int): 摄像头时钟频率，仅在 'time' 和 'timestamp' 模式下有效
-                         支持 camera.XCLK_10MHz 或 camera.XCLK_20MHz
+        target_frames (int): 当 recorder_type='frames' 时，每个分辨率录制的总帧数
 
     返回：
         dict: {分辨率名称: (帧数, 耗时秒, 帧率)}
     """
     print("\n开始帧率基准测试...")
-    print("录制器类型: {}, 时钟频率: {}, 每个分辨率录制 {} 秒".format(
-        recorder_type, xclk_freq, duration))
+    print("录制器类型: {}, 时钟频率: {}".format(recorder_type, xclk_freq))
 
     # 选择录制器类
     if recorder_type == 'fast':
         RecorderCls = FastRecorder
-        extra_args = {}  # FastRecorder 不支持 xclk_freq
-        save_dir = None  # 不使用子目录
+        extra_args = {}
+        save_dir = None
+        use_frames = False
     elif recorder_type == 'time':
         RecorderCls = RecorderTime
         extra_args = {'xclk_freq': xclk_freq}
         save_dir = "time"
+        use_frames = False
     elif recorder_type == 'timestamp':
         RecorderCls = RecorderTimestamp
         extra_args = {'xclk_freq': xclk_freq}
         save_dir = "timestamp"
+        use_frames = False
     elif recorder_type == 'recorder':
         RecorderCls = Recorder
-        extra_args = {}  # Recorder 不支持 xclk_freq
+        extra_args = {}
         save_dir = None
+        use_frames = False
+    elif recorder_type == 'frames':
+        RecorderCls = RecorderFrames
+        extra_args = {'xclk_freq': xclk_freq}
+        save_dir = "frames"
+        use_frames = True
+        print("每个分辨率录制 {} 帧".format(target_frames))
     else:
-        raise ValueError("recorder_type 必须是 'fast', 'time', 'timestamp', 'recorder' 之一")
+        raise ValueError("recorder_type 必须是 'fast', 'time', 'timestamp', 'recorder', 'frames' 之一")
 
     # 创建测试目录
     test_dir = "/sd/benchmark"
@@ -114,7 +127,14 @@ def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast', xclk_freq=cam
                     save_dir=save_dir,
                     **extra_args
                 )
-            frames, elapsed = recorder.start(duration_sec=duration)
+
+            # 启动录制
+            if use_frames:
+                # 按帧数录制
+                frames, elapsed = recorder.start(total_frames=target_frames)
+            else:
+                # 按时长录制
+                frames, elapsed = recorder.start(duration_sec=duration)
             recorder.close()
 
             fps = frames / elapsed if elapsed > 0 else 0
@@ -130,7 +150,6 @@ def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast', xclk_freq=cam
     # 清理测试文件
     print("\n清理测试文件...")
     try:
-        # 删除目录及其内容
         uos.rmdir(test_dir)
         print("清理完成")
     except Exception as e:
@@ -162,5 +181,5 @@ def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast', xclk_freq=cam
 if __name__ == "__main__":
     # 示例：使用 FastRecorder 测试 5 秒
     run_benchmark(duration=5, recorder_type='fast')
-    # 使用 RecorderTime 测试 5 秒，时钟 20MHz
-    # run_benchmark(duration=5, recorder_type='time', xclk_freq=camera.XCLK_20MHz)
+    # 使用 RecorderFrames 录制 200 帧
+    # run_benchmark(recorder_type='frames', target_frames=200, xclk_freq=camera.XCLK_20MHz)
