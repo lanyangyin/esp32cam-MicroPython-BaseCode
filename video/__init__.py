@@ -1,16 +1,16 @@
 # video/__init__.py
-from .recorder import VideoRecorder
-from .fast_recorder import FastRecorder
-from .fast_recorder_no_flash import FastRecorderNoFlash
-from .fast_recorder_by_frames_thread import FastRecorderByFrames
-from .fast_recorder_by_frames_single import FastRecorderByFramesSingle
+from .recorder import Recorder
+from .recorder_fast import FastRecorder
+from .recorder_time import RecorderTime
+from .recorder_timestamp import RecorderTimestamp
+from .recorder_frames import RecorderFrames
 from .benchmark import run_benchmark
 
 __all__ = [
-    "VideoRecorder",
+    "Recorder",
     "FastRecorder",
-    "FastRecorderNoFlash",
-    "FastRecorderByFrames",
-    "FastRecorderByFramesSingle",
-    "run_benchmark"
+    "RecorderTime",
+    "RecorderTimestamp",
+    "RecorderFrames",
+    "run_benchmark",
 ]

@@ -5,13 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="视频模块">
-      <change afterPath="$PROJECT_DIR$/video/fast_recorder_by_frames_single.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/video/fast_recorder_by_frames_thread.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/video/fast_recorder_no_flash.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/video/fast_recorder_timestamp.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/HOST_COMPUTER_SCRIPT/images_to_video_auto_fps.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/video/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video/fast_recorder.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/fast_recorder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/benchmark.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/benchmark.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/fast_recorder.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_fast.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/fast_recorder_by_frames_single.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_frames.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/fast_recorder_by_frames_thread.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/fast_recorder_no_flash.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_time.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/fast_recorder_timestamp.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_timestamp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/recorder.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,20 +49,20 @@
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="1.2265589771619554E-175" />
-      <entry key="S10" value="3.5022264021076015E-88" />
-      <entry key="S30" value="7.04879271254293E-30" />
-      <entry key="S60" value="2.654956262129614E-15" />
-      <entry key="M2" value="5.152905577287746E-8" />
-      <entry key="M5" value="0.0012395432647929626" />
-      <entry key="M10" value="0.03975352764494646" />
-      <entry key="M15" value="0.13552494654913205" />
-      <entry key="M30" value="0.49639256488457656" />
-      <entry key="H1" value="0.9865976192065012" />
-      <entry key="H2" value="1.6328063448370216" />
-      <entry key="H4" value="3.919272503478404" />
-      <entry key="D1" value="27.315493884652017" />
-      <entry key="W1" value="55.64276003602469" />
+      <entry key="S5" value="1.1061262704833386E-296" />
+      <entry key="S10" value="1.051725377883095E-148" />
+      <entry key="S30" value="4.720276631246711E-50" />
+      <entry key="S60" value="2.1726197685948285E-25" />
+      <entry key="M2" value="4.661389165816621E-13" />
+      <entry key="M5" value="1.1908223060475937E-5" />
+      <entry key="M10" value="0.003896442831657596" />
+      <entry key="M15" value="0.028810292557567705" />
+      <entry key="M30" value="0.2288703215362775" />
+      <entry key="H1" value="0.6699188053002231" />
+      <entry key="H2" value="1.3454753087025408" />
+      <entry key="H4" value="3.557754585814495" />
+      <entry key="D1" value="26.878445321256716" />
+      <entry key="W1" value="55.51469553626609" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="1.0" />
@@ -68,36 +71,36 @@
       <entry key="S5" value="1.0" />
       <entry key="S10" value="1.0" />
       <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0" />
-      <entry key="M15" value="1.0000000000000087" />
-      <entry key="M30" value="1.0000001481473142" />
-      <entry key="H1" value="1.0007338087733177" />
-      <entry key="H2" value="1.0576474617374907" />
-      <entry key="H4" value="1.5321141653097416" />
-      <entry key="D1" value="5.581905274419463" />
-      <entry key="W1" value="9.77209206662598" />
+      <entry key="S60" value="1.0000000000818325" />
+      <entry key="M2" value="1.0000090461373605" />
+      <entry key="M5" value="1.0096069442662536" />
+      <entry key="M10" value="1.0980150206154828" />
+      <entry key="M15" value="1.2125829472076075" />
+      <entry key="M30" value="1.461067251271217" />
+      <entry key="H1" value="1.6795175505655076" />
+      <entry key="H2" value="1.871529284277585" />
+      <entry key="H4" value="2.3907903042680374" />
+      <entry key="D1" value="6.492594654904565" />
+      <entry key="W1" value="10.749601124744284" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.4294149269540047E-8" />
-      <entry key="MS500" value="0.02697936120545037" />
-      <entry key="S2" value="0.40528255994265455" />
-      <entry key="S5" value="0.6967920167635375" />
-      <entry key="S10" value="0.8347406883359272" />
-      <entry key="S30" value="0.9415654796478633" />
-      <entry key="S60" value="0.9703429701130772" />
-      <entry key="M2" value="0.9850599327788793" />
-      <entry key="M5" value="0.9952341431873135" />
-      <entry key="M10" value="1.036703044916234" />
-      <entry key="M15" value="1.1334057218509892" />
-      <entry key="M30" value="1.4951456616143715" />
-      <entry key="H1" value="1.9865667049821323" />
-      <entry key="H2" value="2.6899783527857997" />
-      <entry key="H4" value="5.450998002531862" />
-      <entry key="D1" value="32.89711148407222" />
-      <entry key="W1" value="65.41477694577749" />
+      <entry key="MS100" value="5.038998890489607E-12" />
+      <entry key="MS500" value="0.005501344636375317" />
+      <entry key="S2" value="0.2723436245876398" />
+      <entry key="S5" value="0.5943563202488057" />
+      <entry key="S10" value="0.7709450825115922" />
+      <entry key="S30" value="0.9169404835307962" />
+      <entry key="S60" value="0.9575700933523714" />
+      <entry key="M2" value="0.9785640158604387" />
+      <entry key="M5" value="1.0009273747573462" />
+      <entry key="M10" value="1.0972862200046412" />
+      <entry key="M15" value="1.2380564782430274" />
+      <entry key="M30" value="1.6879184302677095" />
+      <entry key="H1" value="2.3481947492873037" />
+      <entry key="H2" value="3.2162515688661086" />
+      <entry key="H4" value="5.948011439652973" />
+      <entry key="D1" value="33.37072679584158" />
+      <entry key="W1" value="66.2642173758978" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -454,7 +457,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786195721953</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="视频模块">
+      <option name="closed" value="true" />
+      <created>1786207125567</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1786207125567</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

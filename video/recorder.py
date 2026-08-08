@@ -13,7 +13,7 @@ from sd_card import get_sd_card
 from flash import get_flash
 
 
-class VideoRecorder:
+class Recorder:
     def __init__(self, framesize=camera.FRAME_XGA, quality=10,
                  flash_pin=4, flash_on_value=1,
                  sd_mount_point="/sd", use_flash=False):
@@ -147,7 +147,7 @@ class VideoRecorder:
 if __name__ == "__main__":
     import camera
 
-    recorder = VideoRecorder(
+    recorder = Recorder(
         framesize=camera.FRAME_VGA,
         quality=10,
         use_flash=False

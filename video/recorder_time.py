@@ -1,8 +1,8 @@
-# video/fast_recorder_by_frames_single.py
+# video/recorder_time.py
 """
-极速视频录制模块（按帧数录制，单线程版本）
-指定总帧数，主循环每50帧执行一次内存回收。
-录制结束条件：达到目标帧数 或 手动停止。
+极速视频录制模块（无闪光灯、无帧数计数）
+仅支持按时间录制，使用内部计数器统计帧数。
+初始化前彻底释放摄像头，每14秒回收一次内存。
 """
 import time
 import gc
@@ -11,10 +11,11 @@ import camera
 from sd_card import get_sd_card
 
 
-class FastRecorderByFramesSingle:
+class RecorderTime:
     """
-    按帧数录制的极速录制器（无闪光灯，单线程）
-    主循环仅捕获和保存，每50帧执行一次 gc.collect()。
+    极速录制器（无闪光灯版本）
+    以最快速度连续捕获 JPEG 并保存到指定目录。
+    目录不存在则创建，若已存在则自动添加序号 (_1, _2, ...)
     """
 
     def __init__(self, framesize=camera.FRAME_VGA, quality=10,
@@ -24,9 +25,9 @@ class FastRecorderByFramesSingle:
         参数：
             framesize: 捕获分辨率
             quality: JPEG 质量 (10-63)
-            sd_mount_point: SD 卡挂载点
-            save_dir: 保存目录名称
-            xclk_freq: 摄像头时钟频率
+            sd_mount_point: SD 卡挂载点（必须已挂载）
+            save_dir: 保存目录名称（在挂载点下）
+            xclk_freq: 摄像头时钟频率 (camera.XCLK_10MHz 或 camera.XCLK_20MHz)
         """
         self.framesize = framesize
         self.quality = quality
@@ -36,16 +37,19 @@ class FastRecorderByFramesSingle:
         self._cam_initialized = False
         self._recording = False
 
+        # 确保 SD 卡已挂载
         self.sd = get_sd_card(mount_point=sd_mount_point)
         if not self.sd.mounted:
             raise RuntimeError("SD card not mounted")
 
+        # 创建保存目录（自动处理重名）
         self.full_dir = self._create_save_dir()
 
     def _create_save_dir(self):
-        """创建带序号的保存目录"""
+        """创建保存目录，若已存在则自动添加尾号"""
         dir_name = self.save_dir
         counter = 1
+
         while True:
             full_path = "{}/{}".format(self.sd_mount_point, dir_name)
             try:
@@ -58,7 +62,7 @@ class FastRecorderByFramesSingle:
                     raise RuntimeError("无法创建目录，重名太多")
 
     def _init_camera(self):
-        """初始化摄像头"""
+        """初始化摄像头（若未初始化）"""
         if not self._cam_initialized:
             try:
                 camera.deinit()
@@ -80,7 +84,7 @@ class FastRecorderByFramesSingle:
             self._cam_initialized = True
 
     def _deinit_camera(self):
-        """释放摄像头"""
+        """彻底释放摄像头"""
         if self._cam_initialized:
             try:
                 camera.deinit()
@@ -88,31 +92,43 @@ class FastRecorderByFramesSingle:
                 pass
             self._cam_initialized = False
 
-    def start(self, total_frames):
+    def start(self, duration_sec):
         """
-        开始录制指定帧数。
+        开始录制（以最快速度）。
         参数：
-            total_frames: 要录制的总帧数
+            duration_sec: 持续秒数
         返回：
             (实际帧数, 实际耗时秒数)
         """
         if self._recording:
             return
-        if total_frames <= 0:
-            raise ValueError("total_frames 必须大于 0")
 
-        # 1. 释放摄像头并初始化
+        if duration_sec <= 0:
+            raise ValueError("duration_sec 必须大于 0")
+
+        # 1. 无条件彻底释放摄像头（确保干净状态）
         self._deinit_camera()
-        time.sleep_ms(200)
+        time.sleep_ms(200)  # 给硬件足够时间复位
+
+        # 2. 初始化摄像头
         self._init_camera()
 
         self._recording = True
         frame_count = 0
         start_time = time.ticks_ms()
+        end_time = time.ticks_add(start_time, int(duration_sec * 1000))
+
+        # 内存回收计时（14秒间隔）
+        last_gc_time = start_time
+        GC_INTERVAL = 14000  # 14 秒
 
         try:
-            while self._recording and frame_count < total_frames:
+            while self._recording:
+                if time.ticks_ms() >= end_time:
+                    break
+
                 buf = camera.capture()
+
                 if buf is not None and buf is not False:
                     filename = "{}/f_{:06d}.jpg".format(self.full_dir, frame_count)
                     try:
@@ -122,21 +138,25 @@ class FastRecorderByFramesSingle:
                     except:
                         pass
 
-                # 每 50 帧回收一次内存
-                if frame_count % 50 == 0:
+                now = time.ticks_ms()
+                if time.ticks_diff(now, last_gc_time) > GC_INTERVAL:
                     gc.collect()
+                    last_gc_time = now
 
         except KeyboardInterrupt:
             pass
         finally:
             self._recording = False
+            # 彻底释放摄像头
             self._deinit_camera()
 
         elapsed = (time.ticks_ms() - start_time) / 1000.0
+
+        # 直接使用计数器返回帧数
         return frame_count, elapsed
 
     def stop(self):
-        """停止录制"""
+        """停止录制（外部调用）"""
         self._recording = False
 
     def close(self):
@@ -147,14 +167,13 @@ class FastRecorderByFramesSingle:
 if __name__ == "__main__":
     import camera
 
-    recorder = FastRecorderByFramesSingle(
+    recorder = RecorderTime(
         framesize=camera.FRAME_VGA,
         quality=10,
-        save_dir="test_frames_single",
+        save_dir="test",
         xclk_freq=camera.XCLK_20MHz
     )
 
-    total = 100  # 录制100帧
-    frames, elapsed = recorder.start(total_frames=total)
-    print("录制完成: {} 帧, 耗时 {:.2f} 秒, 帧速率 {:.2f} fps".format(frames, elapsed, frames/elapsed if elapsed > 0 else 0))
+    frames, elapsed = recorder.start(duration_sec=10)
+    print("录制完成: {} 帧, 耗时 {:.2f} 秒, 帧速率{:.2f}/s".format(frames, elapsed, frames/elapsed))
     recorder.close()

@@ -1,21 +1,20 @@
-# video/fast_recorder_by_frames_thread.py
+# video/recorder_frames.py
 """
-极速视频录制模块（按帧数录制）
-指定总帧数，使用独立线程进行14秒间隔内存回收。
+极速视频录制模块（按帧数录制，单线程版本）
+指定总帧数，主循环每50帧执行一次内存回收。
 录制结束条件：达到目标帧数 或 手动停止。
 """
 import time
 import gc
 import uos
 import camera
-import _thread
 from sd_card import get_sd_card
 
 
-class FastRecorderByFrames:
+class RecorderFrames:
     """
-    按帧数录制的极速录制器（无闪光灯）
-    主循环仅捕获和保存，内存回收由后台线程每14秒执行一次。
+    按帧数录制的极速录制器（无闪光灯，单线程）
+    主循环仅捕获和保存，每50帧执行一次 gc.collect()。
     """
 
     def __init__(self, framesize=camera.FRAME_VGA, quality=10,
@@ -36,7 +35,6 @@ class FastRecorderByFrames:
         self.xclk_freq = xclk_freq
         self._cam_initialized = False
         self._recording = False
-        self._stop_thread = False
 
         self.sd = get_sd_card(mount_point=sd_mount_point)
         if not self.sd.mounted:
@@ -90,13 +88,6 @@ class FastRecorderByFrames:
                 pass
             self._cam_initialized = False
 
-    def _gc_thread(self):
-        """内存回收线程：每14秒执行一次 gc.collect()"""
-        while not self._stop_thread:
-            time.sleep(14)
-            if not self._stop_thread:
-                gc.collect()
-
     def start(self, total_frames):
         """
         开始录制指定帧数。
@@ -116,20 +107,8 @@ class FastRecorderByFrames:
         self._init_camera()
 
         self._recording = True
-        self._stop_thread = False
         frame_count = 0
         start_time = time.ticks_ms()
-
-        # 2. 启动内存回收线程
-        try:
-            _thread.start_new_thread(self._gc_thread, ())
-        except Exception as e:
-            # 如果线程启动失败，回退到主循环手动回收（但这里我们尽量不中断）
-            # 为了简化，我们直接在主循环中处理（但会降低速度），这里我们选择忽略，但打印警告
-            print("警告: 无法启动内存回收线程，将使用主循环回收")
-            use_thread = False
-        else:
-            use_thread = True
 
         try:
             while self._recording and frame_count < total_frames:
@@ -143,17 +122,14 @@ class FastRecorderByFrames:
                     except:
                         pass
 
-                # 如果线程未启动，在主循环中回收（但为了速度，我们仅当无法启动线程时才这样做）
-                if not use_thread and frame_count % 100 == 0:
+                # 每 50 帧回收一次内存
+                if frame_count % 50 == 0:
                     gc.collect()
 
         except KeyboardInterrupt:
             pass
         finally:
             self._recording = False
-            self._stop_thread = True
-            # 等待线程结束（最多1秒）
-            time.sleep_ms(500)
             self._deinit_camera()
 
         elapsed = (time.ticks_ms() - start_time) / 1000.0
@@ -171,15 +147,14 @@ class FastRecorderByFrames:
 if __name__ == "__main__":
     import camera
 
-    recorder = FastRecorderByFrames(
+    recorder = FastRecorderByFramesSingle(
         framesize=camera.FRAME_VGA,
         quality=10,
-        save_dir="test_frames",
+        save_dir="test_frames_single",
         xclk_freq=camera.XCLK_20MHz
     )
 
     total = 100  # 录制100帧
     frames, elapsed = recorder.start(total_frames=total)
-    print("录制完成: {} 帧, 耗时 {:.2f} 秒, 帧速率 {:.2f} fps".format(
-        frames, elapsed, frames/elapsed if elapsed > 0 else 0))
+    print("录制完成: {} 帧, 耗时 {:.2f} 秒, 帧速率 {:.2f} fps".format(frames, elapsed, frames/elapsed if elapsed > 0 else 0))
     recorder.close()

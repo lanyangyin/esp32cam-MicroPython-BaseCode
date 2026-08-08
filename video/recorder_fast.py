@@ -1,6 +1,7 @@
-# video/fast_recorder.py
+# video/recorder_fast.py
 """
 极速视频录制模块 - 无日志、无额外检查，专注于最高帧率。
+支持闪光灯和保持摄像头常开。
 直接使用 camera 模块，保持摄像头常开以避免重复初始化。
 """
 import time
