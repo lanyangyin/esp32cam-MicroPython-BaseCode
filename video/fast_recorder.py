@@ -169,7 +169,7 @@ if __name__ == "__main__":
     import camera
 
     recorder = FastRecorder(
-        framesize=camera.FRAME_VGA,
+        framesize=camera.FRAME_HVGA,
         quality=10,
         use_flash=False,
         keep_camera_open=True
@@ -179,14 +179,30 @@ if __name__ == "__main__":
     frames, elapsed = recorder.start(duration_sec=5)
     print("录制完成: {} 帧, 耗时 {:.2f} 秒".format(frames, elapsed))
 
-    # FRAME_QXGA 2048×1536 1fps
-    # FRAME_QXGA 2048×1536 1fps
-    # FRAME_QXGA 2048×1536 1fps
-    # FRAME_QXGA 2048×1536 1fps
-    # FRAME_QXGA 2048×1536 1fps
-    # FRAME_QXGA 2048×1536 1fps
-    # FRAME_QXGA 2048×1536 1fps
-    # FRAME_QXGA 2048×1536 1fps
-
     # 释放摄像头
     recorder.close()
+
+
+    # ============================================================
+    # 基准测试结果汇总
+    # ============================================================
+    # 分辨率         帧数  耗时(s) 帧率(fps)
+    # FRAME_P_3MP           14       5.02       2.79
+    # FRAME_SVGA            34       5.13       6.63
+    # FRAME_QXGA            13       5.07       2.56
+    # FRAME_QCIF            36       5.07       7.10
+    # FRAME_QVGA            34       5.10       6.67
+    # FRAME_HVGA            39       5.08       7.68
+    # FRAME_CIF             34       5.10       6.66
+    # FRAME_SXGA            18       5.09       3.53
+    # FRAME_HD              21       5.18       4.05
+    # FRAME_QQVGA           34       5.09       6.69
+    # FRAME_VGA             34       5.10       6.67
+    # FRAME_96X96            0       8.02       0.00
+    # FRAME_HQVGA           34       5.08       6.70
+    # FRAME_XGA             17       5.23       3.25
+    # FRAME_240X240         38       5.03       7.55
+    # FRAME_FHD             13       5.18       2.51
+    # FRAME_P_HD            17       5.03       3.38
+    # FRAME_UXGA            13       5.13       2.54
+    # ============================================================
