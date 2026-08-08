@@ -12,8 +12,8 @@ from .fast_recorder import FastRecorder
 
 # 要测试的分辨率（名称和常量）
 RESOLUTIONS = [
-    # ("FRAME_96X96", camera.FRAME_96X96),
-    # ("FRAME_QQVGA", camera.FRAME_QQVGA),
+    ("FRAME_96X96", camera.FRAME_96X96),
+    ("FRAME_QQVGA", camera.FRAME_QQVGA),
     ("FRAME_QCIF", camera.FRAME_QCIF),
     ("FRAME_HQVGA", camera.FRAME_HQVGA),
     ("FRAME_240X240", camera.FRAME_240X240),
@@ -32,7 +32,6 @@ RESOLUTIONS = [
     ("FRAME_QXGA", camera.FRAME_QXGA),
 ]
 
-# 每个分辨率录制时长（秒）
 DEFAULT_DURATION = 5
 
 def run_benchmark(duration=DEFAULT_DURATION):
@@ -43,10 +42,12 @@ def run_benchmark(duration=DEFAULT_DURATION):
     返回：
         dict: {分辨率名称: (帧数, 耗时秒, 帧率)}
     """
+    # 按分辨率常量值排序（从低到高）
+    sorted_res = sorted(RESOLUTIONS, key=lambda x: x[1])
+
     print("\n开始帧率基准测试...")
     print("每个分辨率录制 {} 秒".format(duration))
 
-    # 创建临时目录存储测试文件
     test_dir = "/sd/benchmark"
     try:
         uos.mkdir(test_dir)
@@ -55,7 +56,7 @@ def run_benchmark(duration=DEFAULT_DURATION):
 
     results = {}
 
-    for name, framesize in RESOLUTIONS:
+    for name, framesize in sorted_res:
         print("\n测试 {}...".format(name))
         try:
             recorder = FastRecorder(
@@ -75,7 +76,6 @@ def run_benchmark(duration=DEFAULT_DURATION):
             print("  测试失败: {}".format(e))
             results[name] = (0, 0, 0)
 
-        # 回收内存
         gc.collect()
 
     # 清理测试文件
