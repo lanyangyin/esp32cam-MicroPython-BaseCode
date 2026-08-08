@@ -45,7 +45,11 @@ def is_black_photo(jpeg_data, framesize):
 
     min_size = MIN_SIZE_MAP.get(framesize, None)
     if min_size is None:
-        debug_log("Unknown framesize {}, cannot check black photo".format(framesize), level=LEVEL_DEBUG, module="BlackPhoto")
+        debug_log("未知分辨率常量 {}, 跳过黑照检测".format(framesize), level=LEVEL_DEBUG, module="BlackPhoto")
         return False
 
-    return len(jpeg_data) < min_size
+    size = len(jpeg_data)
+    is_black = size < min_size
+    debug_log("黑照检测: framesize={}, 大小={}, 阈值={}, 判定={}".format(
+        framesize, size, min_size, "黑照" if is_black else "正常"), level=LEVEL_DEBUG, module="BlackPhoto")
+    return is_black

@@ -146,3 +146,26 @@ def simple_capture_with_downgrade(
     debug_log("✅ 拍照完成", level=LEVEL_INFO, module="SimpleCapture")
 
     return saved_path, w_actual, h_actual, set_w, set_h, chosen_framesize
+
+
+if __name__ == "__main__":
+    from config import set_debug
+
+    set_debug(True)
+
+    # 可选：自定义分辨率列表
+    PREFERRED = [
+        camera.FRAME_QSXGA,
+        camera.FRAME_UXGA,
+        camera.FRAME_XGA,
+        camera.FRAME_SVGA,
+        camera.FRAME_VGA,
+        camera.FRAME_QVGA,
+    ]
+
+    saved_path, w, h, req_w, req_h, framesize = simple_capture_with_downgrade(preferred_resolutions=PREFERRED)
+    if saved_path:
+        print("照片保存成功: {} (请求: {}x{}, 实际: {}x{})".format(
+            saved_path, req_w, req_h, w, h))
+    else:
+        print("拍照失败")

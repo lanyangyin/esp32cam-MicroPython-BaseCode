@@ -1,29 +1,22 @@
 """
-app.py - ESP32-CAM 简单拍照入口（调用 photo 包）
+app.py - ESP32-CAM 主程序：智能拍照
 """
 from config import set_debug
-from photo import simple_capture_with_downgrade
+from photo import smart_capture_with_analysis
 import camera
 
 set_debug(True)
 
-# 可选：自定义分辨率列表
-PREFERRED = [
-    camera.FRAME_QSXGA,
-    camera.FRAME_UXGA,
-    camera.FRAME_XGA,
-    camera.FRAME_SVGA,
-    camera.FRAME_VGA,
-    camera.FRAME_QVGA,
-]
-
 def main():
-    saved_path, w, h, req_w, req_h, framesize = simple_capture_with_downgrade(
-        preferred_resolutions=PREFERRED
+    saved_path, w, h, brightness = smart_capture_with_analysis(
+        analysis_framesize=camera.FRAME_QVGA,
+        photo_framesize=camera.FRAME_XGA,
+        retry_analysis_limit=6,
+        retry_capture_limit=6
     )
     if saved_path:
-        print("照片保存成功: {} (请求: {}x{}, 实际: {}x{})".format(
-            saved_path, req_w, req_h, w, h))
+        print("照片保存成功: {}, 尺寸: {}x{}, 亮度: {:.1f}".format(
+            saved_path, w, h, brightness['average_brightness']))
     else:
         print("拍照失败")
 

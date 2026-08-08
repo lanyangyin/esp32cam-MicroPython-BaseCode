@@ -71,10 +71,14 @@ def evaluate_flash_decision(brightness_info, guide_path=DEFAULT_GUIDE_PATH):
                 result['scene_profile'] = 'dark'
             else:
                 result['scene_profile'] = 'backlit'
+            _debug_log("匹配规则: '{}' -> {}".format(result['matched_rule'], result['reason']))
+            _debug_log("场景分类: {}, 平均亮度: {:.1f}".format(result['scene_profile'], avg))
             break
     if not result['flash']:
         result['flash'] = default_action.get('flash') == 'on'
-    _debug_log("Flash decision: {}".format(result['flash']))
+        _debug_log("无匹配规则，使用默认动作: flash={}".format('on' if result['flash'] else 'off'))
+    else:
+        _debug_log("闪光灯决策结果: {}".format('开启' if result['flash'] else '关闭'))
     return result
 
 def should_use_flash(brightness_info, guide_path=DEFAULT_GUIDE_PATH):

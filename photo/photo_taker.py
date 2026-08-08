@@ -7,7 +7,7 @@ import gc
 import camera
 from camera_driver import capture_grayscale, capture_image, get_camera, reset_camera
 from utils.brightness import quick_brightness_estimate, analyze_brightness
-from decision.retry import should_retry
+from decision.retry import should_retry, get_retry_reason
 from decision.flash import should_use_flash
 from decision.black_photo import is_black_photo
 from config import debug_log, LEVEL_INFO, LEVEL_WARNING, LEVEL_ERROR
@@ -76,8 +76,18 @@ def smart_capture_with_analysis(
             debug_log("亮度分析失败", level=LEVEL_WARNING, module="PhotoTaker")
             continue
 
+        # 新增：详细输出亮度信息
+        debug_log("亮度信息: avg={:.1f}, dynamic={}, center={:.1f}".format(
+            brightness_info['average_brightness'],
+            brightness_info['dynamic_range'],
+            brightness_info['center_brightness']
+        ), level=LEVEL_INFO, module="PhotoTaker")
+
         if should_retry(brightness_info):
-            debug_log("亮度信息异常，需要重试分析", level=LEVEL_WARNING, module="PhotoTaker")
+            # 新增：输出重试原因（从 retry_decision 获取）
+            retry_reason = get_retry_reason(brightness_info)  # 需要导入
+            debug_log("亮度信息异常，需要重试分析: {}".format(retry_reason), level=LEVEL_WARNING,
+                      module="PhotoTaker")
             if attempt == retry_analysis_limit:
                 final_brightness = brightness_info
                 debug_log("达到最大分析重试次数，使用最后一次亮度信息", level=LEVEL_WARNING, module="PhotoTaker")
@@ -133,6 +143,9 @@ def smart_capture_with_analysis(
             continue
 
         # 照片有效，保存
+        debug_log("照片大小正常，保存", level=LEVEL_INFO, module="PhotoTaker")
+
+        # 照片有效，保存
         filename = "/sd/photo_{}.jpg".format(int(time.time()))
         saved_path = sd.save_file(jpeg_data, filename)
         if saved_path:
@@ -148,3 +161,18 @@ def smart_capture_with_analysis(
 
     debug_log("拍照阶段全部失败，无法保存照片", level=LEVEL_ERROR, module="PhotoTaker")
     return None, 0, 0, final_brightness
+
+
+
+if __name__ == "__main__":
+    saved_path, w, h, brightness = smart_capture_with_analysis(
+        analysis_framesize=camera.FRAME_QVGA,
+        photo_framesize=camera.FRAME_XGA,
+        retry_analysis_limit=6,
+        retry_capture_limit=6
+    )
+    if saved_path:
+        print("照片保存成功: {}, 尺寸: {}x{}, 亮度: {:.1f}".format(
+            saved_path, w, h, brightness['average_brightness']))
+    else:
+        print("拍照失败")
