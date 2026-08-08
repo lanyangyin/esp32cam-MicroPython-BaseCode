@@ -11,6 +11,7 @@ complete_test_entry.py - ESP32-CAM 完整测试入口
     (可选) WiFi / BLE 初始化测试
 
 每种摄像头模式独立测试，内存不足时仅跳过该模式的更大分辨率。
+连续失败次数超过阈值时，自动跳过该模式剩余测试。
 """
 import camera
 import time
@@ -43,9 +44,11 @@ from utils import (
 # from wifi import get_wifi, reset_wifi
 # from ble import get_ble, reset_ble
 
-# 启用调试日志，并设置日志级别为 DEBUG（输出所有日志）
 set_debug(True)
-set_log_level(LEVEL_DEBUG)  # 可根据需要调整为 INFO
+set_log_level(LEVEL_DEBUG)
+
+# 连续失败阈值
+CONSECUTIVE_FAIL_LIMIT = 3
 
 
 # =============================================================================
@@ -163,7 +166,7 @@ def test_sd_formats():
 # 4. 摄像头 JPEG 模式测试（独立遍历）
 # =============================================================================
 def test_jpeg_resolutions():
-    """仅测试 JPEG 捕获与保存，独立处理内存不足"""
+    """仅测试 JPEG 捕获与保存，独立处理内存不足，连续失败则跳过"""
     debug_log("="*60, level=LEVEL_INFO, module="Test")
     debug_log("  [摄像头测试] JPEG 模式", level=LEVEL_INFO, module="Test")
     debug_log("="*60, level=LEVEL_INFO, module="Test")
@@ -180,6 +183,7 @@ def test_jpeg_resolutions():
     fail = 0
     skipped = 0
     memory_error = False
+    consecutive_fail = 0
 
     for idx, framesize in enumerate(resolution_constants, 1):
         if memory_error:
@@ -188,6 +192,13 @@ def test_jpeg_resolutions():
                 idx, len(resolution_constants), framesize), level=LEVEL_WARNING, module="Test")
             continue
 
+        # 如果连续失败达到阈值，跳过剩余测试
+        if consecutive_fail >= CONSECUTIVE_FAIL_LIMIT:
+            skipped += len(resolution_constants) - idx + 1
+            debug_log("\n⚠️ 连续失败 {} 次，跳过剩余 JPEG 分辨率测试".format(consecutive_fail),
+                      level=LEVEL_WARNING, module="Test")
+            break
+
         w, h = CameraController.get_resolution(framesize)
         if w is None or h is None:
             w, h = 0, 0
@@ -195,8 +206,8 @@ def test_jpeg_resolutions():
             idx, len(resolution_constants), framesize, w, h), level=LEVEL_INFO, module="Test")
 
         reset_camera()
-        time.sleep_ms(200)
         gc.collect()
+        time.sleep_ms(200)
 
         try:
             jpeg_data = capture_image(
@@ -210,16 +221,20 @@ def test_jpeg_resolutions():
                 sd.save_file(jpeg_data, fname)
                 debug_log("    ✅ JPEG 保存成功: {} ({} bytes)".format(fname, len(jpeg_data)), level=LEVEL_INFO, module="Test")
                 success += 1
+                consecutive_fail = 0  # 成功则重置计数
             else:
                 debug_log("    ❌ JPEG 捕获失败", level=LEVEL_ERROR, module="Test")
                 fail += 1
+                consecutive_fail += 1
         except MemoryError as e:
             debug_log("    ❌ 内存不足: {}".format(e), level=LEVEL_ERROR, module="Test")
             memory_error = True
             fail += 1
+            consecutive_fail += 1
         except Exception as e:
             debug_log("    ❌ 异常: {}".format(e), level=LEVEL_ERROR, module="Test")
             fail += 1
+            consecutive_fail += 1
 
         reset_camera()
         time.sleep_ms(100)
@@ -227,14 +242,17 @@ def test_jpeg_resolutions():
 
     debug_log("\n[JPEG 测试汇总] 成功: {}, 失败: {}, 跳过: {}".format(success, fail, skipped), level=LEVEL_INFO, module="Test")
     if memory_error:
-        debug_log("  ⚠️ 因内存不足跳过了后续 {} 个分辨率".format(skipped), level=LEVEL_WARNING, module="Test")
+        debug_log("  ⚠️ 因内存不足跳过了部分分辨率".format(skipped), level=LEVEL_WARNING, module="Test")
+    if consecutive_fail >= CONSECUTIVE_FAIL_LIMIT:
+        debug_log("  ⚠️ 因连续失败超过阈值，提前结束测试".format(consecutive_fail), level=LEVEL_WARNING, module="Test")
+    return (success, fail, skipped)
 
 
 # =============================================================================
 # 5. 摄像头 灰度模式测试（独立遍历）
 # =============================================================================
 def test_grayscale_resolutions():
-    """仅测试灰度捕获 + 亮度分析 + 快速估计，独立处理内存不足"""
+    """仅测试灰度捕获 + 亮度分析 + 快速估计，独立处理内存不足，连续失败则跳过"""
     debug_log("="*60, level=LEVEL_INFO, module="Test")
     debug_log("  [摄像头测试] 灰度模式", level=LEVEL_INFO, module="Test")
     debug_log("="*60, level=LEVEL_INFO, module="Test")
@@ -251,6 +269,7 @@ def test_grayscale_resolutions():
     fail = 0
     skipped = 0
     memory_error = False
+    consecutive_fail = 0
 
     for idx, framesize in enumerate(resolution_constants, 1):
         if memory_error:
@@ -259,6 +278,12 @@ def test_grayscale_resolutions():
                 idx, len(resolution_constants), framesize), level=LEVEL_WARNING, module="Test")
             continue
 
+        if consecutive_fail >= CONSECUTIVE_FAIL_LIMIT:
+            skipped += len(resolution_constants) - idx + 1
+            debug_log("\n⚠️ 连续失败 {} 次，跳过剩余灰度分辨率测试".format(consecutive_fail),
+                      level=LEVEL_WARNING, module="Test")
+            break
+
         w, h = CameraController.get_resolution(framesize)
         if w is None or h is None:
             w, h = 0, 0
@@ -266,8 +291,8 @@ def test_grayscale_resolutions():
             idx, len(resolution_constants), framesize, w, h), level=LEVEL_INFO, module="Test")
 
         reset_camera()
-        time.sleep_ms(200)
         gc.collect()
+        time.sleep_ms(200)
 
         try:
             # 亮度分析
@@ -296,13 +321,16 @@ def test_grayscale_resolutions():
                 debug_log("    ⚠️ 组合捕获失败", level=LEVEL_WARNING, module="Test")
 
             success += 1
+            consecutive_fail = 0
         except MemoryError as e:
             debug_log("    ❌ 内存不足: {}".format(e), level=LEVEL_ERROR, module="Test")
             memory_error = True
             fail += 1
+            consecutive_fail += 1
         except Exception as e:
             debug_log("    ❌ 异常: {}".format(e), level=LEVEL_ERROR, module="Test")
             fail += 1
+            consecutive_fail += 1
 
         reset_camera()
         time.sleep_ms(100)
@@ -310,14 +338,17 @@ def test_grayscale_resolutions():
 
     debug_log("\n[灰度测试汇总] 成功: {}, 失败: {}, 跳过: {}".format(success, fail, skipped), level=LEVEL_INFO, module="Test")
     if memory_error:
-        debug_log("  ⚠️ 因内存不足跳过了后续 {} 个分辨率".format(skipped), level=LEVEL_WARNING, module="Test")
+        debug_log("  ⚠️ 因内存不足跳过了部分分辨率".format(skipped), level=LEVEL_WARNING, module="Test")
+    if consecutive_fail >= CONSECUTIVE_FAIL_LIMIT:
+        debug_log("  ⚠️ 因连续失败超过阈值，提前结束测试".format(consecutive_fail), level=LEVEL_WARNING, module="Test")
+    return (success, fail, skipped)
 
 
 # =============================================================================
 # 6. 摄像头 RGB565 模式测试（独立遍历）
 # =============================================================================
 def test_rgb565_resolutions():
-    """仅测试 RGB565 捕获 + BMP/PPM 编码，独立处理内存不足"""
+    """仅测试 RGB565 捕获 + BMP/PPM 编码，独立处理内存不足，连续失败则跳过"""
     debug_log("="*60, level=LEVEL_INFO, module="Test")
     debug_log("  [摄像头测试] RGB565 模式 (BMP/PPM编码)", level=LEVEL_INFO, module="Test")
     debug_log("="*60, level=LEVEL_INFO, module="Test")
@@ -334,6 +365,7 @@ def test_rgb565_resolutions():
     fail = 0
     skipped = 0
     memory_error = False
+    consecutive_fail = 0
 
     for idx, framesize in enumerate(resolution_constants, 1):
         if memory_error:
@@ -342,6 +374,12 @@ def test_rgb565_resolutions():
                 idx, len(resolution_constants), framesize), level=LEVEL_WARNING, module="Test")
             continue
 
+        if consecutive_fail >= CONSECUTIVE_FAIL_LIMIT:
+            skipped += len(resolution_constants) - idx + 1
+            debug_log("\n⚠️ 连续失败 {} 次，跳过剩余 RGB565 分辨率测试".format(consecutive_fail),
+                      level=LEVEL_WARNING, module="Test")
+            break
+
         w, h = CameraController.get_resolution(framesize)
         if w is None or h is None:
             w, h = 0, 0
@@ -349,8 +387,8 @@ def test_rgb565_resolutions():
             idx, len(resolution_constants), framesize, w, h), level=LEVEL_INFO, module="Test")
 
         reset_camera()
-        time.sleep_ms(200)
         gc.collect()
+        time.sleep_ms(200)
 
         try:
             cam = get_camera()
@@ -381,16 +419,20 @@ def test_rgb565_resolutions():
                     debug_log("    ❌ PPM 编码失败", level=LEVEL_ERROR, module="Test")
 
                 success += 1
+                consecutive_fail = 0
             else:
                 debug_log("    ❌ RGB565 捕获失败或数据不完整", level=LEVEL_ERROR, module="Test")
                 fail += 1
+                consecutive_fail += 1
         except MemoryError as e:
             debug_log("    ❌ 内存不足: {}".format(e), level=LEVEL_ERROR, module="Test")
             memory_error = True
             fail += 1
+            consecutive_fail += 1
         except Exception as e:
             debug_log("    ❌ 异常: {}".format(e), level=LEVEL_ERROR, module="Test")
             fail += 1
+            consecutive_fail += 1
 
         reset_camera()
         time.sleep_ms(100)
@@ -398,7 +440,10 @@ def test_rgb565_resolutions():
 
     debug_log("\n[RGB565测试汇总] 成功: {}, 失败: {}, 跳过: {}".format(success, fail, skipped), level=LEVEL_INFO, module="Test")
     if memory_error:
-        debug_log("  ⚠️ 因内存不足跳过了后续 {} 个分辨率".format(skipped), level=LEVEL_WARNING, module="Test")
+        debug_log("  ⚠️ 因内存不足跳过了部分分辨率".format(skipped), level=LEVEL_WARNING, module="Test")
+    if consecutive_fail >= CONSECUTIVE_FAIL_LIMIT:
+        debug_log("  ⚠️ 因连续失败超过阈值，提前结束测试".format(consecutive_fail), level=LEVEL_WARNING, module="Test")
+    return (success, fail, skipped)
 
 
 # =============================================================================
@@ -448,7 +493,7 @@ def main():
     debug_log("\n🔍 ESP32-CAM 完整测试套件启动", level=LEVEL_INFO, module="Test")
     debug_log("  当前时间: {}".format(time.localtime()), level=LEVEL_INFO, module="Test")
 
-    # 打印设备硬件信息（内部使用 print，但可接受）
+    # 打印设备硬件信息
     print_info()
 
     # 1. 纯算法测试
@@ -460,17 +505,49 @@ def main():
     # 3. SD卡格式测试（灰度保存）
     test_sd_formats()
 
-    # 4. 摄像头各模式独立测试
-    test_jpeg_resolutions()
-    test_grayscale_resolutions()
-    test_rgb565_resolutions()
+    # 4. 摄像头各模式独立测试（并收集结果）
+    jpeg_result = test_jpeg_resolutions()
+    gray_result = test_grayscale_resolutions()
+    rgb565_result = test_rgb565_resolutions()
 
     # 5. 可选 WiFi/BLE（默认注释）
     # test_wifi()
     # test_ble()
 
-    debug_log("\n✅ 所有测试执行完毕。", level=LEVEL_INFO, module="Test")
+    # ====================================================
+    # 最终总结报告
+    # ====================================================
+    debug_log("\n" + "="*60, level=LEVEL_INFO, module="Test")
+    debug_log("  📊 测试总结报告", level=LEVEL_INFO, module="Test")
+    debug_log("="*60, level=LEVEL_INFO, module="Test")
 
+    # 汇总各模式结果
+    total_success = jpeg_result[0] + gray_result[0] + rgb565_result[0]
+    total_fail = jpeg_result[1] + gray_result[1] + rgb565_result[1]
+    total_skip = jpeg_result[2] + gray_result[2] + rgb565_result[2]
+    total_tests = total_success + total_fail + total_skip
+
+    debug_log("  模式           | 成功 | 失败 | 跳过", level=LEVEL_INFO, module="Test")
+    debug_log("  ---------------|------|------|------", level=LEVEL_INFO, module="Test")
+    debug_log("  JPEG 模式      | {:>4} | {:>4} | {:>4}".format(*jpeg_result), level=LEVEL_INFO, module="Test")
+    debug_log("  灰度模式       | {:>4} | {:>4} | {:>4}".format(*gray_result), level=LEVEL_INFO, module="Test")
+    debug_log("  RGB565 模式    | {:>4} | {:>4} | {:>4}".format(*rgb565_result), level=LEVEL_INFO, module="Test")
+    debug_log("  ---------------|------|------|------", level=LEVEL_INFO, module="Test")
+    debug_log("  总计           | {:>4} | {:>4} | {:>4}".format(total_success, total_fail, total_skip), level=LEVEL_INFO, module="Test")
+
+    # 评价
+    if total_success == total_tests:
+        evaluation = "🟢 优秀：所有分辨率测试通过，硬件完全支持。"
+    elif total_success >= total_tests * 0.7:
+        evaluation = "🟡 良好：大多数分辨率通过，部分高分辨率受限（可能因内存不足或硬件不支持）。"
+    elif total_success >= total_tests * 0.4:
+        evaluation = "🟠 一般：约半数分辨率通过，可能存在硬件限制或电源问题。"
+    else:
+        evaluation = "🔴 较差：通过率低于 40%，请检查电源、连接线和摄像头模块。"
+
+    debug_log("\n  💡 评价: {}".format(evaluation), level=LEVEL_INFO, module="Test")
+    debug_log("="*60, level=LEVEL_INFO, module="Test")
+    debug_log("\n✅ 所有测试执行完毕。", level=LEVEL_INFO, module="Test")
 
 if __name__ == "__main__":
     main()

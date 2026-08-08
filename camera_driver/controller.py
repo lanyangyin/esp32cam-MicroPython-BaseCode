@@ -67,15 +67,6 @@ class CameraController:
         self.initialized = True
         self.quality = quality
 
-        # 尝试获取实际帧大小（仅用于记录，若失败则忽略）
-        try:
-            actual = camera.framesize(0)
-            if actual != framesize:
-                _debug_log("Note: camera driver may have adjusted framesize to {}".format(actual))
-        except Exception as e:
-            # 忽略错误，不影响功能
-            _debug_log("Could not query actual framesize: {}".format(e), level=LEVEL_WARNING)
-
         _debug_log("Camera initialized with requested framesize={} ({}), quality={}".format(
             self.framesize, _get_name(self.framesize) or "unknown", quality))
 

@@ -53,28 +53,43 @@ def get_image_dimensions(image_data):
 
 def _parse_jpeg_dimensions(jpeg_data):
     """
-    内部函数：从 JPEG 数据解析宽度和高度。
+    从 JPEG 数据中解析宽度和高度。
+    遍历标记，查找 SOF0 (0xFFC0) 或 SOF2 (0xFFC2)。
     """
-    idx = 2
+    idx = 0
     data_len = len(jpeg_data)
     while idx < data_len - 1:
+        # 查找 0xFF
         if jpeg_data[idx] != 0xFF:
             idx += 1
             continue
         marker = jpeg_data[idx + 1]
         idx += 2
+
+        # 忽略无长度字段的标记
+        if marker == 0xD8 or (0xD0 <= marker <= 0xD7) or marker == 0x01:
+            continue
+        if marker == 0xD9:  # EOI
+            break
+
+        # 读取段长度（大端）
+        if idx + 1 >= data_len:
+            break
+        seg_len = (jpeg_data[idx] << 8) + jpeg_data[idx + 1]
+        idx += 2
+
+        # 如果是 SOF0 或 SOF2，提取尺寸
         if marker == 0xC0 or marker == 0xC2:
             if idx + 5 <= data_len:
                 height = (jpeg_data[idx + 1] << 8) + jpeg_data[idx + 2]
                 width = (jpeg_data[idx + 3] << 8) + jpeg_data[idx + 4]
                 return (width, height)
-            return (0, 0)
-        if 0xD0 <= marker <= 0xD7:
-            continue
-        if idx + 1 > data_len:
-            return (0, 0)
-        segment_len = (jpeg_data[idx] << 8) + jpeg_data[idx + 1]
-        idx += segment_len
+            else:
+                return (0, 0)
+
+        # 跳过段数据
+        idx += seg_len - 2  # 减去已经读的长度字段
+
     return (0, 0)
 
 
