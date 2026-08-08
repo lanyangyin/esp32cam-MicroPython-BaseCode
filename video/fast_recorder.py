@@ -176,7 +176,7 @@ if __name__ == "__main__":
     )
 
     # 录制 5 秒
-    frames, elapsed = recorder.start(duration_sec=5)
+    frames, elapsed = recorder.start(duration_sec=10)
     print("录制完成: {} 帧, 耗时 {:.2f} 秒".format(frames, elapsed))
 
     # 释放摄像头
