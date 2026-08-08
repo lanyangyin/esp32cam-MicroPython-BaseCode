@@ -1,5 +1,4 @@
 # decision/__init__.py
-"""决策引擎包"""
 from .flash import (
     load_flash_guide,
     reload_flash_guide,
@@ -15,6 +14,7 @@ from .retry import (
     get_retry_reason,
     get_retry_action,
 )
+from .black_photo import is_black_photo
 
 __all__ = [
     "load_flash_guide",
@@ -28,4 +28,5 @@ __all__ = [
     "should_retry",
     "get_retry_reason",
     "get_retry_action",
+    "is_black_photo",
 ]
