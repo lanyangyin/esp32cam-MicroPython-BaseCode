@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="快速闪光灯决策">
-      <change afterPath="$PROJECT_DIR$/utils/contrast.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/decision/flash_decision_helper.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_driver/analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/analysis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/decision/engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup_default_configs.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup_default_configs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/brightness.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/brightness.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/decision/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/decision/__init__.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -534,7 +530,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786226269256</updated>
     </task>
-    <option name="localTasksCounter" value="40" />
+    <task id="LOCAL-00040" summary="快速闪光灯决策">
+      <option name="closed" value="true" />
+      <created>1786229562910</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1786229562910</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

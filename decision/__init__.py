@@ -21,6 +21,7 @@ from .quick_flash import (
     quick_should_use_flash,
     set_quick_flash_threshold,
 )
+from .flash_decision_helper import flash_decision_helper
 
 __all__ = [
     # 原有导出
@@ -36,9 +37,11 @@ __all__ = [
     "get_retry_reason",
     "get_retry_action",
     "is_black_photo",
-    # 新增快速闪光灯导出
+    # 快速闪光灯
     "load_quick_flash_guide",
     "reload_quick_flash_guide",
     "quick_should_use_flash",
     "set_quick_flash_threshold",
+    # 辅助工具
+    "flash_decision_helper",
 ]
