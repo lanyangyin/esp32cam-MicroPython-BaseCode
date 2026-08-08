@@ -31,7 +31,7 @@ def analyze_brightness_from_camera(framesize=camera.FRAME_XGA, step=2):
     result = analyze_brightness(gray_buf, w, h, step)
     if result:
         _debug_log("Analysis complete: avg={:.1f}, dynamic={}, center={:.1f}".format(
-            result['average_brightness'], result['dynamic_range'], result['center_brightness']))
+            result['average_brightness'], result['rms_contrast'], result['center_brightness']))
     return result
 
 def quick_brightness_from_camera(framesize=camera.FRAME_XGA):

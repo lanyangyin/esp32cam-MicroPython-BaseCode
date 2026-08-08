@@ -39,7 +39,6 @@ def create_flash_guide(output_path="/sd/flash_guide.json", force=False):
         "_version": "1.0.0",
         "_description": "根据环境亮度信息自动判断是否开启闪光灯",
         "_generated": time.time(),
-
         "flash_conditions": [
             {
                 "id": "very_dark_scene",
@@ -61,8 +60,8 @@ def create_flash_guide(output_path="/sd/flash_guide.json", force=False):
             },
             {
                 "id": "backlit_scene",
-                "description": "逆光场景：动态范围 > 100 且 平均亮度 < 100",
-                "condition": "dynamic > 100 and avg < 100",
+                "description": "逆光场景：RMS 对比度 > 40 且 平均亮度 < 100",
+                "condition": "rms > 40 and avg < 100",
                 "action": "flash_on"
             }
         ],

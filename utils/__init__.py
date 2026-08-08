@@ -43,6 +43,9 @@ from .file_io import load_image_from_file
 # ---------- 设备信息 ----------
 from .device_info import print_info, get_sd_info
 
+# ---------- 对比度分析 ----------
+from .contrast import compute_rms_contrast, compute_rms_contrast_and_mean
+
 # ---------- 公共 API 列表（支持 from utils import *） ----------
 __all__ = [
     # 亮度分析
@@ -73,4 +76,8 @@ __all__ = [
     # 设备信息
     "print_info",
     "get_sd_info",
+
+    # 对比度分析
+    "compute_rms_contrast",
+    "compute_rms_contrast_and_mean",
 ]
