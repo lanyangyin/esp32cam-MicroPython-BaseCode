@@ -103,6 +103,10 @@ def main():
         debug_log("⚠️ 无法从JPEG解析实际尺寸，使用设定尺寸", level=LEVEL_WARNING, module="app")
     else:
         debug_log("实际图像尺寸 (JPEG解析): {}×{}".format(w_actual, h_actual), level=LEVEL_INFO, module="app")
+        # 如果实际尺寸与设定不符，说明驱动降级了
+        if w_actual != set_w or h_actual != set_h:
+            debug_log("⚠️ 摄像头驱动将分辨率从 {}×{} 降级为 {}×{} (可能因内存不足)".format(
+                set_w, set_h, w_actual, h_actual), level=LEVEL_WARNING, module="app")
 
     # 7. 输出结果
     if saved:

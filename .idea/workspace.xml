@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="分辨率检测">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera_driver/controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera_driver/controller.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/complete_test_entry.py" beforeDir="false" afterPath="$PROJECT_DIR$/complete_test_entry.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/image_info.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/image_info.py" afterDir="false" />
-    </list>
+    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="分辨率检测" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -380,7 +374,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786145174277</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="分辨率检测">
+      <option name="closed" value="true" />
+      <created>1786152283017</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1786152283017</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
