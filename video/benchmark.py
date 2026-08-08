@@ -17,9 +17,9 @@ from camera_driver.resolutions import get_resolution
 
 # 要测试的分辨率（名称和常量）
 RESOLUTIONS = [
-    ("FRAME_96X96", camera.FRAME_96X96),
-    ("FRAME_QQVGA", camera.FRAME_QQVGA),
-    ("FRAME_QCIF", camera.FRAME_QCIF),
+    # ("FRAME_96X96", camera.FRAME_96X96),
+    # ("FRAME_QQVGA", camera.FRAME_QQVGA),
+    # ("FRAME_QCIF", camera.FRAME_QCIF),
     ("FRAME_HQVGA", camera.FRAME_HQVGA),
     ("FRAME_240X240", camera.FRAME_240X240),
     ("FRAME_QVGA", camera.FRAME_QVGA),

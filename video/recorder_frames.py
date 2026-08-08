@@ -147,8 +147,8 @@ class RecorderFrames:
 if __name__ == "__main__":
     import camera
 
-    recorder = FastRecorderByFramesSingle(
-        framesize=camera.FRAME_VGA,
+    recorder = RecorderFrames(
+        framesize=camera.FRAME_CIF,
         quality=10,
         save_dir="test_frames_single",
         xclk_freq=camera.XCLK_20MHz
