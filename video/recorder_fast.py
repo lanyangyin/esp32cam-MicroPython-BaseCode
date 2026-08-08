@@ -20,7 +20,8 @@ class FastRecorder:
     def __init__(self, framesize=camera.FRAME_VGA, quality=10,
                  flash_pin=4, flash_on_value=1,
                  sd_mount_point="/sd", use_flash=False,
-                 keep_camera_open=True):
+                 keep_camera_open=True,
+                 xclk_freq=camera.XCLK_10MHz):   # 新增
         """
         参数：
             framesize: 捕获分辨率
@@ -36,6 +37,7 @@ class FastRecorder:
         self.sd_mount_point = sd_mount_point
         self.use_flash = use_flash
         self.keep_camera_open = keep_camera_open
+        self.xclk_freq = xclk_freq                # 存储
 
         # SD 卡
         self.sd = get_sd_card(mount_point=sd_mount_point)
@@ -65,7 +67,7 @@ class FastRecorder:
                         format=camera.JPEG,
                         fb_location=camera.PSRAM,
                         framesize=self.framesize,
-                        xclk_freq=camera.XCLK_20MHz)
+                        xclk_freq=self.xclk_freq)   # 使用存储的值
             camera.flip(1)
             camera.mirror(0)
             camera.saturation(0)

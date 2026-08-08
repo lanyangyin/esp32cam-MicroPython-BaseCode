@@ -12,7 +12,7 @@ from .recorder_fast import FastRecorder
 from .recorder_time import RecorderTime
 from .recorder_timestamp import RecorderTimestamp
 from .recorder import Recorder
-from .recorder_frames import RecorderFrames  # 导入按帧数录制器
+from .recorder_frames import RecorderFrames
 from camera_driver.resolutions import get_resolution
 
 # 要测试的分辨率（名称和常量）
@@ -41,6 +41,24 @@ RESOLUTIONS = [
 DEFAULT_DURATION = 5          # 适用于时长类录制器
 DEFAULT_FRAMES = 200          # 适用于帧数类录制器（RecorderFrames）
 
+def _remove_dir(path):
+    """递归删除目录及其所有内容（稳健版）"""
+    try:
+        # 列出所有文件/目录
+        items = uos.listdir(path)
+        for item in items:
+            full = path + "/" + item
+            try:
+                # 尝试删除文件，如果是目录则递归
+                uos.remove(full)
+            except OSError:
+                # 可能是目录，递归删除
+                _remove_dir(full)
+        uos.rmdir(path)
+    except OSError as e:
+        # 目录可能不存在，忽略
+        pass
+
 def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast',
                   xclk_freq=camera.XCLK_10MHz, target_frames=DEFAULT_FRAMES):
     """
@@ -64,41 +82,23 @@ def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast',
     print("录制器类型: {}, 时钟频率: {}".format(recorder_type, xclk_freq))
 
     # 选择录制器类
-    if recorder_type == 'fast':
-        RecorderCls = FastRecorder
-        extra_args = {}
-        save_dir = None
-        use_frames = False
-    elif recorder_type == 'time':
-        RecorderCls = RecorderTime
-        extra_args = {'xclk_freq': xclk_freq}
-        save_dir = "time"
-        use_frames = False
-    elif recorder_type == 'timestamp':
-        RecorderCls = RecorderTimestamp
-        extra_args = {'xclk_freq': xclk_freq}
-        save_dir = "timestamp"
-        use_frames = False
-    elif recorder_type == 'recorder':
-        RecorderCls = Recorder
-        extra_args = {}
-        save_dir = None
-        use_frames = False
-    elif recorder_type == 'frames':
-        RecorderCls = RecorderFrames
-        extra_args = {'xclk_freq': xclk_freq}
-        save_dir = "frames"
-        use_frames = True
-        print("每个分辨率录制 {} 帧".format(target_frames))
-    else:
+    recorder_map = {
+        'fast': (FastRecorder, {'keep_camera_open': True}),
+        'time': (RecorderTime, {}),
+        'timestamp': (RecorderTimestamp, {}),
+        'recorder': (Recorder, {}),
+        'frames': (RecorderFrames, {}),
+    }
+    if recorder_type not in recorder_map:
         raise ValueError("recorder_type 必须是 'fast', 'time', 'timestamp', 'recorder', 'frames' 之一")
+
+    RecorderCls, extra_fixed = recorder_map[recorder_type]
+    use_frames = (recorder_type == 'frames')
+    save_dir = None if recorder_type == 'fast' or recorder_type == 'recorder' else recorder_type
 
     # 创建测试目录
     test_dir = "/sd/benchmark"
-    try:
-        uos.rmdir(test_dir)  # 删除旧目录（包括子目录）
-    except:
-        pass
+    _remove_dir(test_dir)          # 先清空旧目录
     try:
         uos.mkdir(test_dir)
     except:
@@ -109,31 +109,25 @@ def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast',
     for name, framesize in RESOLUTIONS:
         print("\n测试 {}...".format(name))
         try:
-            # 创建录制器实例
+            # 构建参数
+            common_args = {
+                'framesize': framesize,
+                'quality': 10,
+                'sd_mount_point': test_dir,
+                'xclk_freq': xclk_freq,   # 统一传递
+            }
+            if save_dir is not None:
+                common_args['save_dir'] = save_dir
             if recorder_type == 'fast':
-                recorder = RecorderCls(
-                    framesize=framesize,
-                    quality=10,
-                    use_flash=False,
-                    keep_camera_open=True,
-                    sd_mount_point=test_dir,
-                    **extra_args
-                )
+                common_args.update(extra_fixed)  # keep_camera_open
             else:
-                recorder = RecorderCls(
-                    framesize=framesize,
-                    quality=10,
-                    sd_mount_point=test_dir,
-                    save_dir=save_dir,
-                    **extra_args
-                )
+                common_args.update(extra_fixed)
 
-            # 启动录制
+            recorder = RecorderCls(**common_args)
+
             if use_frames:
-                # 按帧数录制
                 frames, elapsed = recorder.start(total_frames=target_frames)
             else:
-                # 按时长录制
                 frames, elapsed = recorder.start(duration_sec=duration)
             recorder.close()
 
@@ -144,16 +138,12 @@ def run_benchmark(duration=DEFAULT_DURATION, recorder_type='fast',
             print("  测试失败: {}".format(e))
             results[name] = (0, 0, 0)
 
-        # 回收内存
         gc.collect()
 
-    # 清理测试文件
+    # 清理测试目录
     print("\n清理测试文件...")
-    try:
-        uos.rmdir(test_dir)
-        print("清理完成")
-    except Exception as e:
-        print("清理失败: {}".format(e))
+    _remove_dir(test_dir)
+    print("清理完成")
 
     # 按帧率排序（降序）
     sorted_results = sorted(results.items(), key=lambda x: x[1][2], reverse=True)

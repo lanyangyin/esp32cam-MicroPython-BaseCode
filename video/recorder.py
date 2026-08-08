@@ -16,7 +16,8 @@ from flash import get_flash
 class Recorder:
     def __init__(self, framesize=camera.FRAME_XGA, quality=10,
                  flash_pin=4, flash_on_value=1,
-                 sd_mount_point="/sd", use_flash=False):
+                 sd_mount_point="/sd", use_flash=False,
+                 xclk_freq=camera.XCLK_10MHz):   # 新增
         """
         参数：
             framesize: 捕获分辨率
@@ -33,6 +34,7 @@ class Recorder:
         self.use_flash = use_flash
         self._recording = False
         self.frame_count = 0
+        self.xclk_freq = xclk_freq
 
         # SD 卡实例
         self.sd = get_sd_card(mount_point=sd_mount_point)
@@ -122,7 +124,8 @@ class Recorder:
             quality=self.quality,
             format=camera.JPEG,
             flip=1,
-            whitebalance=camera.WB_CLOUDY
+            whitebalance=camera.WB_CLOUDY,
+            xclk_freq=self.xclk_freq
         )
 
         if flash_on:
