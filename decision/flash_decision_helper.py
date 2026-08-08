@@ -9,10 +9,11 @@ from camera_driver import capture_grayscale, CameraController, reset_camera
 from config.flash_config import FLASH_GUIDE_PATH
 from utils.brightness import analyze_brightness
 from .flash import load_flash_guide, reload_flash_guide, evaluate_flash_decision
+from .retry import should_retry, get_retry_reason
 
 
 def _get_brightness_info(framesize=camera.FRAME_QVGA):
-    """捕获灰度图并分析亮度信息"""
+    """捕获灰度图并分析亮度信息（单次）"""
     reset_camera()
     gray = capture_grayscale(framesize=framesize, whitebalance=camera.WB_CLOUDY)
     if gray is None:
@@ -52,22 +53,38 @@ def _show_decision(brightness_info):
 def flash_decision_helper(framesize=camera.FRAME_QVGA):
     """
     交互式辅助：捕获亮度、显示决策，并让用户修改规则。
+    如果捕获的亮度信息满足重拍条件，会自动重试直到有效。
     """
     print("\n" + "="*60)
     print("闪光灯决策辅助工具")
     print("="*60)
 
-    # 1. 捕获并显示亮度信息
-    info = _get_brightness_info(framesize)
-    if info is None:
-        print("❌ 无法捕获灰度图，请检查摄像头")
-        return
-    _show_info(info)
+    MAX_RETRIES = 6
 
-    # 2. 显示当前决策
+    # 获取有效的亮度信息
+    info = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        info = _get_brightness_info(framesize)
+        if info is None:
+            print("❌ 无法捕获灰度图，请检查摄像头")
+            return
+        if should_retry(info):
+            reason = get_retry_reason(info)
+            print(f"⚠️ 亮度信息异常 (尝试 {attempt}/{MAX_RETRIES}): {reason}")
+            continue
+        else:
+            break
+    else:
+        if info is not None:
+            print("⚠️ 已达到最大重试次数，使用最后一次亮度信息（可能不准确）")
+        else:
+            print("❌ 无法获取有效亮度信息")
+            return
+
+    _show_info(info)
     result = _show_decision(info)
 
-    # 3. 询问是否正确
+    # 交互循环
     while True:
         print("\n这个决策正确吗？ (y/n/q=退出)")
         ans = input("> ").strip().lower()
@@ -79,11 +96,21 @@ def flash_decision_helper(framesize=camera.FRAME_QVGA):
             break
         elif ans == 'n':
             _modify_rules(info)
-            # 修改后重新加载配置，并重新显示决策
             reload_flash_guide()
-            info = _get_brightness_info(framesize)
+            # 重新获取有效的亮度信息
+            for attempt in range(1, MAX_RETRIES + 1):
+                info = _get_brightness_info(framesize)
+                if info is None:
+                    print("❌ 重新捕获失败")
+                    break
+                if should_retry(info):
+                    reason = get_retry_reason(info)
+                    print(f"⚠️ 亮度信息异常 (尝试 {attempt}/{MAX_RETRIES}): {reason}")
+                    continue
+                else:
+                    break
             if info is None:
-                print("❌ 重新捕获失败")
+                print("❌ 无法获取有效亮度信息，退出")
                 break
             _show_info(info)
             _show_decision(info)
