@@ -2,13 +2,13 @@
 app.py - ESP32-CAM 主程序：智能拍照
 """
 from config import set_debug
-from photo import smart_capture_with_analysis
+from photo import take_smart_photo
 import camera
 
 set_debug(True)
 
 def main():
-    saved_path, w, h, brightness = smart_capture_with_analysis(
+    saved_path, w, h, brightness = take_smart_photo(
         analysis_framesize=camera.FRAME_QVGA,
         photo_framesize=camera.FRAME_XGA,
         retry_analysis_limit=6,

@@ -130,6 +130,38 @@ def create_retry_guide(output_path="/sd/retry_guide.json", force=False):
         return False
 
 
+def create_quick_flash_guide(output_path="/sd/quick_flash_guide.json", force=False):
+    """创建默认的快速闪光灯决策配置文件。"""
+    print("[Setup] Creating quick flash guide config...")
+    try:
+        with open(output_path, 'r') as f:
+            existing = json.load(f)
+        if not force:
+            print("[Setup] File already exists at {}, use force=True to overwrite".format(output_path))
+            return False
+        print("[Setup] Overwriting existing file...")
+    except:
+        pass
+
+    config = {
+        "_comment": "快速闪光灯决策配置（基于平均亮度阈值）",
+        "_version": "1.0.0",
+        "_description": "当平均亮度低于 threshold 时开启闪光灯",
+        "_generated": time.time(),
+        "threshold": 30,
+        "default_action": "off"
+    }
+
+    try:
+        with open(output_path, 'w') as f:
+            json.dump(config, f)
+        print("[Setup] Quick flash guide config created at {}".format(output_path))
+        return True
+    except Exception as e:
+        print("[Setup] Failed to create quick flash guide: {}".format(e))
+        return False
+
+
 def create_all(output_dir="/sd", force=False):
     """创建所有默认配置文件。"""
     print("\n" + "="*50)
@@ -138,10 +170,12 @@ def create_all(output_dir="/sd", force=False):
 
     flash_guide_path = output_dir + "/flash_guide.json" if output_dir else "flash_guide.json"
     retry_guide_path = output_dir + "/retry_guide.json" if output_dir else "retry_guide.json"
+    quick_flash_guide_path = output_dir + "/quick_flash_guide.json" if output_dir else "quick_flash_guide.json"
 
     results = {
         'flash_guide': create_flash_guide(flash_guide_path, force),
-        'retry_guide': create_retry_guide(retry_guide_path, force)
+        'retry_guide': create_retry_guide(retry_guide_path, force),
+        'quick_flash_guide': create_quick_flash_guide(quick_flash_guide_path, force),
     }
 
     print("\n" + "="*50)
@@ -171,6 +205,11 @@ if __name__ == "__main__":
             retry_exists = True
     except:
         pass
+    try:
+        with open("/sd/quick_flash_guide.json", 'r') as f:
+            quick_flash_exists = True
+    except:
+        pass
 
     if flash_exists or retry_exists:
         print("\n⚠️  以下文件已存在:")
@@ -178,5 +217,7 @@ if __name__ == "__main__":
             print("  - /sd/flash_guide.json")
         if retry_exists:
             print("  - /sd/retry_guide.json")
+        if quick_flash_exists:
+            print("  - /sd/quick_flash_guide.json")
 
     create_all(force=True)
