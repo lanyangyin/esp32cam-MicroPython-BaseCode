@@ -7,9 +7,9 @@ import camera  # type: ignore
 from camera_driver import get_camera, capture_image
 from flash import get_flash
 from sd_card import get_sd_card
-from .brightness_analyzer import capture_and_analyze_brightness
 from .smart_capture_flow import run_smart_capture_flow
 from config import debug_log, LEVEL_INFO, LEVEL_WARNING
+from indicator import get_indicator
 
 
 def _debug_log(msg):
@@ -75,6 +75,8 @@ class PhotoCapturer:
             _debug_log("Camera not initialized, calling setup_camera with defaults")
             self.setup_camera()
 
+        indicator = get_indicator()
+        indicator.on()
         _debug_log("Flash ON")
         flash.on()
         time.sleep_ms(pre_flash_delay)
@@ -88,6 +90,7 @@ class PhotoCapturer:
         finally:
             flash.off()
             _debug_log("Flash OFF")
+            indicator.off()
 
         if buf is None:
             _debug_log("Capture failed, no image data")
@@ -121,45 +124,6 @@ class PhotoCapturer:
             cam.deinit()
         flash = get_flash()
         flash.off()
-
-    def capture_analysis(self, framesize=None, flash_off=True):
-        """
-        捕获并分析亮度（委托给 brightness_analyzer 模块）。
-
-        Args:
-            framesize (int, optional): 分析用分辨率。
-            flash_off (bool): 分析时是否关闭闪光灯。
-
-        Returns:
-            dict or None: 分析结果。
-        """
-        return capture_and_analyze_brightness(self.camera_params, framesize, flash_off)
-
-    def take_photo_with_analysis(self, filename=None, pre_flash_delay=200,
-                                 post_flash_delay=0, auto_deinit=True):
-        """
-        先分析场景亮度，再拍照（仍强制开闪光灯）。
-
-        Args:
-            同 take_photo。
-
-        Returns:
-            tuple: (文件路径, 分析结果字典)
-        """
-        _debug_log("take_photo_with_analysis")
-        debug_log("Analyzing scene...", level=LEVEL_INFO, module="PhotoCapturer")
-        analysis = self.capture_analysis(flash_off=True)
-        if analysis:
-            debug_log("Analysis result: {}".format(analysis), level=LEVEL_INFO, module="PhotoCapturer")
-        else:
-            debug_log("Analysis skipped or failed", level=LEVEL_WARNING, module="PhotoCapturer")
-        path = self.take_photo(
-            filename=filename,
-            pre_flash_delay=pre_flash_delay,
-            post_flash_delay=post_flash_delay,
-            auto_deinit=auto_deinit
-        )
-        return path, analysis
 
     def smart_capture(self, filename=None, quality=10,
                       pre_flash_delay=200, retry_analysis_limit=6,

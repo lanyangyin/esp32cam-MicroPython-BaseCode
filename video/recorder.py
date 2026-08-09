@@ -9,6 +9,7 @@ import gc
 import camera
 from config import debug_log, LEVEL_INFO, LEVEL_WARNING, LEVEL_ERROR, LEVEL_DEBUG
 from camera_driver import capture_image
+from indicator import get_indicator
 from sd_card import get_sd_card
 from flash import get_flash
 
@@ -79,6 +80,8 @@ class Recorder:
         w, h = self._get_resolution()
         debug_log("分辨率: {}x{}".format(w, h), level=LEVEL_INFO, module="Recorder")
 
+        indicator = get_indicator()
+        indicator.on()
         try:
             while self._recording:
                 # 检查是否达到帧数限制
@@ -98,6 +101,7 @@ class Recorder:
         except KeyboardInterrupt:
             debug_log("手动停止录制", level=LEVEL_WARNING, module="Recorder")
         finally:
+            indicator.off()
             self._recording = False
             elapsed = (time.ticks_ms() - start_time) / 1000.0
             fps = self.frame_count / elapsed if elapsed > 0 else 0

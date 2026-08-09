@@ -10,6 +10,7 @@ from flash import get_flash
 from sd_card import get_sd_card
 from utils import get_image_dimensions
 from config import debug_log, LEVEL_INFO, LEVEL_WARNING, LEVEL_ERROR
+from indicator import get_indicator
 
 
 def take_photo_manual(
@@ -70,6 +71,8 @@ def take_photo_manual(
         cam.deinit()
         return None, 0, 0
 
+    indicator = get_indicator()
+    indicator.on()
     # 闪光灯控制
     flash = get_flash(pin=flash_pin, on_value=flash_on_value)
     if use_flash:
@@ -88,6 +91,7 @@ def take_photo_manual(
         return None, 0, 0
     finally:
         flash.off()
+        indicator.off()
 
     if not buf:
         debug_log("捕获无数据", level=LEVEL_ERROR, module="ManualPhotoTaker")

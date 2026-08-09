@@ -8,6 +8,8 @@ import time
 import gc
 import camera
 from machine import Pin
+
+from indicator import get_indicator
 from sd_card import get_sd_card
 
 
@@ -116,6 +118,8 @@ class FastRecorder:
             end_time = None
             target_frames = total_frames
 
+        indicator = get_indicator()
+        indicator.on()
         try:
             while self._recording:
                 # 检查终止条件
@@ -152,6 +156,7 @@ class FastRecorder:
         except KeyboardInterrupt:
             pass
         finally:
+            indicator.off()
             self._recording = False
             if not self.keep_camera_open:
                 self._deinit_camera()

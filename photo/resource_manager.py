@@ -6,6 +6,7 @@ from camera_driver import get_camera, reset_camera
 from flash import get_flash, reset_flash
 from sd_card import get_sd_card, reset_sd_card
 import time
+from indicator import get_indicator
 
 
 def cleanup_resources():

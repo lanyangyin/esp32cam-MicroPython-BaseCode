@@ -17,6 +17,7 @@ from flash import get_flash
 from sd_card import get_sd_card
 from utils import get_image_dimensions
 from camera_driver import CameraController
+from indicator import get_indicator
 
 
 def take_smart_photo(
@@ -86,7 +87,10 @@ def take_smart_photo(
             gc.collect()
             time.sleep_ms(200)
 
+            indicator = get_indicator()
+            indicator.on()
             gray_buf = capture_grayscale(framesize=analysis_framesize, whitebalance=camera.WB_CLOUDY)
+            indicator.off()
             if gray_buf is None:
                 debug_log("灰度捕获失败", level=LEVEL_WARNING, module="SmartPhotoTaker")
                 continue
@@ -144,6 +148,8 @@ def take_smart_photo(
     for attempt in range(1, retry_capture_limit + 1):
         debug_log("拍照阶段 尝试 {}/{}".format(attempt, retry_capture_limit), level=LEVEL_INFO, module="SmartPhotoTaker")
 
+        indicator = get_indicator()
+        indicator.on()
         if need_flash:
             flash.on()
             time.sleep_ms(200)
@@ -159,6 +165,7 @@ def take_smart_photo(
         )
 
         flash.off()
+        indicator.off()
 
         if jpeg_data is None:
             debug_log("JPEG 捕获失败", level=LEVEL_WARNING, module="SmartPhotoTaker")

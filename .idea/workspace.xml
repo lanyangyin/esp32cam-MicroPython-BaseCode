@@ -4,11 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="启动">
-      <change afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/esp32cam-MicroPython-BaseCode.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/esp32cam-MicroPython-BaseCode.iml" afterDir="false" />
+    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="LICENSE">
+      <change afterPath="$PROJECT_DIR$/indicator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/brightness_analyzer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/downgrade_capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/downgrade_capture.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/manual_photo_taker.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/manual_photo_taker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/photo_capturer.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/photo_capturer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/resource_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/resource_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/smart_capture_flow.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/smart_capture_flow.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photo/smart_photo_taker.py" beforeDir="false" afterPath="$PROJECT_DIR$/photo/smart_photo_taker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/recorder.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/recorder_fast.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_fast.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/recorder_frames.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_frames.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/recorder_time.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_time.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video/recorder_timestamp.py" beforeDir="false" afterPath="$PROJECT_DIR$/video/recorder_timestamp.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,61 +51,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="1.4971037493060889E-234" />
+      <entry key="S5" value="2.951894006208087E-94" />
+      <entry key="S10" value="1.718107681784843E-47" />
+      <entry key="S30" value="2.580378792363202E-16" />
+      <entry key="S60" value="1.6067015746891675E-8" />
+      <entry key="M2" value="1.3120075623042E-4" />
+      <entry key="M5" value="0.0493712125225329" />
+      <entry key="M10" value="0.5580337340307624" />
+      <entry key="M15" value="1.3537433033391042" />
+      <entry key="M30" value="3.501923532898233" />
+      <entry key="H1" value="6.365384611550792" />
+      <entry key="H2" value="10.120028880740515" />
+      <entry key="H4" value="14.746731423705423" />
+      <entry key="D1" value="40.83456231744396" />
+      <entry key="W1" value="74.49921127924938" />
+    </decayedCancelled>
+    <decayedSelected>
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
       <entry key="S2" value="1.0" />
       <entry key="S5" value="1.0" />
       <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0000000091812014" />
-      <entry key="S60" value="1.0002152904545276" />
-      <entry key="M2" value="1.0351790480351766" />
-      <entry key="M5" value="1.7877444865240784" />
-      <entry key="M10" value="3.357965891885719" />
-      <entry key="M15" value="4.478647404693227" />
-      <entry key="M30" value="6.369596687373698" />
-      <entry key="H1" value="8.584742790918256" />
-      <entry key="H2" value="11.75257606802403" />
-      <entry key="H4" value="15.891739234103602" />
-      <entry key="D1" value="41.346667814536644" />
-      <entry key="W1" value="74.63196989770195" />
-    </decayedCancelled>
-    <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="6.312526629915052E-143" />
-      <entry key="S5" value="1.3185035070395496E-57" />
-      <entry key="S10" value="3.631120360218799E-29" />
-      <entry key="S30" value="3.3114145158364514E-10" />
-      <entry key="S60" value="1.819729242452418E-5" />
-      <entry key="M2" value="0.004265828456996857" />
-      <entry key="M5" value="0.11272009725771447" />
-      <entry key="M10" value="0.33573813792558305" />
-      <entry key="M15" value="0.48305930556882687" />
-      <entry key="M30" value="0.6950708963280008" />
-      <entry key="H1" value="0.8431274912571253" />
-      <entry key="H2" value="1.0534173627992762" />
-      <entry key="H4" value="1.610266705631286" />
-      <entry key="D1" value="6.22448989686226" />
-      <entry key="W1" value="11.422089584022077" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0000000000002922" />
+      <entry key="M2" value="1.000000540660015" />
+      <entry key="M5" value="1.003112932479569" />
+      <entry key="M10" value="1.055793659851005" />
+      <entry key="M15" value="1.1460124544174135" />
+      <entry key="M30" value="1.3821411697397927" />
+      <entry key="H1" value="1.6251591793875368" />
+      <entry key="H2" value="1.9070874396641588" />
+      <entry key="H4" value="2.4942461790160966" />
+      <entry key="D1" value="7.147395522363227" />
+      <entry key="W1" value="12.401771470550132" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9138314502294005" />
-      <entry key="MS500" value="0.9821395952633915" />
-      <entry key="S2" value="0.995504677670617" />
-      <entry key="S5" value="0.9981994402866303" />
-      <entry key="S10" value="0.9990993145261537" />
-      <entry key="S30" value="0.9996996908246351" />
-      <entry key="S60" value="1.0000829742254036" />
-      <entry key="M2" value="1.0393307875763904" />
-      <entry key="M5" value="1.9000251433342104" />
-      <entry key="M10" value="3.6930741388845925" />
-      <entry key="M15" value="4.9611028276257985" />
-      <entry key="M30" value="7.064230378042633" />
-      <entry key="H1" value="9.427598178821464" />
-      <entry key="H2" value="12.805788985165734" />
-      <entry key="H4" value="17.501780676807563" />
-      <entry key="D1" value="47.570891155444414" />
-      <entry key="W1" value="86.05398054874804" />
+      <entry key="MS100" value="4.793930666448859E-11" />
+      <entry key="MS500" value="0.00863253503749931" />
+      <entry key="S2" value="0.3048137735190758" />
+      <entry key="S5" value="0.6217471954827811" />
+      <entry key="S10" value="0.7885094771039731" />
+      <entry key="S30" value="0.9238517925931556" />
+      <entry key="S60" value="0.9611721091851366" />
+      <entry key="M2" value="0.9805255728776208" />
+      <entry key="M5" value="1.0445829308388221" />
+      <entry key="M10" value="1.609770367585319" />
+      <entry key="M15" value="2.496936585963587" />
+      <entry key="M30" value="4.882505143106788" />
+      <entry key="H1" value="7.989682220332729" />
+      <entry key="H2" value="12.026610313613208" />
+      <entry key="H4" value="17.24060357617733" />
+      <entry key="D1" value="47.981667084444325" />
+      <entry key="W1" value="86.9009000284898" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -579,7 +590,23 @@
       <option name="project" value="LOCAL" />
       <updated>1786234853299</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="WebREPL">
+      <option name="closed" value="true" />
+      <created>1786236820657</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1786236820657</updated>
+    </task>
+    <task id="LOCAL-00047" summary="LICENSE">
+      <option name="closed" value="true" />
+      <created>1786236834472</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1786236834472</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -609,6 +636,8 @@
     <MESSAGE value="拍照高级脚本" />
     <MESSAGE value="快速闪光灯决策" />
     <MESSAGE value="启动" />
-    <option name="LAST_COMMIT_MESSAGE" value="启动" />
+    <MESSAGE value="WebREPL" />
+    <MESSAGE value="LICENSE" />
+    <option name="LAST_COMMIT_MESSAGE" value="LICENSE" />
   </component>
 </project>

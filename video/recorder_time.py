@@ -8,6 +8,8 @@ import time
 import gc
 import uos
 import camera
+
+from indicator import get_indicator
 from sd_card import get_sd_card
 
 
@@ -122,6 +124,8 @@ class RecorderTime:
         last_gc_time = start_time
         GC_INTERVAL = 14000  # 14 秒
 
+        indicator = get_indicator()
+        indicator.on()
         try:
             while self._recording:
                 if time.ticks_ms() >= end_time:
@@ -146,6 +150,7 @@ class RecorderTime:
         except KeyboardInterrupt:
             pass
         finally:
+            indicator.off()
             self._recording = False
             # 彻底释放摄像头
             self._deinit_camera()

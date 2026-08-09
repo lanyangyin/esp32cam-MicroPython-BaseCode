@@ -11,6 +11,7 @@ from camera_driver.resolutions import get_name_by_value
 from flash import get_flash
 from sd_card import get_sd_card
 from utils import get_image_dimensions
+from indicator import get_indicator
 
 
 def take_photo_with_downgrade(
@@ -95,6 +96,8 @@ def take_photo_with_downgrade(
         return None, 0, 0, 0, 0, chosen_framesize
 
     # ---------- 3. 闪光灯预闪 ----------
+    indicator = get_indicator()
+    indicator.on()
     flash = get_flash(pin=flash_pin, on_value=flash_on_value)
     flash.on()
     time.sleep_ms(200)
@@ -109,6 +112,7 @@ def take_photo_with_downgrade(
         return None, 0, 0, set_w, set_h, chosen_framesize
     finally:
         flash.off()
+        indicator.off()
 
     if not buf:
         debug_log("❌ 捕获失败（无数据）", level=LEVEL_ERROR, module="DowngradeCapture")

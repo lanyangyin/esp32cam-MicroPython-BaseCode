@@ -8,6 +8,8 @@ import time
 import gc
 import uos
 import camera
+
+from indicator import get_indicator
 from sd_card import get_sd_card
 
 
@@ -110,6 +112,8 @@ class RecorderFrames:
         frame_count = 0
         start_time = time.ticks_ms()
 
+        indicator = get_indicator()
+        indicator.on()
         try:
             while self._recording and frame_count < total_frames:
                 buf = camera.capture()
@@ -129,6 +133,7 @@ class RecorderFrames:
         except KeyboardInterrupt:
             pass
         finally:
+            indicator.off()
             self._recording = False
             self._deinit_camera()
 
