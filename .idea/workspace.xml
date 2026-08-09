@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="GPIO1（TXD）按键拍照">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/boot.py" beforeDir="false" afterPath="$PROJECT_DIR$/boot.py" afterDir="false" />
-    </list>
+    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="启动" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -41,58 +38,58 @@
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
       <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0000000000658007" />
-      <entry key="S60" value="1.0000180805345844" />
-      <entry key="M2" value="1.0095008622324562" />
-      <entry key="M5" value="1.4103789187476892" />
-      <entry key="M10" value="2.480108144053795" />
-      <entry key="M15" value="3.3270327234544537" />
-      <entry key="M30" value="5.099003163874624" />
-      <entry key="H1" value="7.910429271955237" />
-      <entry key="H2" value="12.292915977601174" />
-      <entry key="H4" value="17.991658994526464" />
-      <entry key="D1" value="46.0345338095356" />
-      <entry key="W1" value="81.0290577439928" />
+      <entry key="S5" value="1.0000000207372524" />
+      <entry key="S10" value="1.000144004348715" />
+      <entry key="S30" value="1.0524153555146163" />
+      <entry key="S60" value="1.2289481402492677" />
+      <entry key="M2" value="1.4830269118669341" />
+      <entry key="M5" value="2.050223329525752" />
+      <entry key="M10" value="3.1401467070399582" />
+      <entry key="M15" value="4.015590433951491" />
+      <entry key="M30" value="5.854482319745954" />
+      <entry key="H1" value="8.718428278537917" />
+      <entry key="H2" value="13.142813471805955" />
+      <entry key="H4" value="18.881478150865654" />
+      <entry key="D1" value="46.987427584908836" />
+      <entry key="W1" value="82.01720748516438" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
-      <entry key="S10" value="9.155937161635284E-164" />
-      <entry key="S30" value="4.507138819022032E-55" />
-      <entry key="S60" value="6.713522785412042E-28" />
-      <entry key="M2" value="2.5910480591603663E-14" />
-      <entry key="M5" value="3.6875670267014493E-6" />
-      <entry key="M10" value="0.0020242963704046927" />
-      <entry key="M15" value="0.01768693997282908" />
-      <entry key="M30" value="0.171705452231265" />
-      <entry key="H1" value="0.5728115235786696" />
-      <entry key="H2" value="1.1322140148544293" />
-      <entry key="H4" value="1.9218446357840258" />
-      <entry key="D1" value="6.843490086228463" />
-      <entry key="W1" value="12.325030004960484" />
+      <entry key="S10" value="1.3184947678377395E-167" />
+      <entry key="S30" value="2.3624328353722247E-56" />
+      <entry key="S60" value="1.5370207660840519E-28" />
+      <entry key="M2" value="1.2397670862284548E-14" />
+      <entry key="M5" value="2.7459066986554953E-6" />
+      <entry key="M10" value="0.0017468154449560862" />
+      <entry key="M15" value="0.01603127213385456" />
+      <entry key="M30" value="0.16347137965438507" />
+      <entry key="H1" value="0.5589083107710024" />
+      <entry key="H2" value="1.1183891289578873" />
+      <entry key="H4" value="1.910075267355016" />
+      <entry key="D1" value="6.8364872786717115" />
+      <entry key="W1" value="12.32322750595959" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.757759532702652E-7" />
-      <entry key="MS500" value="0.048765342510856464" />
-      <entry key="S2" value="0.4699242097087213" />
-      <entry key="S5" value="0.7392836950151944" />
-      <entry key="S10" value="0.8598160820868579" />
-      <entry key="S30" value="0.9509007457828499" />
-      <entry key="S60" value="0.9751594773037717" />
-      <entry key="M2" value="0.9969930685566893" />
-      <entry key="M5" value="1.4053559292409894" />
-      <entry key="M10" value="2.479601950595491" />
-      <entry key="M15" value="3.342990391528801" />
-      <entry key="M30" value="5.269668932145212" />
-      <entry key="H1" value="8.48251305383089" />
-      <entry key="H2" value="13.42461721236189" />
-      <entry key="H4" value="19.913109160220998" />
-      <entry key="D1" value="52.877727776313606" />
-      <entry key="W1" value="93.35400300674789" />
+      <entry key="MS100" value="0.9659363289248456" />
+      <entry key="MS500" value="0.9930924954370359" />
+      <entry key="S2" value="0.9982686325973925" />
+      <entry key="S5" value="0.999307108321165" />
+      <entry key="S10" value="0.9997773037143249" />
+      <entry key="S30" value="1.0497262827886504" />
+      <entry key="S60" value="1.2231991515739857" />
+      <entry key="M2" value="1.4770132903954125" />
+      <entry key="M5" value="2.046471462608549" />
+      <entry key="M10" value="3.1397041239652776" />
+      <entry key="M15" value="4.030050459872575" />
+      <entry key="M30" value="6.016961947699272" />
+      <entry key="H1" value="9.276625548561546" />
+      <entry key="H2" value="14.260695600613333" />
+      <entry key="H4" value="20.791161123188264" />
+      <entry key="D1" value="53.82361900703056" />
+      <entry key="W1" value="94.34035025558148" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -216,14 +213,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749768217230</updated>
-    </task>
-    <task id="LOCAL-00003" summary="获取亮度信息">
-      <option name="closed" value="true" />
-      <created>1786026324487</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1786026324487</updated>
     </task>
     <task id="LOCAL-00004" summary="获取亮度信息">
       <option name="closed" value="true" />
@@ -609,7 +598,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786241044613</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="启动">
+      <option name="closed" value="true" />
+      <created>1786242240255</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1786242240255</updated>
+    </task>
+    <option name="localTasksCounter" value="53" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -638,11 +635,11 @@
     <MESSAGE value="视频模块帧率检测" />
     <MESSAGE value="拍照高级脚本" />
     <MESSAGE value="快速闪光灯决策" />
-    <MESSAGE value="启动" />
     <MESSAGE value="WebREPL" />
     <MESSAGE value="LICENSE" />
     <MESSAGE value="指示灯" />
     <MESSAGE value="GPIO1（TXD）按键拍照" />
-    <option name="LAST_COMMIT_MESSAGE" value="GPIO1（TXD）按键拍照" />
+    <MESSAGE value="启动" />
+    <option name="LAST_COMMIT_MESSAGE" value="启动" />
   </component>
 </project>
