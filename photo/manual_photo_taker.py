@@ -1,6 +1,6 @@
 # photo/manual_photo_taker.py
 """
-手动控制闪光灯的拍照功能（无自动决策）。
+手动控制闪光灯的拍照功能（无自动决策），支持黑照重试。
 """
 import time
 import gc
@@ -11,6 +11,7 @@ from sd_card import get_sd_card
 from utils import get_image_dimensions
 from config import debug_log, LEVEL_INFO, LEVEL_WARNING, LEVEL_ERROR
 from indicator import get_indicator
+from decision.black_photo import is_black_photo  # 新增导入
 
 
 def take_photo_manual(
@@ -24,9 +25,10 @@ def take_photo_manual(
     flip=1,
     fb_location=camera.PSRAM,
     pre_flash_delay=200,
+    retry_capture_limit=6,  # 新增重试次数参数
 ):
     """
-    手动控制闪光灯拍照（不进行亮度分析或自动决策）。
+    手动控制闪光灯拍照（不进行亮度分析或自动决策），支持黑照重试。
 
     Args:
         use_flash (bool): True 开启闪光灯，False 关闭。
@@ -39,6 +41,7 @@ def take_photo_manual(
         flip (int): 上下翻转。
         fb_location (int): 帧缓冲区位置。
         pre_flash_delay (int): 闪光灯开启后到拍摄的延时（毫秒）。
+        retry_capture_limit (int): 黑照重试最大次数。
 
     Returns:
         tuple: (saved_path, actual_width, actual_height)
@@ -71,52 +74,73 @@ def take_photo_manual(
         cam.deinit()
         return None, 0, 0
 
+    # 获取分辨率（用于黑照检测）
+    photo_w, photo_h = CameraController.get_resolution(framesize)
+    if photo_w is None or photo_h is None:
+        photo_w, photo_h = 0, 0
+
     indicator = get_indicator()
-    indicator.on()
-    # 闪光灯控制
     flash = get_flash(pin=flash_pin, on_value=flash_on_value)
-    if use_flash:
-        flash.on()
-        time.sleep_ms(pre_flash_delay)
-    else:
-        flash.off()
 
-    # 捕获
-    try:
-        buf = cam.capture()
-    except Exception as e:
-        debug_log("捕获异常: {}".format(e), level=LEVEL_ERROR, module="ManualPhotoTaker")
-        flash.off()
+    # 拍照循环（含黑照重试）
+    for attempt in range(1, retry_capture_limit + 1):
+        debug_log("拍照尝试 {}/{}".format(attempt, retry_capture_limit), level=LEVEL_INFO, module="ManualPhotoTaker")
+        print("  尝试 {}/{}".format(attempt, retry_capture_limit))
+
+        indicator.on()
+        # 闪光灯控制
+        if use_flash:
+            flash.on()
+            time.sleep_ms(pre_flash_delay)
+        else:
+            flash.off()
+
+        # 捕获
+        try:
+            buf = cam.capture()
+        except Exception as e:
+            debug_log("捕获异常: {}".format(e), level=LEVEL_ERROR, module="ManualPhotoTaker")
+            flash.off()
+            indicator.off()
+            cam.deinit()
+            return None, 0, 0
+        finally:
+            flash.off()
+            indicator.off()
+
+        if not buf:
+            debug_log("捕获无数据", level=LEVEL_ERROR, module="ManualPhotoTaker")
+            continue
+
+        # 黑照检测
+        if is_black_photo(buf, framesize):
+            debug_log("检测到黑照（尺寸过小），重试", level=LEVEL_WARNING, module="ManualPhotoTaker")
+            continue
+
+        # 照片有效，保存
+        filename = "/sd/photo_manual_{}.jpg".format(int(time.time()))
+        saved_path = sd.save_file(buf, filename)
         cam.deinit()
-        return None, 0, 0
-    finally:
-        flash.off()
-        indicator.off()
 
-    if not buf:
-        debug_log("捕获无数据", level=LEVEL_ERROR, module="ManualPhotoTaker")
-        cam.deinit()
-        return None, 0, 0
+        # 解析尺寸
+        w, h = get_image_dimensions(buf)
+        if w == 0 or h == 0:
+            w, h = photo_w, photo_h
 
-    # 保存
-    filename = "/sd/photo_manual_{}.jpg".format(int(time.time()))
-    saved_path = sd.save_file(buf, filename)
+        if saved_path:
+            debug_log("✅ 照片保存成功: {} ({}×{}, {} bytes)".format(
+                saved_path, w, h, len(buf)), level=LEVEL_INFO, module="ManualPhotoTaker")
+            print("  保存至: {} ({}x{})".format(saved_path, w, h))
+            return saved_path, w, h
+        else:
+            debug_log("保存失败", level=LEVEL_ERROR, module="ManualPhotoTaker")
+            print("  保存失败")
+            return None, 0, 0
+
+    debug_log("拍照阶段全部失败，无法保存照片", level=LEVEL_ERROR, module="ManualPhotoTaker")
+    print("  所有尝试均失败")
     cam.deinit()
-
-    # 解析尺寸
-    w, h = get_image_dimensions(buf)
-    if w == 0 or h == 0:
-        w, h = CameraController.get_resolution(framesize)
-
-    if saved_path:
-        debug_log("✅ 照片保存成功: {} ({}×{}, {} bytes)".format(
-            saved_path, w, h, len(buf)), level=LEVEL_INFO, module="ManualPhotoTaker")
-        print("  保存至: {} ({}x{})".format(saved_path, w, h))
-    else:
-        debug_log("保存失败", level=LEVEL_ERROR, module="ManualPhotoTaker")
-        print("  保存失败")
-
-    return saved_path, w, h
+    return None, 0, 0
 
 
 # ---------- 测试入口 ----------

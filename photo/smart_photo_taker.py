@@ -55,7 +55,10 @@ def take_smart_photo(
         gc.collect()
         time.sleep_ms(200)
 
+        indicator = get_indicator()
+        indicator.on()
         gray_buf = capture_grayscale(framesize=analysis_framesize, whitebalance=camera.WB_CLOUDY)
+        indicator.off()
         if gray_buf is None:
             debug_log("快速亮度估计失败（灰度捕获失败）", level=LEVEL_ERROR, module="SmartPhotoTaker")
             return None, 0, 0, None
