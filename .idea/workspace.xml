@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="启动" />
+    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="固件">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -38,58 +40,58 @@
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
       <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0000000207372524" />
-      <entry key="S10" value="1.000144004348715" />
-      <entry key="S30" value="1.0524153555146163" />
-      <entry key="S60" value="1.2289481402492677" />
-      <entry key="M2" value="1.4830269118669341" />
-      <entry key="M5" value="2.050223329525752" />
-      <entry key="M10" value="3.1401467070399582" />
-      <entry key="M15" value="4.015590433951491" />
-      <entry key="M30" value="5.854482319745954" />
-      <entry key="H1" value="8.718428278537917" />
-      <entry key="H2" value="13.142813471805955" />
-      <entry key="H4" value="18.881478150865654" />
-      <entry key="D1" value="46.987427584908836" />
-      <entry key="W1" value="82.01720748516438" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.000000000006482" />
+      <entry key="S30" value="1.0001962169831808" />
+      <entry key="S60" value="1.0167806301579827" />
+      <entry key="M2" value="1.173295141325076" />
+      <entry key="M5" value="1.8686725796218013" />
+      <entry key="M10" value="3.0439836127493702" />
+      <entry key="M15" value="4.016021211492563" />
+      <entry key="M30" value="6.073772486593448" />
+      <entry key="H1" value="9.116325286052675" />
+      <entry key="H2" value="13.680867561917248" />
+      <entry key="H4" value="19.546685245767524" />
+      <entry key="D1" value="47.847532513606524" />
+      <entry key="W1" value="82.98227877864832" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
-      <entry key="S10" value="1.3184947678377395E-167" />
-      <entry key="S30" value="2.3624328353722247E-56" />
-      <entry key="S60" value="1.5370207660840519E-28" />
-      <entry key="M2" value="1.2397670862284548E-14" />
-      <entry key="M5" value="2.7459066986554953E-6" />
-      <entry key="M10" value="0.0017468154449560862" />
-      <entry key="M15" value="0.01603127213385456" />
-      <entry key="M30" value="0.16347137965438507" />
-      <entry key="H1" value="0.5589083107710024" />
-      <entry key="H2" value="1.1183891289578873" />
-      <entry key="H4" value="1.910075267355016" />
-      <entry key="D1" value="6.8364872786717115" />
-      <entry key="W1" value="12.32322750595959" />
+      <entry key="S10" value="8.545287225709368E-179" />
+      <entry key="S30" value="4.4046244811517356E-60" />
+      <entry key="S60" value="2.0987197242972466E-30" />
+      <entry key="M2" value="1.4486966534388495E-15" />
+      <entry key="M5" value="1.1634312325738722E-6" />
+      <entry key="M10" value="0.0011370367301575587" />
+      <entry key="M15" value="0.012040734133171081" />
+      <entry key="M30" value="0.14167206306840158" />
+      <entry key="H1" value="0.520309568464605" />
+      <entry key="H2" value="1.0790797919658972" />
+      <entry key="H4" value="1.8762071748993119" />
+      <entry key="D1" value="6.816133091935719" />
+      <entry key="W1" value="12.317979407297317" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9659363289248456" />
-      <entry key="MS500" value="0.9930924954370359" />
-      <entry key="S2" value="0.9982686325973925" />
-      <entry key="S5" value="0.999307108321165" />
-      <entry key="S10" value="0.9997773037143249" />
-      <entry key="S30" value="1.0497262827886504" />
-      <entry key="S60" value="1.2231991515739857" />
-      <entry key="M2" value="1.4770132903954125" />
-      <entry key="M5" value="2.046471462608549" />
-      <entry key="M10" value="3.1397041239652776" />
-      <entry key="M15" value="4.030050459872575" />
-      <entry key="M30" value="6.016961947699272" />
-      <entry key="H1" value="9.276625548561546" />
-      <entry key="H2" value="14.260695600613333" />
-      <entry key="H4" value="20.791161123188264" />
-      <entry key="D1" value="53.82361900703056" />
-      <entry key="W1" value="94.34035025558148" />
+      <entry key="MS100" value="0.9592641193252643" />
+      <entry key="MS500" value="0.9917167307382933" />
+      <entry key="S2" value="0.9979227189990506" />
+      <entry key="S5" value="0.999168569213607" />
+      <entry key="S10" value="0.9995841981676986" />
+      <entry key="S30" value="1.0000570957930481" />
+      <entry key="S60" value="1.0166328184737878" />
+      <entry key="M2" value="1.1725577789215218" />
+      <entry key="M5" value="1.8670690636538478" />
+      <entry key="M10" value="3.0436885952227106" />
+      <entry key="M15" value="4.026877196356732" />
+      <entry key="M30" value="6.214582740038112" />
+      <entry key="H1" value="9.6359717636791" />
+      <entry key="H2" value="14.759457596240244" />
+      <entry key="H4" value="21.42250679271889" />
+      <entry key="D1" value="54.66337058170698" />
+      <entry key="W1" value="95.30017347961306" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo"><![CDATA[{
@@ -115,7 +117,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "D:/Documents/ESP/ESP32-CAM/esp32cam-MicroPython-BaseCode",
+    "last_opened_file_path": "D:/Documents/ESP/ESP32-CAM/esp32cam-MicroPython-BaseCode/固件",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.jshint": "true",
     "node.js.detected.package.tslint": "true",
@@ -133,6 +135,7 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\固件" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\old" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\photo" />
@@ -213,14 +216,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749768217230</updated>
-    </task>
-    <task id="LOCAL-00004" summary="获取亮度信息">
-      <option name="closed" value="true" />
-      <created>1786027561481</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1786027561481</updated>
     </task>
     <task id="LOCAL-00005" summary="获取亮度信息">
       <option name="closed" value="true" />
@@ -606,7 +601,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786242240255</updated>
     </task>
-    <option name="localTasksCounter" value="53" />
+    <task id="LOCAL-00053" summary="固件">
+      <option name="closed" value="true" />
+      <created>1786242616315</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1786242616315</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -640,6 +643,7 @@
     <MESSAGE value="指示灯" />
     <MESSAGE value="GPIO1（TXD）按键拍照" />
     <MESSAGE value="启动" />
-    <option name="LAST_COMMIT_MESSAGE" value="启动" />
+    <MESSAGE value="固件" />
+    <option name="LAST_COMMIT_MESSAGE" value="固件" />
   </component>
 </project>
