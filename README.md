@@ -1,9 +1,13 @@
-![esp32cam.jpg](images/esp32cam.jpg)
+<p align="center">
+  <img src="images/esp32cam.jpg" alt="esp32cam" width="30%" />
+</p>
+
+
 # ESP32-CAM 摄像系统基础代码
 
 基于 MicroPython 的 ESP32-CAM 多功能拍照与图像分析工具包。提供模块化的摄像头控制、智能闪光灯决策、快速连拍、亮度分析、视频录制基准测试等功能，适用于物联网、智能家居、安防监控等场景。
 
----
+---shuipjuzhong
 
 ## 🚀 特性
 
