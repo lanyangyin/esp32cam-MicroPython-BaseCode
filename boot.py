@@ -20,12 +20,18 @@ boot.py - ESP32 启动初始化脚本
     无需手动调用，每次启动自动执行。
 """
 # This file is executed on every boot (including wake-boot from deepsleep)
-#import esp
-#esp.osdebug(None)
-#import webrepl
-#webrepl.start()
+import esp
+esp.osdebug(None)
+import webrepl
+webrepl.start(password="0000")
 import machine, uos
 from machine import Pin
+import network
+
+ap = network.WLAN(network.AP_IF)
+ap.active(True)
+ap.config(essid="ESP32-CAM-AP-{}".format(':'.join(['{:02x}'.format(b) for b in ap.config('mac')])), password="00000000", authmode=network.AUTH_WPA_WPA2_PSK)
+print("AP IP:", ap.ifconfig()[0])   # 通常为 192.168.4.1
 
 # 关闪光灯
 led = Pin(4, Pin.OUT)
