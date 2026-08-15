@@ -1,15 +1,14 @@
 # decision/flash.py
 """闪光灯决策"""
 import json
-from .engine import evaluate_condition
 from config import debug_log
+from config.camera_model import get_config_path
+from .engine import evaluate_condition
 
-
-def _debug_log(msg):
-    debug_log(msg, module="FlashDecision")
-
-DEFAULT_GUIDE_PATH = "/sd/flash_guide.json"
 _cached_guide = None
+
+def _get_flash_guide_path():
+    return get_config_path("flash_guide.json")
 
 def _get_conservative_default():
     return {
@@ -29,27 +28,28 @@ def _get_conservative_default():
         }
     }
 
-def load_flash_guide(guide_path=DEFAULT_GUIDE_PATH):
+def load_flash_guide():
     global _cached_guide
     if _cached_guide is not None:
         return _cached_guide
+    path = _get_flash_guide_path()
     try:
-        with open(guide_path, 'r') as f:
+        with open(path, 'r') as f:
             _cached_guide = json.load(f)
-        _debug_log("Loaded flash guide from {}".format(guide_path))
+        debug_log("Loaded flash guide from {}".format(path), module="FlashDecision")
         return _cached_guide
     except Exception as e:
-        _debug_log("Failed to load flash guide: {}, using conservative default".format(e))
+        debug_log("Failed to load flash guide: {}, using conservative default".format(e), module="FlashDecision")
         _cached_guide = _get_conservative_default()
         return _cached_guide
 
-def reload_flash_guide(guide_path=DEFAULT_GUIDE_PATH):
+def reload_flash_guide():
     global _cached_guide
     _cached_guide = None
-    return load_flash_guide(guide_path)
+    return load_flash_guide()
 
-def evaluate_flash_decision(brightness_info, guide_path=DEFAULT_GUIDE_PATH):
-    guide = load_flash_guide(guide_path)
+def evaluate_flash_decision(brightness_info):
+    guide = load_flash_guide()
     flash_conditions = guide.get('flash_conditions', [])
     default_action = guide.get('default_action', {})
     result = {
@@ -71,22 +71,22 @@ def evaluate_flash_decision(brightness_info, guide_path=DEFAULT_GUIDE_PATH):
                 result['scene_profile'] = 'dark'
             else:
                 result['scene_profile'] = 'backlit'
-            _debug_log("匹配规则: '{}' -> {}".format(result['matched_rule'], result['reason']))
-            _debug_log("场景分类: {}, 平均亮度: {:.1f}".format(result['scene_profile'], avg))
+            debug_log("匹配规则: '{}' -> {}".format(result['matched_rule'], result['reason']), module="FlashDecision")
+            debug_log("场景分类: {}, 平均亮度: {:.1f}".format(result['scene_profile'], avg), module="FlashDecision")
             break
     if not result['flash']:
         result['flash'] = default_action.get('flash') == 'on'
-        _debug_log("无匹配规则，使用默认动作: flash={}".format('on' if result['flash'] else 'off'))
+        debug_log("无匹配规则，使用默认动作: flash={}".format('on' if result['flash'] else 'off'), module="FlashDecision")
     else:
-        _debug_log("闪光灯决策结果: {}".format('开启' if result['flash'] else '关闭'))
+        debug_log("闪光灯决策结果: {}".format('开启' if result['flash'] else '关闭'), module="FlashDecision")
     return result
 
-def should_use_flash(brightness_info, guide_path=DEFAULT_GUIDE_PATH):
-    return evaluate_flash_decision(brightness_info, guide_path)['flash']
+def should_use_flash(brightness_info):
+    return evaluate_flash_decision(brightness_info)['flash']
 
-def get_recommended_settings(brightness_info, guide_path=DEFAULT_GUIDE_PATH):
-    result = evaluate_flash_decision(brightness_info, guide_path)
+def get_recommended_settings(brightness_info):
+    result = evaluate_flash_decision(brightness_info)
     profile_name = result.get('scene_profile', 'normal')
-    guide = load_flash_guide(guide_path)
+    guide = load_flash_guide()
     profiles = guide.get('camera_settings', {}).get('scene_profiles', {})
     return profiles.get(profile_name, profiles.get('normal', {}))

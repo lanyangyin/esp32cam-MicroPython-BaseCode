@@ -1,0 +1,1 @@
+{"retry_conditions": [{"id": "invalid_brightness", "action": "retry_analysis", "condition": "avg < 3 and dynamic < 2.5 and center < 3", "description": "亮度信息异常（平均<3，动态<2.5，中心<3），建议重新获取亮度信息"}], "default_action": {"retry": false}, "_description": "根据环境亮度信息自动判断是否需要重新获取亮度信息", "_comment": "重拍决策规则配置文件（重新获取亮度信息）", "_version": "1.0.0", "_generated": 7477}

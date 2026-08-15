@@ -4,10 +4,6 @@ from config import get_retry_guide_config
 from .engine import evaluate_condition
 from config import debug_log
 
-
-def _debug_log(msg):
-    debug_log(msg, module="RetryDecision")
-
 _cached_guide = None
 
 def load_retry_guide():
@@ -16,10 +12,10 @@ def load_retry_guide():
         return _cached_guide
     try:
         _cached_guide = get_retry_guide_config()
-        _debug_log("Loaded retry guide via config module")
+        debug_log("Loaded retry guide via config module", module="RetryDecision")
         return _cached_guide
     except Exception as e:
-        _debug_log("Failed to load via config: {}, using minimal default".format(e))
+        debug_log("Failed to load via config: {}, using minimal default".format(e), module="RetryDecision")
         _cached_guide = {
             "retry_conditions": [
                 {
@@ -55,7 +51,7 @@ def evaluate_retry_decision(brightness_info):
             result['reason'] = cond.get('description', '')
             result['matched_rule'] = cond.get('id', '')
             result['action'] = cond.get('action', '')
-            _debug_log("Retry condition matched: {}".format(cond.get('id')))
+            debug_log("Retry condition matched: {}".format(cond.get('id')), module="RetryDecision")
             break
     if not result['retry']:
         result['retry'] = default_action.get('retry', False)

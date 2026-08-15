@@ -1,34 +1,18 @@
 """
 setup_default_configs.py - 默认配置文件生成脚本
-
-本脚本用于生成项目所需的默认配置文件，包括：
-    1. flash_guide.json - 闪光灯决策规则
-    2. retry_guide.json - 重拍决策规则（重新获取亮度信息）
-
-本脚本不会被其他模块调用，仅在首次部署或需要重置配置时手动执行。
-
-用法：
-    在 REPL 中执行：
-    import setup_default_configs
-    setup_default_configs.create_all()
-
-    或单独创建：
-    setup_default_configs.create_flash_guide()
-    setup_default_configs.create_retry_guide()
 """
 import json
 import time
+from config.camera_model import get_config_path, CAMERA_MODEL, get_camera_model
 
-
-def create_flash_guide(output_path="/sd/flash_guide.json", force=False):
-    """创建默认的闪光灯决策配置文件。"""
-    print("[Setup] Creating flash guide config...")
-
+def create_flash_guide(force=False):
+    path = get_config_path("flash_guide.json")
+    print("[Setup] Creating flash guide config at {}".format(path))
     try:
-        with open(output_path, 'r') as f:
+        with open(path, 'r') as f:
             existing = json.load(f)
         if not force:
-            print("[Setup] File already exists at {}, use force=True to overwrite".format(output_path))
+            print("[Setup] File already exists, use force=True to overwrite")
             return False
         print("[Setup] Overwriting existing file...")
     except:
@@ -77,25 +61,22 @@ def create_flash_guide(output_path="/sd/flash_guide.json", force=False):
     }
 
     try:
-        with open(output_path, 'w') as f:
+        with open(path, 'w') as f:
             json.dump(config, f)
-        print("[Setup] Flash guide config created at {}".format(output_path))
-        print("[Setup] Flash conditions: {} rules".format(len(config['flash_conditions'])))
+        print("[Setup] Flash guide config created")
         return True
     except Exception as e:
         print("[Setup] Failed to create flash guide: {}".format(e))
         return False
 
-
-def create_retry_guide(output_path="/sd/retry_guide.json", force=False):
-    """创建默认的重拍决策配置文件（仅保留亮度信息异常检测）。"""
-    print("[Setup] Creating retry guide config...")
-
+def create_retry_guide(force=False):
+    path = get_config_path("retry_guide.json")
+    print("[Setup] Creating retry guide config at {}".format(path))
     try:
-        with open(output_path, 'r') as f:
+        with open(path, 'r') as f:
             existing = json.load(f)
         if not force:
-            print("[Setup] File already exists at {}, use force=True to overwrite".format(output_path))
+            print("[Setup] File already exists, use force=True to overwrite")
             return False
         print("[Setup] Overwriting existing file...")
     except:
@@ -106,7 +87,6 @@ def create_retry_guide(output_path="/sd/retry_guide.json", force=False):
         "_version": "1.0.0",
         "_description": "根据环境亮度信息自动判断是否需要重新获取亮度信息",
         "_generated": time.time(),
-
         "retry_conditions": [
             {
                 "id": "invalid_brightness",
@@ -119,24 +99,22 @@ def create_retry_guide(output_path="/sd/retry_guide.json", force=False):
     }
 
     try:
-        with open(output_path, 'w') as f:
+        with open(path, 'w') as f:
             json.dump(config, f)
-        print("[Setup] Retry guide config created at {}".format(output_path))
-        print("[Setup] Retry conditions: {} rules".format(len(config['retry_conditions'])))
+        print("[Setup] Retry guide config created")
         return True
     except Exception as e:
         print("[Setup] Failed to create retry guide: {}".format(e))
         return False
 
-
-def create_quick_flash_guide(output_path="/sd/quick_flash_guide.json", force=False):
-    """创建默认的快速闪光灯决策配置文件。"""
-    print("[Setup] Creating quick flash guide config...")
+def create_quick_flash_guide(force=False):
+    path = get_config_path("quick_flash_guide.json")
+    print("[Setup] Creating quick flash guide config at {}".format(path))
     try:
-        with open(output_path, 'r') as f:
+        with open(path, 'r') as f:
             existing = json.load(f)
         if not force:
-            print("[Setup] File already exists at {}, use force=True to overwrite".format(output_path))
+            print("[Setup] File already exists, use force=True to overwrite")
             return False
         print("[Setup] Overwriting existing file...")
     except:
@@ -152,71 +130,78 @@ def create_quick_flash_guide(output_path="/sd/quick_flash_guide.json", force=Fal
     }
 
     try:
-        with open(output_path, 'w') as f:
+        with open(path, 'w') as f:
             json.dump(config, f)
-        print("[Setup] Quick flash guide config created at {}".format(output_path))
+        print("[Setup] Quick flash guide config created")
         return True
     except Exception as e:
         print("[Setup] Failed to create quick flash guide: {}".format(e))
         return False
 
+def create_black_photo_config(force=False):
+    path = get_config_path("black_photo_config.json")
+    print("[Setup] Creating black photo config at {}".format(path))
+    try:
+        with open(path, 'r') as f:
+            existing = json.load(f)
+        if not force:
+            print("[Setup] File already exists, use force=True to overwrite")
+            return False
+        print("[Setup] Overwriting existing file...")
+    except:
+        pass
 
-def create_all(output_dir="/sd", force=False):
-    """创建所有默认配置文件。"""
-    print("\n" + "="*50)
-    print("  创建默认配置文件")
-    print("="*50)
-
-    flash_guide_path = output_dir + "/flash_guide.json" if output_dir else "flash_guide.json"
-    retry_guide_path = output_dir + "/retry_guide.json" if output_dir else "retry_guide.json"
-    quick_flash_guide_path = output_dir + "/quick_flash_guide.json" if output_dir else "quick_flash_guide.json"
-
-    results = {
-        'flash_guide': create_flash_guide(flash_guide_path, force),
-        'retry_guide': create_retry_guide(retry_guide_path, force),
-        'quick_flash_guide': create_quick_flash_guide(quick_flash_guide_path, force),
+    config = {
+        "_comment": "黑照检测阈值配置（各分辨率下的最小照片大小，单位为字节）",
+        "_version": "1.0.0",
+        "_description": "如果 JPEG 大小低于该值，视为黑照，需要重试",
+        "_generated": time.time(),
+        "_model": "ov3660",
+        "FRAME_96X96": 807,
+        "FRAME_QQVGA": 1002,
+        "FRAME_QCIF": 1122,
+        "FRAME_HQVGA": 1452,
+        "FRAME_240X240": 1752,
+        "FRAME_QVGA": 2165,
+        "FRAME_CIF": 2998,
+        "FRAME_HVGA": 5531,
+        "FRAME_VGA": 7291,
+        "FRAME_SVGA": 11092,
+        "FRAME_XGA": 16155,
+        "FRAME_HD": 18627,
+        "FRAME_SXGA": 26227,
+        "FRAME_UXGA": 39143,
+        "FRAME_FHD": 41127,
+        "FRAME_P_HD": 18634,
+        "FRAME_P_3MP": 26547,
+        "FRAME_QXGA": 62942,
     }
 
+    try:
+        with open(path, 'w') as f:
+            json.dump(config, f)
+        print("[Setup] Black photo config created")
+        return True
+    except Exception as e:
+        print("[Setup] Failed to create black photo config: {}".format(e))
+        return False
+
+def create_all(force=False):
+    print("\n" + "="*50)
+    print("  创建默认配置文件 (型号: {})".format(get_camera_model()))
+    print("="*50)
+    results = {
+        'flash_guide': create_flash_guide(force),
+        'retry_guide': create_retry_guide(force),
+        'quick_flash_guide': create_quick_flash_guide(force),
+        'black_photo_config': create_black_photo_config(force),
+    }
     print("\n" + "="*50)
     print("  创建完成")
     print("="*50)
     for name, success in results.items():
         print("  {}: {}".format(name, "✅ 成功" if success else "⏭️  跳过/失败"))
-
     return results
 
-
-# ---------- 独立运行入口 ----------
 if __name__ == "__main__":
-    print("\n--- 默认配置文件生成工具 ---")
-    print("本脚本将生成项目所需的默认配置文件。")
-
-    # 检查文件是否存在
-    flash_exists = False
-    retry_exists = False
-    try:
-        with open("/sd/flash_guide.json", 'r') as f:
-            flash_exists = True
-    except:
-        pass
-    try:
-        with open("/sd/retry_guide.json", 'r') as f:
-            retry_exists = True
-    except:
-        pass
-    try:
-        with open("/sd/quick_flash_guide.json", 'r') as f:
-            quick_flash_exists = True
-    except:
-        pass
-
-    if flash_exists or retry_exists:
-        print("\n⚠️  以下文件已存在:")
-        if flash_exists:
-            print("  - /sd/flash_guide.json")
-        if retry_exists:
-            print("  - /sd/retry_guide.json")
-        if quick_flash_exists:
-            print("  - /sd/quick_flash_guide.json")
-
     create_all(force=True)

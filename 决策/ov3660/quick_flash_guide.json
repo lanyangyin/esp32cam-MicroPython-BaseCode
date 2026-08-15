@@ -1,0 +1,1 @@
+{"threshold": 30, "default_action": "off", "_description": "当平均亮度低于 threshold 时开启闪光灯", "_comment": "快速闪光灯决策配置（基于平均亮度阈值）", "_version": "1.0.0", "_generated": 7477}

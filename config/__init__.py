@@ -9,7 +9,6 @@ from .debug import (
     LOG_TO_FILE,
     set_log_to_file,
     debug_log,
-    # 新增日志级别常量和函数
     LEVEL_DEBUG,
     LEVEL_INFO,
     LEVEL_WARNING,
@@ -36,6 +35,8 @@ from .retry_config import (
     list_retry_rules,
     reset_retry_guide,
 )
+# 新增：导出摄像头型号相关
+from .camera_model import CAMERA_MODEL, get_config_dir, get_config_path, set_camera_model
 
 __all__ = [
     "DEBUG",
@@ -64,4 +65,8 @@ __all__ = [
     "get_retry_rule",
     "list_retry_rules",
     "reset_retry_guide",
+    "CAMERA_MODEL",          # 新增
+    "get_config_dir",        # 新增
+    "get_config_path",       # 新增
+    "set_camera_model",      # 新增
 ]

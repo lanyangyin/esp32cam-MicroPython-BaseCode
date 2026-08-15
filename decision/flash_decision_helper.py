@@ -1,19 +1,14 @@
 # decision/flash_decision_helper.py
-"""
-闪光灯决策辅助工具（交互式）
-捕获灰度图，显示亮度信息和当前决策，让用户逐步修正规则。
-"""
+"""闪光灯决策辅助工具（交互式）"""
 import camera
 from config import debug_log, LEVEL_INFO
 from camera_driver import capture_grayscale, CameraController, reset_camera
-from config.flash_config import FLASH_GUIDE_PATH
+from config.camera_model import get_config_path
 from utils.brightness import analyze_brightness
 from .flash import load_flash_guide, reload_flash_guide, evaluate_flash_decision
 from .retry import should_retry, get_retry_reason
 
-
 def _get_brightness_info(framesize=camera.FRAME_QVGA):
-    """捕获灰度图并分析亮度信息（单次）"""
     reset_camera()
     gray = capture_grayscale(framesize=framesize, whitebalance=camera.WB_CLOUDY)
     if gray is None:
@@ -27,18 +22,14 @@ def _get_brightness_info(framesize=camera.FRAME_QVGA):
             w, h = 320, 240
     return analyze_brightness(gray, w, h, step=2)
 
-
 def _show_info(brightness_info):
-    """打印亮度信息"""
     print("\n亮度信息:")
     print(f"  平均亮度 (avg)       : {brightness_info['average_brightness']:.1f}")
     print(f"  RMS 对比度 (rms)     : {brightness_info['rms_contrast']:.1f}")
     print(f"  中心亮度 (center)    : {brightness_info['center_brightness']:.1f}")
     print(f"  动态范围 (dynamic)   : {brightness_info['dynamic_range']:.1f}")
 
-
 def _show_decision(brightness_info):
-    """显示当前决策"""
     result = evaluate_flash_decision(brightness_info)
     print("\n当前决策:")
     print(f"  开闪光灯? {result['flash']}")
@@ -49,19 +40,12 @@ def _show_decision(brightness_info):
     print(f"  场景分类: {result['scene_profile']}")
     return result
 
-
 def flash_decision_helper(framesize=camera.FRAME_QVGA):
-    """
-    交互式辅助：捕获亮度、显示决策，并让用户修改规则。
-    如果捕获的亮度信息满足重拍条件，会自动重试直到有效。
-    """
     print("\n" + "="*60)
     print("闪光灯决策辅助工具")
     print("="*60)
 
     MAX_RETRIES = 6
-
-    # 获取有效的亮度信息
     info = None
     for attempt in range(1, MAX_RETRIES + 1):
         info = _get_brightness_info(framesize)
@@ -84,7 +68,6 @@ def flash_decision_helper(framesize=camera.FRAME_QVGA):
     _show_info(info)
     result = _show_decision(info)
 
-    # 交互循环
     while True:
         print("\n这个决策正确吗？ (y/n/q=退出)")
         ans = input("> ").strip().lower()
@@ -97,7 +80,6 @@ def flash_decision_helper(framesize=camera.FRAME_QVGA):
         elif ans == 'n':
             _modify_rules(info)
             reload_flash_guide()
-            # 重新获取有效的亮度信息
             for attempt in range(1, MAX_RETRIES + 1):
                 info = _get_brightness_info(framesize)
                 if info is None:
@@ -117,9 +99,7 @@ def flash_decision_helper(framesize=camera.FRAME_QVGA):
         else:
             print("请输入 y/n/q")
 
-
 def _modify_rules(brightness_info):
-    """交互式修改规则"""
     guide = load_flash_guide()
     conditions = guide.get('flash_conditions', [])
     if not conditions:
@@ -150,9 +130,7 @@ def _modify_rules(brightness_info):
         except ValueError:
             print("无效输入")
 
-
 def _edit_rule(cond, guide):
-    """编辑单条规则的条件"""
     print(f"\n编辑规则: {cond.get('id')}")
     print(f"当前条件: {cond.get('condition')}")
     print("你可以修改条件中的数值（如 avg, rms, center, dynamic）")
@@ -167,9 +145,7 @@ def _edit_rule(cond, guide):
         else:
             print("❌ 条件必须包含 avg, rms, center 或 dynamic 变量")
 
-
 def _add_rule(guide):
-    """添加新规则"""
     print("\n添加新规则")
     rule_id = input("规则ID (例如 my_rule): ").strip()
     if not rule_id:
@@ -191,9 +167,7 @@ def _add_rule(guide):
     _save_guide(guide)
     print("✅ 规则已添加")
 
-
 def _delete_rule(guide):
-    """删除规则"""
     print("\n删除规则")
     rule_id = input("输入要删除的规则ID: ").strip()
     if not rule_id:
@@ -206,18 +180,16 @@ def _delete_rule(guide):
     else:
         print("未找到该ID")
 
-
 def _save_guide(guide):
-    """保存配置文件并重新加载"""
     import json
+    path = get_config_path("flash_guide.json")
     try:
-        with open(FLASH_GUIDE_PATH, 'w') as f:
+        with open(path, 'w') as f:
             json.dump(guide, f)
         reload_flash_guide()
         print("✅ 配置已保存并重新加载")
     except Exception as e:
         print(f"❌ 保存失败: {e}")
-
 
 if __name__ == "__main__":
     from config import set_debug

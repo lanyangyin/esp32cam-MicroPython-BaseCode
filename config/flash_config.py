@@ -3,9 +3,13 @@
 import json
 from .debug import DEBUG
 from .defaults import get_flash_conservative_default
+from .camera_model import get_config_path
 
-FLASH_GUIDE_PATH = "/sd/flash_guide.json"
 _cached_flash_guide = None
+
+def _get_flash_guide_path():
+    """获取当前型号的闪光灯配置文件路径"""
+    return get_config_path("flash_guide.json")
 
 def _deep_merge(base, update):
     result = base.copy()
@@ -20,11 +24,12 @@ def get_flash_guide_config(force_reload=False):
     global _cached_flash_guide
     if _cached_flash_guide is not None and not force_reload:
         return _cached_flash_guide
+    path = _get_flash_guide_path()
     try:
-        with open(FLASH_GUIDE_PATH, 'r') as f:
+        with open(path, 'r') as f:
             _cached_flash_guide = json.load(f)
         if DEBUG:
-            print("[Config] Loaded flash guide from {}".format(FLASH_GUIDE_PATH))
+            print("[Config] Loaded flash guide from {}".format(path))
         return _cached_flash_guide
     except Exception as e:
         if DEBUG:
@@ -38,11 +43,12 @@ def update_flash_guide_config(new_config, save_to_file=True):
     merged = _deep_merge(current, new_config)
     _cached_flash_guide = merged
     if save_to_file:
+        path = _get_flash_guide_path()
         try:
-            with open(FLASH_GUIDE_PATH, 'w') as f:
+            with open(path, 'w') as f:
                 json.dump(merged, f)
             if DEBUG:
-                print("[Config] Saved flash guide to {}".format(FLASH_GUIDE_PATH))
+                print("[Config] Saved flash guide to {}".format(path))
         except Exception as e:
             if DEBUG:
                 print("[Config] Failed to save flash guide: {}".format(e))
@@ -88,11 +94,12 @@ def reset_flash_guide():
     global _cached_flash_guide
     default = get_flash_conservative_default()
     _cached_flash_guide = default
+    path = _get_flash_guide_path()
     try:
-        with open(FLASH_GUIDE_PATH, 'w') as f:
+        with open(path, 'w') as f:
             json.dump(default, f)
         if DEBUG:
-            print("[Config] Reset flash guide to conservative default")
+            print("[Config] Reset flash guide to conservative default at {}".format(path))
     except Exception as e:
         if DEBUG:
             print("[Config] Failed to reset flash guide: {}".format(e))
