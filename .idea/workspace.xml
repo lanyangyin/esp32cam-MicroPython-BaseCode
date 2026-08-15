@@ -218,14 +218,6 @@
       <option name="presentableId" value="Default" />
       <updated>1749768217230</updated>
     </task>
-    <task id="LOCAL-00008" summary="获取亮度信息">
-      <option name="closed" value="true" />
-      <created>1786043309944</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1786043309944</updated>
-    </task>
     <task id="LOCAL-00009" summary="闪光灯测试">
       <option name="closed" value="true" />
       <created>1786046503769</created>
@@ -610,7 +602,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786520604449</updated>
     </task>
-    <option name="localTasksCounter" value="57" />
+    <task id="LOCAL-00057" summary="开始">
+      <option name="closed" value="true" />
+      <created>1786654310352</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1786654310352</updated>
+    </task>
+    <option name="localTasksCounter" value="58" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
