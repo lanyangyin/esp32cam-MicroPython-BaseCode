@@ -38,9 +38,9 @@ def main():
         print("拍照失败")
     # 拍照后延时避免重复触发（防抖）
     time.sleep_ms(500)
-else:
-    # 每隔 1 秒检测一次
-    time.sleep(1)
+        # else:
+        #     # 每隔 1 秒检测一次
+        #     time.sleep(1)
 
 if __name__ == "__main__":
     main()
