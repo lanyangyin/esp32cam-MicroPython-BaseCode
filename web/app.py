@@ -3,6 +3,7 @@
 使用 EasyWeb 框架的 Web 控制服务
 """
 
+import sys
 import time
 import camera
 import uos
@@ -26,7 +27,9 @@ def index(request):
             html = f.read()
         return make_response(html, 200)
     except Exception as e:
-        err = f"<h1>Error loading page</h1><p>{e}</p>"
+        print("[Web] / 异常:", e)
+        sys.print_exception(e)
+        err = "<h1>Error loading page</h1><p>{}</p>".format(e)
         return make_response(err, 500)
 
 # ---------- API：系统状态 ----------
@@ -44,6 +47,7 @@ def status(request):
         return make_response(status_data, 200)
     except Exception as e:
         print("[Web] /api/status 错误:", e)
+        sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
 # ---------- API：拍照 ----------
@@ -55,7 +59,7 @@ def capture(request):
         framesize = params.get("framesize", camera.FRAME_XGA)
         quality = params.get("quality", 10)
         decision_mode = params.get("decision_mode", "quick")
-        print(f"[Web] 参数: framesize={framesize}, quality={quality}, mode={decision_mode}")
+        print("[Web] 参数: framesize={}, quality={}, mode={}".format(framesize, quality, decision_mode))
         saved_path, w, h, brightness = take_smart_photo(
             analysis_framesize=camera.FRAME_QVGA,
             photo_framesize=framesize,
@@ -73,13 +77,14 @@ def capture(request):
                 "height": h,
                 "brightness": avg
             }
-            print(f"[Web] 拍照成功: {saved_path}")
+            print("[Web] 拍照成功: {}".format(saved_path))
         else:
             result = {"success": False, "error": "Capture failed"}
             print("[Web] 拍照失败")
         return make_response(result, 200)
     except Exception as e:
         print("[Web] /api/capture 异常:", e)
+        sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
 # ---------- API：录像 ----------
@@ -93,7 +98,7 @@ def video(request):
         duration = params.get("duration", 5)
         xclk_freq = params.get("xclk_freq", camera.XCLK_10MHz)
         save_dir = params.get("save_dir", "video_web")
-        print(f"[Web] 参数: framesize={framesize}, duration={duration}s, xclk={xclk_freq}")
+        print("[Web] 参数: framesize={}, duration={}s, xclk={}".format(framesize, duration, xclk_freq))
         recorder = RecorderTime(
             framesize=framesize,
             quality=quality,
@@ -108,10 +113,11 @@ def video(request):
             "elapsed": elapsed,
             "fps": frames / elapsed if elapsed > 0 else 0
         }
-        print(f"[Web] 录像完成: {frames}帧, {elapsed:.2f}s")
+        print("[Web] 录像完成: {}帧, {:.2f}s".format(frames, elapsed))
         return make_response(result, 200)
     except Exception as e:
         print("[Web] /api/video 异常:", e)
+        sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
 # ---------- API：文件列表 ----------
@@ -122,39 +128,79 @@ def files(request):
         sd = get_sd_card()
         file_list = []
         if sd and sd.mounted:
-            for f in sd.list_files():
-                if f.lower().endswith(('.jpg', '.jpeg', '.ppm', '.bmp', '.raw')):
-                    file_list.append(f)
+            raw_files = sd.list_files()
+            print("[Web] 原始文件列表类型: {} 内容: {}".format(type(raw_files), raw_files))
+            extensions = ['.jpg', '.jpeg', '.ppm', '.bmp', '.raw']
+            for f in raw_files:
+                f_str = str(f)
+                f_lower = f_str.lower()
+                is_image = False
+                for ext in extensions:
+                    if len(f_lower) >= len(ext) and f_lower[-len(ext):] == ext:
+                        is_image = True
+                        break
+                if is_image:
+                    file_list.append(f_str)
+        print("[Web] 过滤后文件数: {}".format(len(file_list)))
         return make_response({"files": file_list}, 200)
     except Exception as e:
         print("[Web] /api/files 异常:", e)
+        sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
-# ---------- 路由：下载 SD 卡文件 ----------
-@app.route("/sd/<path:filename>")
-def sd_file(request, filename):
-    print(f"[Web] 请求: /sd/{filename}")
-    # 安全防护
-    if '..' in filename or filename.startswith('/'):
-        return make_response("Invalid path", 403)
-    full_path = "/sd/" + filename
+# ---------- 路由：查看 SD 卡文件（在浏览器中显示，而不是下载） ----------
+@app.route("/sd/<path>")
+def sd_file(request):
+    filename = request.match  # EasyWeb 会将匹配的路径部分存入 request.match
+    print("[Web] 请求: /sd/{}".format(filename))
     try:
+        if not filename:
+            print("[Web] 文件名缺失")
+            return make_response("Missing filename", 400)
+        if '..' in filename or filename.startswith('/'):
+            print("[Web] 非法路径: {}".format(filename))
+            return make_response("Invalid path", 403)
+        full_path = "/sd/" + filename
+        print("[Web] 尝试读取文件: {}".format(full_path))
         # 检查文件是否存在
         uos.stat(full_path)
-        # 确定 MIME 类型
-        if filename.lower().endswith(('.jpg', '.jpeg')):
-            mime = "image/jpeg"
+        # 读取文件内容
+        with open(full_path, "rb") as f:
+            data = f.read()
+        # 判断文件类型
+        f_lower = filename.lower()
+        # 图片扩展名
+        image_exts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico']
+        is_image = False
+        for ext in image_exts:
+            if len(f_lower) >= len(ext) and f_lower[-len(ext):] == ext:
+                is_image = True
+                break
+        if is_image:
+            # 根据扩展名设置 MIME 类型
+            if f_lower.endswith('.png'):
+                ct = "image/png"
+            elif f_lower.endswith('.gif'):
+                ct = "image/gif"
+            elif f_lower.endswith('.bmp'):
+                ct = "image/bmp"
+            elif f_lower.endswith('.ico'):
+                ct = "image/x-icon"
+            else:
+                ct = "image/jpeg"
         else:
-            mime = "application/octet-stream"
-        # 使用 send_file 发送
-        return send_file(full_path, mimetype=mime)
+            # 非图片文件，作为普通文件下载
+            ct = "application/octet-stream"
+        print("[Web] 文件存在，大小: {} bytes, Content-Type: {}".format(len(data), ct))
+        # 返回响应，通过 headers 参数设置 Content-Type
+        return make_response(data, 200, {"Content-Type": ct})
     except Exception as e:
-        print(f"[Web] 文件下载失败: {e}")
-        return make_response(f"File not found: {filename}", 404)
+        print("[Web] 文件读取失败: {}".format(e))
+        sys.print_exception(e)
+        return make_response("File not found: {}".format(filename), 404)
 
 # ---------- 辅助函数 ----------
 def _get_resolutions():
-    """获取所有分辨率列表"""
     res = []
     for name in dir(camera):
         if name.startswith("FRAME_"):
@@ -175,7 +221,7 @@ def _get_resolutions():
 
 # ---------- 启动入口 ----------
 def start(host="0.0.0.0", port=80):
-    print(f"Starting EasyWeb server on http://{host}:{port}")
+    print("Starting EasyWeb server on http://{}:{}".format(host, port))
     app.run(host=host, port=port)
 
 def stop():
