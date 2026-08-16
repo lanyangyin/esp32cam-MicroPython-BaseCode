@@ -37,68 +37,70 @@
 
 ```
 /
-├── app.py                      # 应用入口（智能拍照示例）
-├── boot.py                     # 启动挂载 SD 卡、关闭闪光灯
-├── main.py                     # 空（防止自动运行）
-├── quick_photo_taking.py       # 独立快速拍照脚本（不依赖模块）
-├── setup_default_configs.py    # 生成默认决策配置文件
+├── app.py # 应用入口（智能拍照示例）
+├── boot.py # 启动挂载 SD 卡、关闭闪光灯/指示灯
+├── main.py # 空（防止自动运行）
+├── quick_photo_taking.py # 独立快速拍照脚本（不依赖模块）
+├── setup_default_configs.py # 生成默认决策配置文件
+├── flash.py # 闪光灯控制（单例）
+├── sd_card.py # SD 卡管理（单例）
+├── indicator.py # 红色指示灯控制（GPIO 33，低电平点亮）
+├── wifi.py / ble.py # WiFi / BLE 模块（可选）
 │
-├── config/                     # 配置管理包
-│   ├── debug.py                # 日志分级、文件输出
-│   ├── defaults.py             # 保守默认配置模板
-│   ├── flash_config.py         # 闪光灯规则 CRUD
-│   ├── retry_config.py         # 重拍规则 CRUD
-│   └── __init__.py
+├── config/ # 配置管理包
+│ ├── debug.py # 日志分级、文件输出
+│ ├── defaults.py # 保守默认配置模板
+│ ├── flash_config.py # 闪光灯规则 CRUD
+│ ├── retry_config.py # 重拍规则 CRUD
+│ ├── camera_model.py # 摄像头型号管理与配置路径
+│ └── init.py
 │
-├── camera_driver/              # 摄像头硬件驱动
-│   ├── controller.py           # CameraController 类（初始化/捕获/释放）
-│   ├── capture.py              # capture_image / capture_grayscale
-│   ├── analysis.py             # 从摄像头捕获并分析亮度
-│   ├── resolutions.py          # 分辨率映射表（常量->尺寸）
-│   ├── singleton.py            # 单例管理
-│   └── __init__.py
+├── camera_driver/ # 摄像头硬件驱动
+│ ├── controller.py # CameraController 类（初始化/捕获/释放）
+│ ├── capture.py # capture_image / capture_grayscale
+│ ├── analysis.py # 从摄像头捕获并分析亮度
+│ ├── resolutions.py # 分辨率映射表（常量->尺寸）
+│ ├── singleton.py # 单例管理（含可用性检查与参数重初始化）
+│ └── init.py
 │
-├── flash/                      # 闪光灯控制（单例）——根目录 flash.py
-├── sd_card/                    # SD 卡管理（单例）——根目录 sd_card.py
-├── wifi.py / ble.py            # WiFi / BLE 模块（可选）
+├── decision/ # 智能决策引擎
+│ ├── engine.py # 条件表达式评估器
+│ ├── flash.py # 正常闪光灯决策（规则引擎）
+│ ├── quick_flash.py # 快速闪光灯决策（阈值）
+│ ├── retry.py # 亮度重拍决策
+│ ├── black_photo.py # 黑照检测（按型号加载阈值）
+│ ├── flash_decision_helper.py # 交互式调参工具
+│ └── init.py
 │
-├── decision/                   # 智能决策引擎
-│   ├── engine.py               # 条件表达式评估器
-│   ├── flash.py                # 正常闪光灯决策（规则引擎）
-│   ├── quick_flash.py          # 快速闪光灯决策（阈值）
-│   ├── retry.py                # 亮度重拍决策
-│   ├── black_photo.py          # 黑照检测
-│   ├── flash_decision_helper.py # 交互式调参工具
-│   └── __init__.py
+├── photo/ # 拍照业务逻辑
+│ ├── photo_capturer.py # PhotoCapturer 类（完整功能）
+│ ├── smart_photo_taker.py # 智能拍照流程（供 app 调用）
+│ ├── plain_capture.py # 纯拍照模块（无闪光灯、无决策）
+│ ├── downgrade_capture.py # 自动降级拍照
+│ ├── manual_photo_taker.py # 手动控制闪光灯拍照
+│ ├── brightness_analyzer.py # 灰度分析工具
+│ ├── smart_capture_flow.py # 智能拍照核心流程
+│ ├── resource_manager.py # 硬件资源清理/重置
+│ └── init.py
 │
-├── photo/                      # 拍照业务逻辑
-│   ├── photo_capturer.py       # PhotoCapturer 类（完整功能）
-│   ├── smart_photo_taker.py    # 智能拍照流程（供 app 调用）
-│   ├── downgrade_capture.py    # 自动降级拍照
-│   ├── manual_photo_taker.py   # 手动控制闪光灯拍照
-│   ├── brightness_analyzer.py  # 灰度分析工具
-│   ├── smart_capture_flow.py   # 智能拍照核心流程（被 capturer 调用）
-│   ├── resource_manager.py     # 硬件资源清理/重置
-│   └── __init__.py
+├── video/ # 快速连拍 / 录制
+│ ├── recorder.py # 通用录制器（带日志、闪光灯）
+│ ├── recorder_fast.py # 极速录制器（无日志，可保持常开）
+│ ├── recorder_time.py # 按时间录制（14秒GC，序号文件名）
+│ ├── recorder_timestamp.py # 按时间录制（时间戳文件名）
+│ ├── recorder_frames.py # 按帧数录制（50帧GC）
+│ ├── benchmark.py # 帧率基准测试（可选择录制器）
+│ └── init.py
 │
-├── video/                      # 快速连拍 / 录制
-│   ├── recorder.py             # 通用录制器（带日志、闪光灯）
-│   ├── recorder_fast.py        # 极速录制器（无日志，可保持常开）
-│   ├── recorder_time.py        # 按时间录制（14秒GC，序号文件名）
-│   ├── recorder_timestamp.py   # 按时间录制（时间戳文件名）
-│   ├── recorder_frames.py      # 按帧数录制（50帧GC）
-│   ├── benchmark.py            # 帧率基准测试（可选择录制器）
-│   └── __init__.py
-│
-└── utils/                      # 纯工具函数（无硬件依赖）
-    ├── brightness.py           # 亮度分析（avg, rms_contrast, center）
-    ├── contrast.py             # RMS 对比度计算（标准差）
-    ├── image_info.py           # JPEG/PNG 尺寸/格式提取
-    ├── image_encoders.py       # BMP/PPM/PGM/RAW 编码
-    ├── test_images.py          # 生成测试用灰度图
-    ├── file_io.py              # 从 SD 卡加载图片
-    ├── device_info.py          # 打印硬件信息
-    └── __init__.py
+└── utils/ # 纯工具函数（无硬件依赖）
+    ├── brightness.py # 亮度分析（avg, rms_contrast, center）
+    ├── contrast.py # RMS 对比度计算（标准差）
+    ├── image_info.py # JPEG/PNG 尺寸/格式提取
+    ├── image_encoders.py # BMP/PPM/PGM/RAW 编码
+    ├── test_images.py # 生成测试用灰度图
+    ├── file_io.py # 从 SD 卡加载图片
+    ├── device_info.py # 打印硬件信息
+    └── init.py
 ```
 
 ---
