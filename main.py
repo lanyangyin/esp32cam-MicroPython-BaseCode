@@ -17,5 +17,6 @@ led.pulse(500)
 # 在关键操作时闪烁
 led.blink(2, 100, 100)
 
-import app
-app.main()
+import web
+
+web.start(port=80)  # 默认端口 80
