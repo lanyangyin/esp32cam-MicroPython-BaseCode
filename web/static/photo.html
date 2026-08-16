@@ -20,6 +20,10 @@
         .inline-group .row { flex: 1; min-width: 200px; }
         .section-title { font-weight: bold; color: #555; margin-top: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
         .small-note { font-size: 0.8em; color: #888; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .button-group button { flex: 1; min-width: 120px; }
+        #file_list li {border-bottom: 1px solid #eee; padding: 6px 0;}
+        #file_list li:last-child {border-bottom: none;}
     </style>
 </head>
 <body>
@@ -48,14 +52,9 @@
             <select id="flash_mode">
                 <option value="off">关闭</option>
                 <option value="on">开启</option>
-                <option value="auto" selected>自动（完整分析）</option>
-                <option value="auto_quick">自动（快速估计）</option>
+                <option value="auto" selected>自动（规则引擎）</option>
+                <option value="auto_quick">自动（快速阈值）</option>
             </select>
-        </div>
-        <div class="row">
-            <label>亮度阈值：</label>
-            <input type="number" id="brightness_threshold" value="30" min="0" max="255">
-            <span class="small-note">低于此值则开闪光灯（仅自动模式）</span>
         </div>
 
         <!-- 图像调节 -->
@@ -133,12 +132,30 @@
         </div>
 
         <button id="btn_capture">📷 拍照</button>
-        <div class="row" style="margin-top: 15px;">
+        <div id="result"></div>
+
+        <!-- 连拍 -->
+        <div class="section-title" style="margin-top:20px;">连拍设置</div>
+        <div class="row">
+            <label>连拍张数：</label>
+            <input type="number" id="burst_count" value="5" min="1" max="20">
+        </div>
+        <div class="row">
+            <label>闪光灯：</label>
+            <input type="checkbox" id="burst_flash">
+        </div>
+        <div class="row">
+            <label>文件前缀：</label>
+            <input type="text" id="burst_prefix" value="burst">
+        </div>
+        <button id="btn_burst">⏺️ 开始连拍</button>
+        <div id="burst_result"></div>
+
+        <div class="button-group">
             <button id="btn_save_config">💾 保存配置</button>
             <button id="btn_load_config">📂 加载配置</button>
             <button id="btn_reset_default">↩️ 恢复默认</button>
         </div>
-        <div id="result"></div>
     </div>
 
     <div class="card">
@@ -184,9 +201,9 @@
             document.getElementById('contrast_adj_val').textContent = this.value;
         });
 
-        // 拍照按钮
-        document.getElementById('btn_capture').addEventListener('click', function() {
-            const params = {
+        // 获取当前所有参数（不包含 brightness_threshold）
+        function getParams() {
+            return {
                 flash_mode: document.getElementById('flash_mode').value,
                 resolution: parseInt(document.getElementById('capture_res').value),
                 whitebalance: parseInt(document.getElementById('whitebalance').value),
@@ -203,9 +220,15 @@
                 black_retry: parseInt(document.getElementById('black_retry').value),
                 analysis_retry: parseInt(document.getElementById('analysis_retry').value),
                 analysis_resolution: parseInt(document.getElementById('analysis_res').value),
-                brightness_threshold: parseInt(document.getElementById('brightness_threshold').value),
+                burst_count: parseInt(document.getElementById('burst_count').value),
+                burst_flash: document.getElementById('burst_flash').checked,
+                burst_prefix: document.getElementById('burst_prefix').value,
             };
+        }
 
+        // 拍照按钮
+        document.getElementById('btn_capture').addEventListener('click', function() {
+            const params = getParams();
             fetch('/api/capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -230,6 +253,139 @@
             });
         });
 
+        // 连拍按钮
+        document.getElementById('btn_burst').addEventListener('click', function() {
+            const params = {
+                resolution: parseInt(document.getElementById('capture_res').value),
+                whitebalance: parseInt(document.getElementById('whitebalance').value),
+                mirror: document.getElementById('mirror').checked ? 1 : 0,
+                flip: document.getElementById('flip').checked ? 1 : 0,
+                burst_count: parseInt(document.getElementById('burst_count').value),
+                xclk_freq: parseInt(document.getElementById('xclk_freq').value),
+                saturation: parseInt(document.getElementById('saturation').value),
+                brightness: parseInt(document.getElementById('brightness_adj').value),
+                contrast: parseInt(document.getElementById('contrast_adj').value),
+                quality: parseInt(document.getElementById('capture_quality').value),
+                flash_on: document.getElementById('burst_flash').checked,
+                filename_prefix: document.getElementById('burst_prefix').value,
+                save_path: document.getElementById('save_path').value,
+            };
+            const btn = document.getElementById('btn_burst');
+            btn.disabled = true;
+            btn.textContent = '⏳ 连拍中...';
+            document.getElementById('burst_result').innerHTML = '正在连拍，请稍候...';
+            fetch('/api/burst', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = '⏺️ 开始连拍';
+                const div = document.getElementById('burst_result');
+                if (data.success) {
+                    div.innerHTML = `✅ 连拍完成：${data.frames} 张，耗时 ${data.elapsed.toFixed(2)} 秒，平均 ${(data.frames/data.elapsed).toFixed(1)} 张/秒`;
+                } else {
+                    div.innerHTML = `❌ 连拍失败：${data.error}`;
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.textContent = '⏺️ 开始连拍';
+                document.getElementById('burst_result').textContent = '请求失败：' + err;
+            });
+        });
+
+        // 保存配置
+        document.getElementById('btn_save_config').addEventListener('click', function() {
+            const params = getParams();
+            fetch('/api/save_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ 配置已保存');
+                } else {
+                    alert('❌ 保存失败：' + data.error);
+                }
+            })
+            .catch(err => alert('❌ 保存失败：' + err));
+        });
+
+        // 加载配置
+        document.getElementById('btn_load_config').addEventListener('click', function() {
+            fetch('/api/load_config')
+            .then(res => res.json())
+            .then(config => {
+                // 填充所有控件
+                document.getElementById('flash_mode').value = config.flash_mode || 'auto';
+                document.getElementById('capture_res').value = config.resolution || 1024;
+                document.getElementById('whitebalance').value = config.whitebalance || 2;
+                document.getElementById('mirror').checked = config.mirror === 1;
+                document.getElementById('flip').checked = config.flip === 1;
+                document.getElementById('xclk_freq').value = config.xclk_freq || 10000000;
+                document.getElementById('saturation').value = config.saturation || 0;
+                document.getElementById('saturation_val').textContent = config.saturation || 0;
+                document.getElementById('brightness_adj').value = config.brightness || 0;
+                document.getElementById('brightness_adj_val').textContent = config.brightness || 0;
+                document.getElementById('contrast_adj').value = config.contrast || 0;
+                document.getElementById('contrast_adj_val').textContent = config.contrast || 0;
+                document.getElementById('capture_quality').value = config.quality || 10;
+                document.getElementById('save_file').checked = config.save_file !== false;
+                document.getElementById('filename_prefix').value = config.filename_prefix || 'photo';
+                document.getElementById('save_path').value = config.save_path || '/sd';
+                document.getElementById('black_retry').value = config.black_retry || 3;
+                document.getElementById('analysis_retry').value = config.analysis_retry || 3;
+                document.getElementById('analysis_res').value = config.analysis_resolution || 320;
+            })
+            .catch(err => alert('❌ 加载配置失败：' + err));
+        });
+
+        // 恢复默认配置（硬编码默认值，与后端默认一致）
+        document.getElementById('btn_reset_default').addEventListener('click', function() {
+            const defaultConfig = {
+                flash_mode: 'auto',
+                resolution: 1024,
+                whitebalance: 2,
+                mirror: 0,
+                flip: 1,
+                xclk_freq: 10000000,
+                saturation: 0,
+                brightness: 0,
+                contrast: 0,
+                quality: 10,
+                save_file: true,
+                filename_prefix: 'photo',
+                save_path: '/sd',
+                black_retry: 3,
+                analysis_retry: 3,
+                analysis_resolution: 320,
+            };
+            document.getElementById('flash_mode').value = defaultConfig.flash_mode;
+            document.getElementById('capture_res').value = defaultConfig.resolution;
+            document.getElementById('whitebalance').value = defaultConfig.whitebalance;
+            document.getElementById('mirror').checked = defaultConfig.mirror === 1;
+            document.getElementById('flip').checked = defaultConfig.flip === 1;
+            document.getElementById('xclk_freq').value = defaultConfig.xclk_freq;
+            document.getElementById('saturation').value = defaultConfig.saturation;
+            document.getElementById('saturation_val').textContent = defaultConfig.saturation;
+            document.getElementById('brightness_adj').value = defaultConfig.brightness;
+            document.getElementById('brightness_adj_val').textContent = defaultConfig.brightness;
+            document.getElementById('contrast_adj').value = defaultConfig.contrast;
+            document.getElementById('contrast_adj_val').textContent = defaultConfig.contrast;
+            document.getElementById('capture_quality').value = defaultConfig.quality;
+            document.getElementById('save_file').checked = defaultConfig.save_file;
+            document.getElementById('filename_prefix').value = defaultConfig.filename_prefix;
+            document.getElementById('save_path').value = defaultConfig.save_path;
+            document.getElementById('black_retry').value = defaultConfig.black_retry;
+            document.getElementById('analysis_retry').value = defaultConfig.analysis_retry;
+            document.getElementById('analysis_res').value = defaultConfig.analysis_resolution;
+        });
+
         // 文件列表
         document.getElementById('btn_files').addEventListener('click', function() {
             fetch('/api/files')
@@ -237,13 +393,60 @@
             .then(data => {
                 const list = document.getElementById('file_list');
                 list.innerHTML = '';
-                data.files.forEach(f => {
+                data.files.forEach(fullPath => {
+                    // 提取文件名用于显示
+                    const parts = fullPath.split('/');
+                    const filename = parts[parts.length - 1];
                     const li = document.createElement('li');
-                    li.innerHTML = `<a href="/sd/${f}" target="_blank">${f}</a>`;
+                    li.style.display = 'flex';
+                    li.style.alignItems = 'center';
+                    li.style.justifyContent = 'space-between';
+                    li.style.padding = '4px 0';
+                    // 查看链接（使用完整路径）
+                    const link = document.createElement('a');
+                    link.href = fullPath;  // 直接使用完整路径
+                    link.target = '_blank';
+                    link.textContent = fullPath;  // 或只显示文件名 filename
+                    link.style.marginRight = '10px';
+                    // 删除按钮
+                    const delBtn = document.createElement('button');
+                    delBtn.textContent = '🗑️';
+                    delBtn.style.background = 'none';
+                    delBtn.style.border = 'none';
+                    delBtn.style.cursor = 'pointer';
+                    delBtn.style.fontSize = '1.2em';
+                    delBtn.title = '删除此文件';
+                    delBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm('确定要删除文件 "' + fullPath + '" 吗？')) {
+                            fetch('/api/delete_file', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ file_path: fullPath })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // 刷新文件列表
+                                    document.getElementById('btn_files').click();
+                                } else {
+                                    alert('删除失败：' + data.error);
+                                }
+                            })
+                            .catch(err => alert('删除请求失败：' + err));
+                        }
+                    });
+                    li.appendChild(link);
+                    li.appendChild(delBtn);
                     list.appendChild(li);
                 });
             })
             .catch(err => console.error('文件列表获取失败', err));
+        });
+
+        // 页面加载完成后，自动加载配置（可选）
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('btn_load_config').click();
         });
     </script>
 </body>

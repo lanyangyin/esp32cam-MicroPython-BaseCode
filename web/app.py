@@ -10,7 +10,7 @@ import camera
 import uos
 import json
 
-from advanced_photo import take_advanced_photo
+from advanced_photo import take_advanced_photo, burst_capture
 from easyweb import EasyWeb, make_response, send_file, render_template
 from photo import take_smart_photo, gray_quick_capture, gray_analyzer_capture
 from video import RecorderTime
@@ -166,6 +166,9 @@ def load_config(request):
                 "black_retry": 3,
                 "analysis_retry": 3,
                 "analysis_resolution": 320,  # FRAME_QVGA
+                "burst_count": 5,
+                "burst_flash": False,
+                "burst_prefix": "burst",
             }
             print("[Web] 配置不存在，返回默认")
             return make_response(default_config, 200)
@@ -252,6 +255,49 @@ def capture(request):
         sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
+# ---------- API：连拍 ----------
+@app.route("/api/burst", methods=["POST"])
+def burst(request):
+    print("[Web] 请求: /api/burst")
+    try:
+        params = request.json if request.json else {}
+        resolution = params.get("resolution", camera.FRAME_XGA)
+        whitebalance = params.get("whitebalance", camera.WB_CLOUDY)
+        mirror = params.get("mirror", 0)
+        flip = params.get("flip", 1)
+        burst_count = params.get("burst_count", 5)
+        xclk_freq = params.get("xclk_freq", camera.XCLK_10MHz)
+        saturation = params.get("saturation", 0)
+        brightness = params.get("brightness", 0)
+        contrast = params.get("contrast", 0)
+        quality = params.get("quality", 10)
+        flash_on = params.get("flash_on", False)
+        filename_prefix = params.get("filename_prefix", "burst")
+        save_path = params.get("save_path", "/sd")
+        # 调用连拍函数
+        elapsed = burst_capture(
+            resolution=resolution,
+            whitebalance=whitebalance,
+            mirror=mirror,
+            flip=flip,
+            burst_count=burst_count,
+            xclk_freq=xclk_freq,
+            saturation=saturation,
+            brightness=brightness,
+            contrast=contrast,
+            quality=quality,
+            flash_on=flash_on,
+            filename_prefix=filename_prefix,
+            save_path=save_path,
+        )
+        if elapsed < 0:
+            return make_response({"success": False, "error": "Burst capture failed"}, 200)
+        else:
+            return make_response({"success": True, "elapsed": elapsed, "frames": burst_count}, 200)
+    except Exception as e:
+        print("[Web] /api/burst 异常:", e)
+        sys.print_exception(e)
+        return make_response({"success": False, "error": str(e)}, 500)
 
 # ---------- API：录像 ----------
 @app.route("/api/video", methods=["POST"])
@@ -286,6 +332,33 @@ def video(request):
         sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
+# ---------- 辅助函数：递归获取图片文件 ----------
+def _get_files_recursive(path):
+    """
+    递归遍历目录，返回所有图片文件的完整路径。
+    支持扩展名：.jpg, .jpeg, .ppm, .bmp, .raw
+    """
+    try:
+        items = uos.listdir(path)
+    except Exception:
+        return []
+    files = []
+    for name in items:
+        full = path + '/' + name if path != '/' else '/' + name
+        # 判断是否为目录
+        try:
+            st = uos.stat(full)
+            is_dir = (st[0] & 0x4000) != 0
+        except Exception:
+            continue
+        if is_dir:
+            files.extend(_get_files_recursive(full))
+        else:
+            ext = name.split('.')[-1].lower()
+            if ext in ('jpg', 'jpeg', 'ppm', 'bmp', 'raw'):
+                files.append(full)
+    return files
+
 # ---------- API：文件列表 ----------
 @app.route("/api/files")
 def files(request):
@@ -294,26 +367,39 @@ def files(request):
         sd = get_sd_card()
         file_list = []
         if sd and sd.mounted:
-            raw_files = sd.list_files()
-            print("[Web] 原始文件列表类型: {} 内容: {}".format(type(raw_files), raw_files))
-            # 扩展名列表（使用切片比较，避免 endswith）
-            extensions = ['.jpg', '.jpeg', '.ppm', '.bmp', '.raw']
-            for f in raw_files:
-                f_str = str(f)
-                f_lower = f_str.lower()
-                is_image = False
-                for ext in extensions:
-                    if len(f_lower) >= len(ext) and f_lower[-len(ext):] == ext:
-                        is_image = True
-                        break
-                if is_image:
-                    file_list.append(f_str)
-        print("[Web] 过滤后文件数: {}".format(len(file_list)))
+            root = sd.mount_point
+            file_list = _get_files_recursive(root)
+        print("[Web] 获取到 {} 个文件".format(len(file_list)))
         return make_response({"files": file_list}, 200)
     except Exception as e:
         print("[Web] /api/files 异常:", e)
         sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
+
+# ---------- API：删除文件 ----------
+@app.route("/api/delete_file", methods=["POST"])
+def delete_file(request):
+    try:
+        params = request.json if request.json else {}
+        file_path = params.get("file_path")
+        if not file_path:
+            return make_response({"success": False, "error": "Missing file_path"}, 400)
+        # 安全校验：必须是以 /sd/ 开头，且不包含 '..' 路径穿越
+        if not file_path.startswith('/sd/') or '..' in file_path:
+            return make_response({"success": False, "error": "Invalid file path"}, 400)
+        # 检查文件是否存在
+        try:
+            uos.stat(file_path)
+        except:
+            return make_response({"success": False, "error": "File not found"}, 404)
+        # 删除文件
+        uos.remove(file_path)
+        print("[Web] 已删除文件: {}".format(file_path))
+        return make_response({"success": True}, 200)
+    except Exception as e:
+        print("[Web] 删除文件失败:", e)
+        sys.print_exception(e)
+        return make_response({"success": False, "error": str(e)}, 500)
 
 # ---------- 路由：查看 SD 卡文件 ----------
 @app.route("/sd/<path>")

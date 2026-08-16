@@ -22,7 +22,7 @@ from decision.flash import should_use_flash
 from decision.quick_flash import quick_should_use_flash
 from flash import get_flash
 from config import debug_log, LEVEL_INFO, LEVEL_WARNING, LEVEL_ERROR
-from camera_driver import capture_image
+from camera_driver import capture_image, get_camera
 from utils import get_image_dimensions
 
 
@@ -158,7 +158,7 @@ def take_advanced_photo(
         else:
             flash.off()
 
-        jpeg_data = capture_image(
+        cam = get_camera(
             framesize=resolution,
             quality=quality,
             format=camera.JPEG,
@@ -172,7 +172,9 @@ def take_advanced_photo(
             whitebalance=whitebalance,
             effect=camera.EFFECT_NONE
         )
-
+        for _ in range(3):
+            cam.capture()
+        jpeg_data = cam.capture()
         flash.off()
 
         if jpeg_data is None:
