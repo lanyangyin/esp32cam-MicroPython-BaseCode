@@ -205,7 +205,7 @@ def test_jpeg_resolutions():
         debug_log("\n--- [{}/{}] 测试 JPEG: {} ({}x{}) ---".format(
             idx, len(resolution_constants), framesize, w, h), level=LEVEL_INFO, module="Test")
 
-        reset_camera()
+        # reset_camera()
         gc.collect()
         time.sleep_ms(200)
 
@@ -236,7 +236,7 @@ def test_jpeg_resolutions():
             fail += 1
             consecutive_fail += 1
 
-        reset_camera()
+        # reset_camera()
         time.sleep_ms(100)
         gc.collect()
 
@@ -290,7 +290,7 @@ def test_grayscale_resolutions():
         debug_log("\n--- [{}/{}] 测试灰度: {} ({}x{}) ---".format(
             idx, len(resolution_constants), framesize, w, h), level=LEVEL_INFO, module="Test")
 
-        reset_camera()
+        # reset_camera()
         gc.collect()
         time.sleep_ms(200)
 
@@ -332,7 +332,7 @@ def test_grayscale_resolutions():
             fail += 1
             consecutive_fail += 1
 
-        reset_camera()
+        # reset_camera()
         time.sleep_ms(100)
         gc.collect()
 
@@ -386,7 +386,7 @@ def test_rgb565_resolutions():
         debug_log("\n--- [{}/{}] 测试 RGB565: {} ({}x{}) ---".format(
             idx, len(resolution_constants), framesize, w, h), level=LEVEL_INFO, module="Test")
 
-        reset_camera()
+        # reset_camera()
         gc.collect()
         time.sleep_ms(200)
 
@@ -434,7 +434,7 @@ def test_rgb565_resolutions():
             fail += 1
             consecutive_fail += 1
 
-        reset_camera()
+        # reset_camera()
         time.sleep_ms(100)
         gc.collect()
 

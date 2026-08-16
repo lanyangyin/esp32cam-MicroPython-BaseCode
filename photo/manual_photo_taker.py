@@ -51,7 +51,7 @@ def take_photo_manual(
     print("📷 手动拍照 (闪光灯: {})".format("开" if use_flash else "关"))
 
     # 初始化摄像头
-    reset_camera()
+    # reset_camera()
     gc.collect()
     time.sleep_ms(200)
 

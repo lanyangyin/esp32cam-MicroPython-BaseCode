@@ -153,7 +153,27 @@ if __name__ == "__main__":
     from config import set_debug
     set_debug(True)
     print("降级拍照测试（需硬件）")
-    saved_path, w, h, req_w, req_h, framesize = take_photo_with_downgrade()
+    preferred_resolutions = [
+        # camera.FRAME_96X96,  #                 96×96        0       8.00         0.00
+        # camera.FRAME_QQVGA,  #               160×120       69       5.04        13.69
+        camera.FRAME_QCIF,  #                176×144       72       5.00        14.39
+        camera.FRAME_HQVGA,  #               240×176       68       5.01        13.56
+        camera.FRAME_240X240,  #             240×240       77       5.03        15.30
+        camera.FRAME_QVGA,  #                320×240       68       5.06        13.44
+        camera.FRAME_CIF,  #                 400×296       55       5.05        10.89
+        camera.FRAME_HVGA,  #                480×320       60       5.03        11.93
+        camera.FRAME_VGA,  #                 640×480       47       5.09         9.24
+        camera.FRAME_SVGA,  #                800×600       35       5.05         6.93
+        camera.FRAME_P_HD,  #               720×1280       19       5.12         3.71
+        camera.FRAME_P_3MP,  #              864×1536       11       5.07         2.17
+        camera.FRAME_XGA,  #                1024×768       21       5.01         4.19
+        camera.FRAME_HD,  #                 1280×720       16       5.36         2.99
+        camera.FRAME_SXGA,  #              1280×1024       11       5.27         2.09
+        camera.FRAME_UXGA,  #              1600×1200       10       5.13         1.95
+        camera.FRAME_FHD,  #               1920×1080       10       5.34         1.87
+        camera.FRAME_QXGA,  #              2048×1536        6       5.13         1.17
+    ]
+    saved_path, w, h, req_w, req_h, framesize = take_photo_with_downgrade(preferred_resolutions)
     if saved_path:
         print("照片保存成功: {} (请求: {}x{}, 实际: {}x{})".format(
             saved_path, req_w, req_h, w, h))

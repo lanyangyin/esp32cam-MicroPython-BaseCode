@@ -3,13 +3,13 @@
 import camera
 from config import debug_log, LEVEL_INFO
 from camera_driver import capture_grayscale, CameraController, reset_camera
-from config.camera_model import get_config_path
+from config.camera_model import get_config_path, CAMERA_MODEL
 from utils.brightness import analyze_brightness
 from .flash import load_flash_guide, reload_flash_guide, evaluate_flash_decision
 from .retry import should_retry, get_retry_reason
 
 def _get_brightness_info(framesize=camera.FRAME_QVGA):
-    reset_camera()
+    # reset_camera()
     gray = capture_grayscale(framesize=framesize, whitebalance=camera.WB_CLOUDY)
     if gray is None:
         return None
@@ -42,7 +42,7 @@ def _show_decision(brightness_info):
 
 def flash_decision_helper(framesize=camera.FRAME_QVGA):
     print("\n" + "="*60)
-    print("闪光灯决策辅助工具")
+    print("闪光灯决策辅助工具 - 当前型号: {}".format(CAMERA_MODEL))
     print("="*60)
 
     MAX_RETRIES = 6

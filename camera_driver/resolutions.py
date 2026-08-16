@@ -2,8 +2,16 @@
 """
 分辨率映射工具
 
-提供摄像头所有支持的分辨率常量与尺寸的映射关系。
-所有分辨率尺寸均来自 ESP32 camera 驱动和 OV3660 传感器数据手册。
+提供摄像头所有支持的分辨率常量与其名称、尺寸的映射关系。
+所有尺寸来自 ESP32 camera 驱动和传感器数据手册（OV3660/OV2640）。
+
+主要功能：
+    - get_resolution(framesize): 根据常量返回 (宽, 高)
+    - get_name_by_value(framesize): 根据常量返回名称（如 "FRAME_XGA"）
+    - list_resolutions(): 打印所有分辨率表格
+    - is_resolution_supported(framesize): 检查分辨率是否在映射表中
+
+设计上自动适配固件支持的分辨率（如 HQVGA 可能存在也可能不存在）。
 """
 import camera  # type: ignore
 from config import debug_log
@@ -12,7 +20,7 @@ from config import debug_log
 def _debug_log(msg):
     debug_log(msg, module="Resolutions")
 
-# 所有支持的分辨率常量名称列表
+# 所有支持的分辨率常量名称列表（按顺序）
 RESOLUTION_NAMES = [
     "FRAME_96X96",     # 96x96
     "FRAME_QQVGA",     # 160x120
@@ -30,7 +38,7 @@ RESOLUTION_NAMES = [
     "FRAME_UXGA",      # 1600x1200
     "FRAME_FHD",       # 1920x1080
     "FRAME_P_HD",      # 720x1280 (竖屏HD)
-    "FRAME_P_3MP",     # 864x1536 (竖屏3MP) [reference:0]
+    "FRAME_P_3MP",     # 864x1536 (竖屏3MP)
     "FRAME_QXGA",      # 2048x1536
     "FRAME_QHD",       # 2560x1440
     "FRAME_WQXGA",     # 2560x1600
@@ -38,7 +46,7 @@ RESOLUTION_NAMES = [
     "FRAME_QSXGA",     # 2560x1920
 ]
 
-# 动态构建：名称 -> camera常量
+# 动态构建：名称 -> camera常量（只包含固件实际支持的常量）
 RESOLUTION_MAP = {}
 for name in RESOLUTION_NAMES:
     if hasattr(camera, name):
@@ -48,7 +56,7 @@ for name in RESOLUTION_NAMES:
         _debug_log("Warning: {} not supported".format(name))
 
 # 固定尺寸映射（常量 -> (宽, 高)）
-# 所有尺寸来自 ESP32 camera 驱动 [reference:1]
+# 所有尺寸来自 ESP32 camera 驱动
 RESOLUTION_SIZE = {
     camera.FRAME_96X96:   (96, 96),
     camera.FRAME_QQVGA:   (160, 120),
@@ -66,13 +74,14 @@ RESOLUTION_SIZE = {
     camera.FRAME_UXGA:    (1600, 1200),
     camera.FRAME_FHD:     (1920, 1080),
     camera.FRAME_P_HD:    (720, 1280),
-    camera.FRAME_P_3MP:   (864, 1536),   # [reference:2]
+    camera.FRAME_P_3MP:   (864, 1536),
     camera.FRAME_QXGA:    (2048, 1536),
     camera.FRAME_QHD:     (2560, 1440),
     camera.FRAME_WQXGA:   (2560, 1600),
     camera.FRAME_P_FHD:   (1080, 1920),
     camera.FRAME_QSXGA:   (2560, 1920),
 }
+
 
 def get_resolution(framesize):
     """
@@ -86,6 +95,7 @@ def get_resolution(framesize):
     """
     return RESOLUTION_SIZE.get(framesize, (None, None))
 
+
 def get_name_by_value(framesize):
     """
     根据常量值查找对应的分辨率名称。
@@ -94,15 +104,16 @@ def get_name_by_value(framesize):
         framesize (int): 分辨率常量值。
 
     返回：
-        str: 名称（如 "FRAME_XGA"），若未找到则返回 None。
+        str or None: 名称（如 "FRAME_XGA"），若未找到则返回 None。
     """
     for name, val in RESOLUTION_MAP.items():
         if val == framesize:
             return name
     return None
 
+
 def list_resolutions():
-    """打印所有可用的分辨率及其名称、常量和尺寸。"""
+    """打印所有可用的分辨率及其名称、常量和尺寸（表格形式）。"""
     print("Available camera resolutions:")
     print("┌─────────────┬────────────┬──────────┐")
     print("│   Name      │  Constant  │  Size    │")
@@ -114,6 +125,7 @@ def list_resolutions():
             size_str = "{}×{}".format(w, h) if w else "unknown"
             print("│ {:<11} │ {:<10} │ {:<8} │".format(name, val, size_str))
     print("└─────────────┴────────────┴──────────┘")
+
 
 def is_resolution_supported(framesize):
     """检查分辨率是否在映射表中。"""

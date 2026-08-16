@@ -51,7 +51,7 @@ def take_smart_photo(
     if decision_mode == 'quick':
         # 快速模式：仅使用快速亮度估计，不重试
         debug_log("快速模式：使用快速亮度估计", level=LEVEL_INFO, module="SmartPhotoTaker")
-        reset_camera()
+        # reset_camera()
         gc.collect()
         time.sleep_ms(200)
 
