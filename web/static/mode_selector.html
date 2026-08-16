@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>选择工作模式</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #f0f0f0; text-align: center; }
+        h1 { color: #333; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        label { display: block; margin: 20px 0; font-size: 1.2em; }
+        input[type="radio"] { margin-right: 10px; }
+        button { padding: 15px 40px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 1.2em; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .disabled-option { opacity: 0.6; }
+        .disabled-option input { cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📷 选择工作模式</h1>
+        <p>请选择本次开机的工作模式：</p>
+        <form id="modeForm">
+            <label>
+                <input type="radio" name="mode" value="拍照" checked> 📸 拍照模式
+            </label>
+            <label class="disabled-option">
+                <input type="radio" name="mode" value="视频" disabled> 🎬 视频模式 <span style="color: #888;">(即将上线)</span>
+            </label>
+            <label>
+                <input type="radio" name="mode" value="录制"> 🎥 录制模式
+            </label>
+            <br><br>
+            <button type="submit">确认选择</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('modeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var mode = document.querySelector('input[name="mode"]:checked').value;
+            console.log('[mode_selector] 提交模式:', mode);
+            fetch('/set_mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'mode=' + encodeURIComponent(mode)
+            })
+            .then(function(response) {
+                console.log('[mode_selector] 响应状态:', response.status);
+                // 无论响应如何，都跳转到首页
+                window.location.href = '/';
+            })
+            .catch(function(err) {
+                console.error('[mode_selector] 请求失败:', err);
+                window.location.href = '/';
+            });
+        });
+    </script>
+</body>
+</html>

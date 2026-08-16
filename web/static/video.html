@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>录制模式</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f0f0f0; }
+        h1 { color: #333; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; }
+        label { width: 100px; font-weight: bold; }
+        select, input { padding: 8px; width: 200px; }
+        button { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1e7e34; }
+        #result { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🎥 录制模式</h1>
+    <div class="card">
+        <div class="row">
+            <label>分辨率：</label>
+            <select id="video_res"></select>
+        </div>
+        <div class="row">
+            <label>质量：</label>
+            <input type="number" id="video_quality" value="10" min="10" max="63">
+        </div>
+        <div class="row">
+            <label>时长 (秒)：</label>
+            <input type="number" id="video_duration" value="5" min="1" max="60">
+        </div>
+        <div class="row">
+            <label>时钟：</label>
+            <select id="video_xclk">
+                <option value="10000000">10 MHz</option>
+                <option value="20000000">20 MHz</option>
+            </select>
+        </div>
+        <button id="btn_video">⏺️ 开始录像</button>
+        <div id="result"></div>
+    </div>
+    <div class="card">
+        <h3>📂 文件列表</h3>
+        <button id="btn_files">刷新</button>
+        <ul id="file_list"></ul>
+    </div>
+    <script>
+        var resolutions = {resolutions};
+        var sel = document.getElementById('video_res');
+        resolutions.forEach(function(r) {
+            var opt = document.createElement('option');
+            opt.value = r.value;
+            opt.text = r.name + ' (' + r.width + '×' + r.height + ')';
+            sel.appendChild(opt);
+        });
+
+        document.getElementById('btn_video').addEventListener('click', function() {
+            var framesize = parseInt(document.getElementById('video_res').value);
+            var quality = parseInt(document.getElementById('video_quality').value);
+            var duration = parseInt(document.getElementById('video_duration').value);
+            var xclk_freq = parseInt(document.getElementById('video_xclk').value);
+            var body = { framesize: framesize, quality: quality, duration: duration, xclk_freq: xclk_freq };
+            fetch('/api/video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(res => res.json())
+            .then(function(data) {
+                var div = document.getElementById('result');
+                if (data.success) {
+                    div.innerHTML = '✅ 录像完成：' + data.frames + ' 帧，耗时 ' + data.elapsed.toFixed(2) + ' 秒，帧率 ' + data.fps.toFixed(1) + ' fps';
+                } else {
+                    div.innerHTML = '❌ 录像失败：' + data.error;
+                }
+            })
+            .catch(function(err) {
+                document.getElementById('result').textContent = '请求失败：' + err;
+            });
+        });
+
+        document.getElementById('btn_files').addEventListener('click', function() {
+            fetch('/api/files')
+            .then(res => res.json())
+            .then(function(data) {
+                var list = document.getElementById('file_list');
+                list.innerHTML = '';
+                data.files.forEach(function(f) {
+                    var li = document.createElement('li');
+                    li.innerHTML = '<a href="/sd/' + f + '" target="_blank">' + f + '</a>';
+                    list.appendChild(li);
+                });
+            })
+            .catch(function(err) {
+                console.error('文件列表获取失败', err);
+            });
+        });
+    </script>
+</body>
+</html>

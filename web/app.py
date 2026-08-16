@@ -1,12 +1,14 @@
 # web/app.py
 """
 使用 EasyWeb 框架的 Web 控制服务
+支持模式选择：拍照 / 录制（视频预留）
 """
 
 import sys
 import time
 import camera
 import uos
+import json
 from easyweb import EasyWeb, make_response, send_file, render_template
 from photo import take_smart_photo, gray_quick_capture, gray_analyzer_capture
 from video import RecorderTime
@@ -18,19 +20,104 @@ set_debug(True)
 
 app = EasyWeb()
 
-# ---------- 主页 ----------
+# ---------- 模式配置文件（独立于摄像头型号） ----------
+MODE_FILE = "/web_mode.txt"
+
+def _read_mode():
+    try:
+        with open(MODE_FILE, "r") as f:
+            mode = f.read().strip()
+            if mode in ("拍照", "录制", "视频"):
+                return mode
+            return None
+    except:
+        return None
+
+def _write_mode(mode):
+    try:
+        with open(MODE_FILE, "w") as f:
+            f.write(mode)
+        return True
+    except:
+        return False
+
+def _clear_mode():
+    try:
+        with open(MODE_FILE, "w") as f:
+            f.write("")
+        return True
+    except:
+        return False
+
+def _get_resolutions():
+    res = []
+    for name in dir(camera):
+        if name.startswith("FRAME_"):
+            val = getattr(camera, name)
+            w, h = 0, 0
+            try:
+                from camera_driver.resolutions import get_resolution
+                w, h = get_resolution(val) or (0, 0)
+            except:
+                pass
+            res.append({
+                "name": name,
+                "value": val,
+                "width": w,
+                "height": h
+            })
+    return res
+
+def _render_html(template_name, **kwargs):
+    """读取 HTML 模板并用 kwargs 替换占位符"""
+    path = "/web/static/" + template_name
+    try:
+        with open(path, "r") as f:
+            html = f.read()
+        for key, value in kwargs.items():
+            if isinstance(value, (list, dict)):
+                value = json.dumps(value)
+            html = html.replace("{" + key + "}", str(value))
+        return html
+    except Exception as e:
+        print("[Web] 读取模板失败:", e)
+        return "<h1>Error loading page</h1><p>{}</p>".format(e)
+
+# ---------- 路由 ----------
 @app.route("/")
 def index(request):
     print("[Web] 请求: /")
-    try:
-        with open("/web/static/index.html", "r") as f:
-            html = f.read()
-        return make_response(html, 200)
-    except Exception as e:
-        print("[Web] / 异常:", e)
-        sys.print_exception(e)
-        err = "<h1>Error loading page</h1><p>{}</p>".format(e)
-        return make_response(err, 500)
+    mode = _read_mode()
+    if mode is None:
+        print("[Web] 未选择模式，显示模式选择页")
+        return make_response(_render_html("mode_selector.html"), 200)
+    elif mode == "拍照":
+        print("[Web] 当前模式: 拍照")
+        resolutions = _get_resolutions()
+        return make_response(_render_html("photo.html", resolutions=resolutions), 200)
+    elif mode == "录制":
+        print("[Web] 当前模式: 录制")
+        resolutions = _get_resolutions()
+        return make_response(_render_html("video.html", resolutions=resolutions), 200)
+    elif mode == "视频":
+        print("[Web] 当前模式: 视频 (未实现)")
+        return make_response("<h1>视频模式即将上线</h1><p><a href='/set_mode?mode=拍照'>切换到拍照</a> | <a href='/set_mode?mode=录制'>切换到录制</a></p>", 200)
+    else:
+        _clear_mode()
+        return make_response("Invalid mode, please reselect.", 302, {"Location": "/"})
+
+# 注意：只接受 POST 方法
+@app.route("/set_mode", methods=["POST"])
+def set_mode(request):
+    # 使用 request.form 获取表单数据
+    mode = request.form.get("mode") if request.form else None
+    print("[Web] /set_mode 收到 mode: {}".format(mode))
+    if mode in ("拍照", "录制", "视频"):
+        _write_mode(mode)
+        print("[Web] 模式已设置为: {}".format(mode))
+        return make_response({"success": True, "mode": mode}, 200)
+    else:
+        return make_response({"success": False, "error": "Invalid mode"}, 400)
 
 # ---------- API：系统状态 ----------
 @app.route("/api/status")
@@ -41,7 +128,6 @@ def status(request):
         status_data = {
             "model": CAMERA_MODEL,
             "sd_mounted": sd.mounted if sd else False,
-            "resolutions": _get_resolutions(),
             "timestamp": time.time()
         }
         return make_response(status_data, 200)
@@ -148,79 +234,44 @@ def files(request):
         sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
-# ---------- 路由：查看 SD 卡文件（在浏览器中显示，而不是下载） ----------
+# ---------- 路由：查看 SD 卡文件 ----------
 @app.route("/sd/<path>")
 def sd_file(request):
-    filename = request.match  # EasyWeb 会将匹配的路径部分存入 request.match
+    filename = request.match
     print("[Web] 请求: /sd/{}".format(filename))
     try:
         if not filename:
-            print("[Web] 文件名缺失")
             return make_response("Missing filename", 400)
         if '..' in filename or filename.startswith('/'):
-            print("[Web] 非法路径: {}".format(filename))
             return make_response("Invalid path", 403)
         full_path = "/sd/" + filename
         print("[Web] 尝试读取文件: {}".format(full_path))
-        # 检查文件是否存在
         uos.stat(full_path)
-        # 读取文件内容
         with open(full_path, "rb") as f:
             data = f.read()
-        # 判断文件类型
+        # 判断 Content-Type
         f_lower = filename.lower()
-        # 图片扩展名
-        image_exts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico']
-        is_image = False
-        for ext in image_exts:
-            if len(f_lower) >= len(ext) and f_lower[-len(ext):] == ext:
-                is_image = True
-                break
-        if is_image:
-            # 根据扩展名设置 MIME 类型
-            if f_lower.endswith('.png'):
-                ct = "image/png"
-            elif f_lower.endswith('.gif'):
-                ct = "image/gif"
-            elif f_lower.endswith('.bmp'):
-                ct = "image/bmp"
-            elif f_lower.endswith('.ico'):
-                ct = "image/x-icon"
-            else:
-                ct = "image/jpeg"
+        if f_lower.endswith(('.jpg', '.jpeg')):
+            ct = "image/jpeg"
+        elif f_lower.endswith('.png'):
+            ct = "image/png"
+        elif f_lower.endswith('.gif'):
+            ct = "image/gif"
+        elif f_lower.endswith('.bmp'):
+            ct = "image/bmp"
         else:
-            # 非图片文件，作为普通文件下载
             ct = "application/octet-stream"
-        print("[Web] 文件存在，大小: {} bytes, Content-Type: {}".format(len(data), ct))
-        # 返回响应，通过 headers 参数设置 Content-Type
+        print("[Web] 文件大小: {} bytes, Content-Type: {}".format(len(data), ct))
         return make_response(data, 200, {"Content-Type": ct})
     except Exception as e:
         print("[Web] 文件读取失败: {}".format(e))
         sys.print_exception(e)
-        return make_response("File not found: {}".format(filename), 404)
-
-# ---------- 辅助函数 ----------
-def _get_resolutions():
-    res = []
-    for name in dir(camera):
-        if name.startswith("FRAME_"):
-            val = getattr(camera, name)
-            w, h = 0, 0
-            try:
-                from camera_driver.resolutions import get_resolution
-                w, h = get_resolution(val) or (0, 0)
-            except:
-                pass
-            res.append({
-                "name": name,
-                "value": val,
-                "width": w,
-                "height": h
-            })
-    return res
+        return make_response("File not found", 404)
 
 # ---------- 启动入口 ----------
 def start(host="0.0.0.0", port=80):
+    _clear_mode()
+    print("Mode file cleared. Please select mode on first visit.")
     print("Starting EasyWeb server on http://{}:{}".format(host, port))
     app.run(host=host, port=port)
 
