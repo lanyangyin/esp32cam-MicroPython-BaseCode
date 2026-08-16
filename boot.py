@@ -27,13 +27,13 @@ boot.py - ESP32 启动初始化脚本
 # # webrepl.stop()
 import machine, uos
 from machine import Pin
-# import network
-#
-# ap = network.WLAN(network.AP_IF)
-# ap.active(True)
-# ap.config(essid="ESP32-CAM-AP-{}".format(':'.join(['{:02x}'.format(b) for b in ap.config('mac')])), password="00000000", authmode=network.AUTH_WPA_WPA2_PSK)
-# print("AP IP:", ap.ifconfig()[0])   # 通常为 192.168.4.1
-# # ap.active(False)
+import network
+
+ap = network.WLAN(network.AP_IF)
+ap.active(True)
+ap.config(essid="ESP32-CAM-AP-{}".format(':'.join(['{:02x}'.format(b) for b in ap.config('mac')]).replace(':','').upper()[-4:]), password="00000000", authmode=network.AUTH_WPA_WPA2_PSK)
+print("AP IP:", ap.ifconfig()[0])   # 通常为 192.168.4.1
+# ap.active(False)
 
 # 关闪光灯
 led = Pin(4, Pin.OUT)
