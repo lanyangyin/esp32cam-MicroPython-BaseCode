@@ -444,6 +444,59 @@ def sd_file(request):
         sys.print_exception(e)
         return make_response("File not found", 404)
 
+# ---------- API：设置 Wi-Fi ----------
+@app.route("/api/set_wifi", methods=["POST"])
+def set_wifi(request):
+    try:
+        import network
+        params = request.json if request.json else {}
+        ssid = params.get("ssid", "").strip()
+        password = params.get("password", "").strip()
+        if not ssid:
+            return make_response({"success": False, "error": "SSID is required"}, 400)
+        # 连接 Wi-Fi
+        wlan = network.WLAN(network.STA_IF)
+        wlan.active(True)
+        wlan.connect(ssid, password)
+        # 等待连接（最多10秒）
+        import time
+        timeout = 10
+        while timeout > 0:
+            if wlan.isconnected():
+                break
+            time.sleep(1)
+            timeout -= 1
+        if wlan.isconnected():
+            ip = wlan.ifconfig()[0]
+            print("[Web] Wi-Fi 连接成功，IP:", ip)
+            return make_response({"success": True, "ip": ip}, 200)
+        else:
+            return make_response({"success": False, "error": "Connection timeout"}, 200)
+    except Exception as e:
+        print("[Web] 设置 Wi-Fi 失败:", e)
+        sys.print_exception(e)
+        return make_response({"success": False, "error": str(e)}, 500)
+
+# ---------- API：重启设备 ----------
+@app.route("/api/restart", methods=["POST"])
+def restart(request):
+    try:
+        import machine
+        # 先返回响应，再重启
+        response = make_response({"success": True, "message": "Restarting..."}, 200)
+        # 注意：需要异步发送响应后再重启，但 EasyWeb 是同步的，所以先发送再重启
+        # 但 make_response 只是构造响应，实际发送在框架内部，我们可以先返回，然后立即重启
+        # 但没法保证响应先发送，所以采用简单方式：直接触发重启，客户端会断开连接
+        # 但为了友好，我们可以在重启前打印日志
+        print("[Web] 设备即将重启...")
+        # 延迟一点让响应发送出去
+        import time
+        time.sleep_ms(500)
+        machine.reset()
+    except Exception as e:
+        print("[Web] 重启失败:", e)
+        return make_response({"success": False, "error": str(e)}, 500)
+
 # ---------- 启动入口 ----------
 def start(host="0.0.0.0", port=80):
     _clear_mode()

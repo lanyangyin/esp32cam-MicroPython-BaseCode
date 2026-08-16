@@ -33,6 +33,20 @@
             <button type="submit">确认选择</button>
         </form>
     </div>
+    <div class="card" style="margin-top:20px;">
+        <h3>📶 Wi-Fi 设置</h3>
+        <p>设置 ESP32-CAM 连接的 Wi-Fi 网络</p>
+        <div class="row">
+            <label>SSID：</label>
+            <input type="text" id="wifi_ssid" placeholder="请输入 Wi-Fi 名称">
+        </div>
+        <div class="row">
+            <label>密码：</label>
+            <input type="password" id="wifi_password" placeholder="请输入 Wi-Fi 密码">
+        </div>
+        <button id="btn_wifi">连接</button>
+        <div id="wifi_result"></div>
+    </div>
     <script>
         document.getElementById('modeForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -51,6 +65,38 @@
             .catch(function(err) {
                 console.error('[mode_selector] 请求失败:', err);
                 window.location.href = '/';
+            });
+        });
+        document.getElementById('btn_wifi').addEventListener('click', function() {
+            var ssid = document.getElementById('wifi_ssid').value.trim();
+            var password = document.getElementById('wifi_password').value.trim();
+            if (!ssid) {
+                alert('请输入 SSID');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '连接中...';
+            fetch('/api/set_wifi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ssid: ssid, password: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = '连接';
+                var resultDiv = document.getElementById('wifi_result');
+                if (data.success) {
+                    resultDiv.innerHTML = '✅ 连接成功，IP：' + data.ip;
+                } else {
+                    resultDiv.innerHTML = '❌ 连接失败：' + data.error;
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.textContent = '连接';
+                document.getElementById('wifi_result').textContent = '请求失败：' + err;
             });
         });
     </script>

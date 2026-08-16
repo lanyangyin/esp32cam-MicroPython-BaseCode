@@ -163,6 +163,9 @@
         <button id="btn_files">刷新</button>
         <ul id="file_list"></ul>
     </div>
+    <div class="button-group" style="margin-top:10px;">
+        <button id="btn_restart" style="background:#dc3545;">🔁 重启设备</button>
+    </div>
 
     <script>
         // 加载分辨率列表（用于主分辨率和分析分辨率）
@@ -443,7 +446,19 @@
             })
             .catch(err => console.error('文件列表获取失败', err));
         });
-
+        document.getElementById('btn_restart').addEventListener('click', function() {
+            if (confirm('确定要重启设备吗？')) {
+                fetch('/api/restart', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    alert('设备正在重启...');
+                })
+                .catch(err => {
+                    // 即使请求失败，也可能因为重启导致连接断开，所以忽略错误
+                    alert('设备正在重启...');
+                });
+            }
+        });
         // 页面加载完成后，自动加载配置（可选）
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('btn_load_config').click();
