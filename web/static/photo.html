@@ -2,97 +2,248 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>拍照模式</title>
+    <title>拍照模式 - 高级</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f0f0f0; }
+        body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f0f0f0; }
         h1 { color: #333; }
         .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; }
-        label { width: 100px; font-weight: bold; }
-        select, input { padding: 8px; width: 200px; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0; }
+        .row label { min-width: 140px; font-weight: bold; }
+        select, input[type="text"], input[type="number"] { padding: 6px; width: 180px; }
+        input[type="range"] { width: 150px; }
+        input[type="checkbox"] { width: 20px; height: 20px; }
+        button { padding: 10px 25px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1em; }
         button:hover { background: #0056b3; }
         img { max-width: 100%; height: auto; border: 1px solid #ccc; margin-top: 10px; }
         #result { margin-top: 10px; }
+        .inline-group { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+        .inline-group .row { flex: 1; min-width: 200px; }
+        .section-title { font-weight: bold; color: #555; margin-top: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .small-note { font-size: 0.8em; color: #888; }
     </style>
 </head>
 <body>
-    <h1>📸 拍照模式</h1>
+    <h1>📸 高级拍照模式</h1>
     <div class="card">
+        <h3>参数设置</h3>
+
+        <!-- 基本参数 -->
         <div class="row">
             <label>分辨率：</label>
             <select id="capture_res"></select>
         </div>
         <div class="row">
-            <label>质量：</label>
-            <input type="number" id="capture_quality" value="10" min="10" max="63">
+            <label>分析分辨率：</label>
+            <select id="analysis_res"></select>
+            <span class="small-note">用于亮度分析，通常低于拍照分辨率</span>
         </div>
         <div class="row">
-            <label>模式：</label>
-            <select id="capture_mode">
-                <option value="quick">快速 (阈值)</option>
-                <option value="normal">智能 (规则引擎)</option>
+            <label>JPEG 质量：</label>
+            <input type="number" id="capture_quality" value="10" min="10" max="63">
+        </div>
+
+        <!-- 闪光灯模式 -->
+        <div class="row">
+            <label>闪光灯模式：</label>
+            <select id="flash_mode">
+                <option value="off">关闭</option>
+                <option value="on">开启</option>
+                <option value="auto" selected>自动（完整分析）</option>
+                <option value="auto_quick">自动（快速估计）</option>
             </select>
         </div>
+        <div class="row">
+            <label>亮度阈值：</label>
+            <input type="number" id="brightness_threshold" value="30" min="0" max="255">
+            <span class="small-note">低于此值则开闪光灯（仅自动模式）</span>
+        </div>
+
+        <!-- 图像调节 -->
+        <div class="section-title">图像调节</div>
+        <div class="inline-group">
+            <div class="row">
+                <label>白平衡：</label>
+                <select id="whitebalance">
+                    <option value="0">WB_NONE</option>
+                    <option value="1">WB_SUNNY</option>
+                    <option value="2" selected>WB_CLOUDY</option>
+                    <option value="3">WB_OFFICE</option>
+                    <option value="4">WB_HOME</option>
+                </select>
+            </div>
+            <div class="row">
+                <label>左右镜像：</label>
+                <input type="checkbox" id="mirror" value="1">
+            </div>
+            <div class="row">
+                <label>上下翻转：</label>
+                <input type="checkbox" id="flip" checked value="1">
+            </div>
+        </div>
+        <div class="inline-group">
+            <div class="row">
+                <label>时钟频率：</label>
+                <select id="xclk_freq">
+                    <option value="10000000">10 MHz</option>
+                    <option value="20000000">20 MHz</option>
+                </select>
+            </div>
+            <div class="row">
+                <label>饱和度：</label>
+                <input type="range" id="saturation" min="-2" max="2" value="0" step="1">
+                <span id="saturation_val">0</span>
+            </div>
+        </div>
+        <div class="inline-group">
+            <div class="row">
+                <label>亮度调节：</label>
+                <input type="range" id="brightness_adj" min="-2" max="2" value="0" step="1">
+                <span id="brightness_adj_val">0</span>
+            </div>
+            <div class="row">
+                <label>对比度：</label>
+                <input type="range" id="contrast_adj" min="-2" max="2" value="0" step="1">
+                <span id="contrast_adj_val">0</span>
+            </div>
+        </div>
+
+        <!-- 文件和重试 -->
+        <div class="section-title">文件与重试</div>
+        <div class="row">
+            <label>保存文件：</label>
+            <input type="checkbox" id="save_file" checked>
+        </div>
+        <div class="row">
+            <label>文件名前缀：</label>
+            <input type="text" id="filename_prefix" value="photo">
+        </div>
+        <div class="row">
+            <label>保存路径：</label>
+            <input type="text" id="save_path" value="/sd">
+        </div>
+        <div class="inline-group">
+            <div class="row">
+                <label>黑照重试次数：</label>
+                <input type="number" id="black_retry" value="3" min="0" max="10">
+            </div>
+            <div class="row">
+                <label>分析重试次数：</label>
+                <input type="number" id="analysis_retry" value="3" min="1" max="10">
+            </div>
+        </div>
+
         <button id="btn_capture">📷 拍照</button>
+        <div class="row" style="margin-top: 15px;">
+            <button id="btn_save_config">💾 保存配置</button>
+            <button id="btn_load_config">📂 加载配置</button>
+            <button id="btn_reset_default">↩️ 恢复默认</button>
+        </div>
         <div id="result"></div>
     </div>
+
     <div class="card">
         <h3>📂 文件列表</h3>
         <button id="btn_files">刷新</button>
         <ul id="file_list"></ul>
     </div>
+
     <script>
-        var resolutions = {resolutions};
-        var sel = document.getElementById('capture_res');
-        resolutions.forEach(function(r) {
-            var opt = document.createElement('option');
-            opt.value = r.value;
-            opt.text = r.name + ' (' + r.width + '×' + r.height + ')';
-            sel.appendChild(opt);
+        // 加载分辨率列表（用于主分辨率和分析分辨率）
+        function loadResolutions() {
+            fetch('/api/status')
+                .then(res => res.json())
+                .then(data => {
+                    const sel1 = document.getElementById('capture_res');
+                    const sel2 = document.getElementById('analysis_res');
+                    sel1.innerHTML = '';
+                    sel2.innerHTML = '';
+                    data.resolutions.forEach(r => {
+                        const opt1 = document.createElement('option');
+                        opt1.value = r.value;
+                        opt1.text = `${r.name} (${r.width}×${r.height})`;
+                        sel1.appendChild(opt1);
+                        const opt2 = opt1.cloneNode(true);
+                        sel2.appendChild(opt2);
+                    });
+                    // 默认选择 XGA 和 QVGA
+                    sel1.value = 1024;  // FRAME_XGA
+                    sel2.value = 320;   // FRAME_QVGA
+                })
+                .catch(err => console.error('加载分辨率失败', err));
+        }
+        loadResolutions();
+
+        // 滑块显示数值
+        document.getElementById('saturation').addEventListener('input', function() {
+            document.getElementById('saturation_val').textContent = this.value;
+        });
+        document.getElementById('brightness_adj').addEventListener('input', function() {
+            document.getElementById('brightness_adj_val').textContent = this.value;
+        });
+        document.getElementById('contrast_adj').addEventListener('input', function() {
+            document.getElementById('contrast_adj_val').textContent = this.value;
         });
 
+        // 拍照按钮
         document.getElementById('btn_capture').addEventListener('click', function() {
-            var framesize = parseInt(document.getElementById('capture_res').value);
-            var quality = parseInt(document.getElementById('capture_quality').value);
-            var mode = document.getElementById('capture_mode').value;
-            var body = { framesize: framesize, quality: quality, decision_mode: mode };
+            const params = {
+                flash_mode: document.getElementById('flash_mode').value,
+                resolution: parseInt(document.getElementById('capture_res').value),
+                whitebalance: parseInt(document.getElementById('whitebalance').value),
+                mirror: document.getElementById('mirror').checked ? 1 : 0,
+                flip: document.getElementById('flip').checked ? 1 : 0,
+                xclk_freq: parseInt(document.getElementById('xclk_freq').value),
+                saturation: parseInt(document.getElementById('saturation').value),
+                brightness: parseInt(document.getElementById('brightness_adj').value),
+                contrast: parseInt(document.getElementById('contrast_adj').value),
+                quality: parseInt(document.getElementById('capture_quality').value),
+                save_file: document.getElementById('save_file').checked,
+                filename_prefix: document.getElementById('filename_prefix').value,
+                save_path: document.getElementById('save_path').value,
+                black_retry: parseInt(document.getElementById('black_retry').value),
+                analysis_retry: parseInt(document.getElementById('analysis_retry').value),
+                analysis_resolution: parseInt(document.getElementById('analysis_res').value),
+                brightness_threshold: parseInt(document.getElementById('brightness_threshold').value),
+            };
+
             fetch('/api/capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify(params)
             })
             .then(res => res.json())
             .then(data => {
-                var div = document.getElementById('result');
+                const div = document.getElementById('result');
                 if (data.success) {
-                    div.innerHTML = '✅ 照片已保存：<a href="/sd/' + data.path.split('/').pop() + '" target="_blank">查看</a>' +
-                        '<br>尺寸: ' + data.width + '×' + data.height + '，亮度: ' + data.brightness.toFixed(1) +
-                        '<br><img src="/sd/' + data.path.split('/').pop() + '" alt="photo" style="max-width:300px;">';
+                    const filename = data.path.split('/').pop();
+                    div.innerHTML = `
+                        ✅ 照片已保存：<a href="/sd/${filename}" target="_blank">查看</a>
+                        <br>尺寸: ${data.width}×${data.height}，亮度: ${data.brightness.toFixed(1)}
+                        <br><img src="/sd/${filename}" alt="photo" style="max-width:300px;">
+                    `;
                 } else {
-                    div.innerHTML = '❌ 拍照失败：' + data.error;
+                    div.innerHTML = `❌ 拍照失败：${data.error}`;
                 }
             })
-            .catch(function(err) {
+            .catch(err => {
                 document.getElementById('result').textContent = '请求失败：' + err;
             });
         });
 
+        // 文件列表
         document.getElementById('btn_files').addEventListener('click', function() {
             fetch('/api/files')
             .then(res => res.json())
-            .then(function(data) {
-                var list = document.getElementById('file_list');
+            .then(data => {
+                const list = document.getElementById('file_list');
                 list.innerHTML = '';
-                data.files.forEach(function(f) {
-                    var li = document.createElement('li');
-                    li.innerHTML = '<a href="/sd/' + f + '" target="_blank">' + f + '</a>';
+                data.files.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="/sd/${f}" target="_blank">${f}</a>`;
                     list.appendChild(li);
                 });
             })
-            .catch(function(err) {
-                console.error('文件列表获取失败', err);
-            });
+            .catch(err => console.error('文件列表获取失败', err));
         });
     </script>
 </body>

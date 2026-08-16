@@ -9,6 +9,8 @@ import time
 import camera
 import uos
 import json
+
+from advanced_photo import take_advanced_photo
 from easyweb import EasyWeb, make_response, send_file, render_template
 from photo import take_smart_photo, gray_quick_capture, gray_analyzer_capture
 from video import RecorderTime
@@ -119,16 +121,71 @@ def set_mode(request):
     else:
         return make_response({"success": False, "error": "Invalid mode"}, 400)
 
+# ---------- API：配置保存/加载 ----------
+CONFIG_FILE = "/sd/camera_config.json"
+
+@app.route("/api/save_config", methods=["POST"])
+def save_config(request):
+    try:
+        config = request.json
+        if not config:
+            return make_response({"success": False, "error": "No config data"}, 400)
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(config, f)
+        print("[Web] 配置已保存至 {}".format(CONFIG_FILE))
+        return make_response({"success": True}, 200)
+    except Exception as e:
+        print("[Web] 保存配置失败:", e)
+        sys.print_exception(e)
+        return make_response({"success": False, "error": str(e)}, 500)
+
+@app.route("/api/load_config", methods=["GET"])
+def load_config(request):
+    try:
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                config = json.load(f)
+            print("[Web] 配置已加载")
+            return make_response(config, 200)
+        except OSError:
+            # 文件不存在，返回默认配置（与前端默认值对齐）
+            default_config = {
+                "flash_mode": "auto",
+                "resolution": 1024,          # FRAME_XGA
+                "whitebalance": 2,           # WB_CLOUDY
+                "mirror": 0,
+                "flip": 1,
+                "xclk_freq": 10000000,
+                "saturation": 0,
+                "brightness": 0,
+                "contrast": 0,
+                "quality": 10,
+                "save_file": True,
+                "filename_prefix": "photo",
+                "save_path": "/sd",
+                "black_retry": 3,
+                "analysis_retry": 3,
+                "analysis_resolution": 320,  # FRAME_QVGA
+            }
+            print("[Web] 配置不存在，返回默认")
+            return make_response(default_config, 200)
+    except Exception as e:
+        print("[Web] 加载配置失败:", e)
+        sys.print_exception(e)
+        return make_response({"error": str(e)}, 500)
+
 # ---------- API：系统状态 ----------
 @app.route("/api/status")
 def status(request):
     print("[Web] 请求: /api/status")
     try:
         sd = get_sd_card()
+        resolutions = _get_resolutions()   # 调用已有的分辨率获取函数
         status_data = {
             "model": CAMERA_MODEL,
             "sd_mounted": sd.mounted if sd else False,
-            "timestamp": time.time()
+            "timestamp": time.time(),
+            "resolutions": resolutions,    # 添加这一行
         }
         return make_response(status_data, 200)
     except Exception as e:
@@ -142,36 +199,59 @@ def capture(request):
     print("[Web] 请求: /api/capture")
     try:
         params = request.json if request.json else {}
-        framesize = params.get("framesize", camera.FRAME_XGA)
+        flash_mode = params.get("flash_mode", "auto")
+        resolution = params.get("resolution", camera.FRAME_XGA)
+        whitebalance = params.get("whitebalance", camera.WB_CLOUDY)
+        mirror = params.get("mirror", 0)
+        flip = params.get("flip", 1)
+        xclk_freq = params.get("xclk_freq", camera.XCLK_10MHz)
+        saturation = params.get("saturation", 0)
+        brightness = params.get("brightness", 0)
+        contrast = params.get("contrast", 0)
         quality = params.get("quality", 10)
-        decision_mode = params.get("decision_mode", "quick")
-        print("[Web] 参数: framesize={}, quality={}, mode={}".format(framesize, quality, decision_mode))
-        saved_path, w, h, brightness = take_smart_photo(
-            analysis_framesize=camera.FRAME_QVGA,
-            photo_framesize=framesize,
+        save_file = params.get("save_file", True)
+        filename_prefix = params.get("filename_prefix", "photo")
+        save_path = params.get("save_path", "/sd")
+        black_retry = params.get("black_retry", 3)
+        analysis_retry = params.get("analysis_retry", 3)
+        analysis_resolution = params.get("analysis_resolution", camera.FRAME_QVGA)
+        # brightness_threshold 已被移除
+
+        result = take_advanced_photo(
+            flash_mode=flash_mode,
+            resolution=resolution,
+            whitebalance=whitebalance,
+            mirror=mirror,
+            flip=flip,
+            xclk_freq=xclk_freq,
+            saturation=saturation,
+            brightness=brightness,
+            contrast=contrast,
             quality=quality,
-            decision_mode=decision_mode,
-            retry_analysis_limit=3,
-            retry_capture_limit=3
+            save_file=save_file,
+            filename_prefix=filename_prefix,
+            save_path=save_path,
+            black_retry=black_retry,
+            analysis_retry=analysis_retry,
+            analysis_resolution=analysis_resolution,
         )
-        if saved_path:
-            avg = brightness.get('average_brightness', 0) if brightness else 0
-            result = {
-                "success": True,
-                "path": saved_path,
-                "width": w,
-                "height": h,
-                "brightness": avg
-            }
-            print("[Web] 拍照成功: {}".format(saved_path))
-        else:
-            result = {"success": False, "error": "Capture failed"}
-            print("[Web] 拍照失败")
-        return make_response(result, 200)
+
+        if result is None:
+            return make_response({"success": False, "error": "Capture failed"}, 200)
+
+        response = {
+            "success": True,
+            "path": result.get('path'),
+            "width": result.get('width', 0),
+            "height": result.get('height', 0),
+            "brightness": result.get('brightness', 0),
+        }
+        return make_response(response, 200)
     except Exception as e:
         print("[Web] /api/capture 异常:", e)
         sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
+
 
 # ---------- API：录像 ----------
 @app.route("/api/video", methods=["POST"])
