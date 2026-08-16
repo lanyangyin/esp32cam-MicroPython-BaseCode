@@ -20,7 +20,7 @@ set_debug(True)
 
 app = EasyWeb()
 
-# ---------- 模式配置文件（独立于摄像头型号） ----------
+# ---------- 模式配置文件 ----------
 MODE_FILE = "/web_mode.txt"
 
 def _read_mode():
@@ -216,6 +216,7 @@ def files(request):
         if sd and sd.mounted:
             raw_files = sd.list_files()
             print("[Web] 原始文件列表类型: {} 内容: {}".format(type(raw_files), raw_files))
+            # 扩展名列表（使用切片比较，避免 endswith）
             extensions = ['.jpg', '.jpeg', '.ppm', '.bmp', '.raw']
             for f in raw_files:
                 f_str = str(f)
@@ -237,7 +238,10 @@ def files(request):
 # ---------- 路由：查看 SD 卡文件 ----------
 @app.route("/sd/<path>")
 def sd_file(request):
+    # 修复：request.match 可能是元组，确保转为字符串
     filename = request.match
+    if isinstance(filename, tuple):
+        filename = filename[0] if filename else ""
     print("[Web] 请求: /sd/{}".format(filename))
     try:
         if not filename:
@@ -249,18 +253,24 @@ def sd_file(request):
         uos.stat(full_path)
         with open(full_path, "rb") as f:
             data = f.read()
-        # 判断 Content-Type
+        # 手动检查后缀（不使用 endswith）
         f_lower = filename.lower()
-        if f_lower.endswith(('.jpg', '.jpeg')):
-            ct = "image/jpeg"
-        elif f_lower.endswith('.png'):
-            ct = "image/png"
-        elif f_lower.endswith('.gif'):
-            ct = "image/gif"
-        elif f_lower.endswith('.bmp'):
-            ct = "image/bmp"
-        else:
-            ct = "application/octet-stream"
+        ct = "application/octet-stream"
+        # 图片扩展名
+        img_exts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico']
+        for ext in img_exts:
+            if len(f_lower) >= len(ext) and f_lower[-len(ext):] == ext:
+                if ext in ('.jpg', '.jpeg'):
+                    ct = "image/jpeg"
+                elif ext == '.png':
+                    ct = "image/png"
+                elif ext == '.gif':
+                    ct = "image/gif"
+                elif ext == '.bmp':
+                    ct = "image/bmp"
+                elif ext == '.ico':
+                    ct = "image/x-icon"
+                break
         print("[Web] 文件大小: {} bytes, Content-Type: {}".format(len(data), ct))
         return make_response(data, 200, {"Content-Type": ct})
     except Exception as e:
