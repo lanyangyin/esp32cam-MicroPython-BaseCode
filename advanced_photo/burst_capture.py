@@ -102,7 +102,7 @@ def burst_capture(
             debug_log("拍摄第 {} 张".format(i), level=LEVEL_INFO, module="BurstCapture")
             # 捕获
             try:
-                for _ in range(3):
+                for _ in range(brightness+2):
                     cam.capture()
                 jpeg_data = cam.capture()
             except Exception as e:

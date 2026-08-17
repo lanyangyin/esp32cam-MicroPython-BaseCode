@@ -739,6 +739,7 @@ def sd_file(request):
         if '..' in filename or filename.startswith('/'):
             return make_response("Invalid path", 403)
         full_path = "/sd/" + filename
+
         # 检查是否为目录
         try:
             st = uos.stat(full_path)
@@ -748,9 +749,10 @@ def sd_file(request):
         except:
             pass
 
-        # 确定 Content-Type
+        # 确定 Content-Type 和是否为图片
         f_lower = filename.lower()
         ct = "application/octet-stream"
+        is_image = False
         img_exts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico']
         for ext in img_exts:
             if len(f_lower) >= len(ext) and f_lower[-len(ext):] == ext:
@@ -764,12 +766,22 @@ def sd_file(request):
                     ct = "image/bmp"
                 elif ext == '.ico':
                     ct = "image/x-icon"
+                is_image = True
                 break
 
+        # 设置 Content-Disposition：图片内联显示，其他附件下载
+        if is_image:
+            disposition = "inline"
+        else:
+            disposition = "attachment"
+
         # 使用 easyweb.send_file 流式传输，显式传递 mimetype
-        print("[Web] 流式发送文件: {} (Content-Type: {})".format(full_path, ct))
+        print("[Web] 流式发送文件: {} (Content-Type: {}, Disposition: {})".format(full_path, ct, disposition))
         generator = easyweb.send_file(full_path, mimetype=ct)
-        return make_response(generator, 200, {"Content-Type": ct})
+        return make_response(generator, 200, {
+            "Content-Type": ct,
+            "Content-Disposition": "{}; filename=\"{}\"".format(disposition, filename)
+        })
 
     except Exception as e:
         print("[Web] 文件读取失败: {}".format(e))

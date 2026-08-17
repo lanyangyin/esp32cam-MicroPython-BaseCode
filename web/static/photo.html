@@ -13,7 +13,7 @@
         input[type="checkbox"] { width: 20px; height: 20px; }
         button { padding: 10px 25px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1.1em; }
         button:hover { background: #0056b3; }
-        img { max-width: 100%; height: auto; border: 1px solid #ccc; margin-top: 10px; }
+        img { max-width: 100%; height: auto; border: 1px solid #ccc; margin-top: 10px; max-height: 600px; }
         #result { margin-top: 10px; }
         .inline-group { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
         .inline-group .row { flex: 1; min-width: 200px; }
@@ -260,10 +260,12 @@
             .then(function(data) {
                 var div = document.getElementById('result');
                 if (data.success) {
-                    var filename = data.path.split('/').pop();
-                    div.innerHTML = '<p>✅ 照片已保存：<a href="/sd/' + filename + '" target="_blank">查看</a><br>尺寸: ' + data.width + '×' + data.height + '，亮度: ' + data.brightness.toFixed(1) + '<br><img src="/sd/' + filename + '" alt="photo" style="max-width:300px;"></p>';
+                    // 安全处理亮度值
+                    var brightness = (data.brightness !== null && data.brightness !== undefined) ? data.brightness.toFixed(1) : 'N/A';
+                    var filepath = data.path ? '/sd/' + data.path.split('/').pop() : '';
+                    div.innerHTML = '<p>✅ 照片已保存：<a href="' + filepath + '" target="_blank">查看</a><br>尺寸: ' + (data.width || 0) + '×' + (data.height || 0) + '，亮度: ' + brightness + '<br><img src="' + filepath + '" alt="photo" style="max-width:300px;"></p>';
                 } else {
-                    div.innerHTML = '<p>❌ 拍照失败：' + data.error + '</p>';
+                    div.innerHTML = '<p>❌ 拍照失败：' + (data.error || '未知错误') + '</p>';
                 }
             })
             .catch(function(err) {
@@ -305,7 +307,7 @@
                 if (data.success) {
                     div.innerHTML = '✅ 连拍完成：' + data.frames + ' 张，耗时 ' + data.elapsed.toFixed(2) + ' 秒，平均 ' + (data.frames/data.elapsed).toFixed(1) + ' 张/秒';
                 } else {
-                    div.innerHTML = '❌ 连拍失败：' + data.error;
+                    div.innerHTML = '❌ 连拍失败：' + (data.error || '未知错误');
                 }
             })
             .catch(function(err) {
@@ -535,12 +537,34 @@
                             relPath = relPath.substring(4);
                         }
                         var link = document.createElement('a');
-                        link.href = '/sd/' + relPath;
-                        link.target = '_blank';
+                        link.href = '#';
                         link.textContent = entry.name;
-                        link.onclick = function() {
-                            console.log('[photo] 点击文件:', entry.path);
-                        };
+                        // 判断是否为图片
+                        var isImage = false;
+                        var imgExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico'];
+                        var lowerName = entry.name.toLowerCase();
+                        for (var i = 0; i < imgExts.length; i++) {
+                            if (lowerName.endsWith(imgExts[i])) {
+                                isImage = true;
+                                break;
+                            }
+                        }
+                        if (isImage) {
+                            // 图片：点击后显示在 result 区域
+                            link.onclick = function(e) {
+                                e.preventDefault();
+                                console.log('[photo] 点击图片文件:', entry.path);
+                                var imgDiv = document.getElementById('result');
+                                imgDiv.innerHTML = '<p><img src="' + entry.path + '" alt="' + entry.name + '" style="max-width:100%;max-height:600px;"></p>';
+                            };
+                        } else {
+                            // 非图片：下载或新窗口打开（使用完整路径）
+                            link.href = entry.path;
+                            link.target = '_blank';
+                            link.onclick = function() {
+                                console.log('[photo] 点击文件:', entry.path);
+                            };
+                        }
                         leftDiv.appendChild(link);
 
                         var btnGroup = document.createElement('span');

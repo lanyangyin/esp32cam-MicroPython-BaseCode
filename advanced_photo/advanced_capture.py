@@ -172,7 +172,7 @@ def take_advanced_photo(
             whitebalance=whitebalance,
             effect=camera.EFFECT_NONE
         )
-        for _ in range(3):
+        for _ in range(brightness+2):
             cam.capture()
         jpeg_data = cam.capture()
         flash.off()
