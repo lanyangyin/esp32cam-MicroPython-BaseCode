@@ -4,12 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="高级拍照web">
+    <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="sta设定">
+      <change afterPath="$PROJECT_DIR$/utils/archiver.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/unarchiver.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/web/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web/static/mode_selector.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/mode_selector.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/static/photo.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/photo.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/static/video.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/video.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,18 +53,18 @@
       <entry key="S2" value="1.0" />
       <entry key="S5" value="1.0" />
       <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.000000213001335" />
-      <entry key="S60" value="1.0007120641210754" />
-      <entry key="M2" value="1.0472234614634275" />
-      <entry key="M5" value="1.653070425099295" />
-      <entry key="M10" value="2.6319989346064583" />
-      <entry key="M15" value="3.277580762028296" />
-      <entry key="M30" value="4.51172799485343" />
-      <entry key="H1" value="6.206662493623232" />
-      <entry key="H2" value="9.319180903863222" />
-      <entry key="H4" value="16.26204204008328" />
-      <entry key="D1" value="60.152765598044724" />
-      <entry key="W1" value="118.67495525128724" />
+      <entry key="S30" value="1.0000000024177422" />
+      <entry key="S60" value="1.0000695122647087" />
+      <entry key="M2" value="1.011789791160542" />
+      <entry key="M5" value="1.257061978203116" />
+      <entry key="M10" value="1.7616082258332777" />
+      <entry key="M15" value="2.227073020240745" />
+      <entry key="M30" value="3.584951240864536" />
+      <entry key="H1" value="5.838817039820965" />
+      <entry key="H2" value="9.478577097476714" />
+      <entry key="H4" value="16.645744103762148" />
+      <entry key="D1" value="61.46509744282849" />
+      <entry key="W1" value="121.19554624480881" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -71,37 +72,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="5.5351293375047E-305" />
-      <entry key="S60" value="1.1724340393804689E-152" />
-      <entry key="M2" value="1.8282073953874515E-76" />
-      <entry key="M5" value="9.736748606048657E-31" />
-      <entry key="M10" value="1.7073697286280987E-15" />
-      <entry key="M15" value="2.0601664498606472E-10" />
-      <entry key="M30" value="2.5122909323661468E-5" />
-      <entry key="H1" value="0.009366081214655379" />
-      <entry key="H2" value="0.19941680129374645" />
-      <entry key="H4" value="0.9987854405422755" />
-      <entry key="D1" value="7.15849898587968" />
-      <entry key="W1" value="15.9437621485455" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="2.6559521116212727E-170" />
+      <entry key="M2" value="2.751638466663323E-85" />
+      <entry key="M5" value="2.8803172231587506E-34" />
+      <entry key="M10" value="2.9365727154644654E-17" />
+      <entry key="M15" value="1.3727067368911645E-11" />
+      <entry key="M30" value="6.484965324459085E-6" />
+      <entry key="H1" value="0.004758573513745952" />
+      <entry key="H2" value="0.14214159276228736" />
+      <entry key="H4" value="0.843241396581078" />
+      <entry key="D1" value="6.959348533521665" />
+      <entry key="W1" value="15.879627985115961" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.747660263228235E-8" />
-      <entry key="MS500" value="0.028086097706594673" />
-      <entry key="S2" value="0.40937644527688927" />
-      <entry key="S5" value="0.6995989358931844" />
-      <entry key="S10" value="0.836420310545592" />
-      <entry key="S30" value="0.9421967819144823" />
-      <entry key="S60" value="0.971362266938028" />
-      <entry key="M2" value="1.031877060252375" />
-      <entry key="M5" value="1.644110834009669" />
-      <entry key="M10" value="2.6253724635440046" />
-      <entry key="M15" value="3.2723188762954645" />
-      <entry key="M30" value="4.50854005179191" />
-      <entry key="H1" value="6.214187603832076" />
-      <entry key="H2" value="9.517299673291262" />
-      <entry key="H4" value="17.259544139781895" />
-      <entry key="D1" value="67.31054510523965" />
-      <entry key="W1" value="134.61854066778838" />
+      <entry key="MS100" value="0.9075191553171609" />
+      <entry key="MS500" value="0.9807790039885513" />
+      <entry key="S2" value="0.9951597218200828" />
+      <entry key="S5" value="0.9980610700524115" />
+      <entry key="S10" value="0.9990300646389034" />
+      <entry key="S30" value="0.9996765860434972" />
+      <entry key="S60" value="0.9999077861611189" />
+      <entry key="M2" value="1.0117085177199634" />
+      <entry key="M5" value="1.2570234214025102" />
+      <entry key="M10" value="1.7614731137275839" />
+      <entry key="M15" value="2.2267069715054286" />
+      <entry key="M30" value="3.584119665247303" />
+      <entry key="H1" value="5.84263563849147" />
+      <entry key="H2" value="9.619791062385705" />
+      <entry key="H4" value="17.487900790929032" />
+      <entry key="D1" value="68.42374630576171" />
+      <entry key="W1" value="137.0749981790053" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -116,43 +117,44 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.camera_analyzer.executor&quot;: &quot;Run&quot;,
-    &quot;Python.device_info.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;web&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Documents/ESP/ESP32-CAM/esp32cam-MicroPython-BaseCode/lib&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;dev.micropythontools.configurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.camera_analyzer.executor": "Run",
+    "Python.device_info.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "web",
+    "last_opened_file_path": "D:/Documents/ESP/ESP32-CAM/esp32cam-MicroPython-BaseCode",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.jshint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.jshint": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "dev.micropythontools.configurable"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/新建临时文件&quot;: [
-      &quot;TEXT&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/新建临时文件": [
+      "TEXT"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\lib" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\images" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\固件" />
-      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\old" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\utils" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\photo" />
       <recent name="D:\Documents\ESP\ESP32-CAM\esp32cam-MicroPython-BaseCode\图片" />
@@ -229,14 +231,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749768217230</updated>
-    </task>
-    <task id="LOCAL-00021" summary="分辨率检测">
-      <option name="closed" value="true" />
-      <created>1786152283017</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1786152283017</updated>
     </task>
     <task id="LOCAL-00022" summary="分辨率检测">
       <option name="closed" value="true" />
@@ -622,7 +616,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786889928242</updated>
     </task>
-    <option name="localTasksCounter" value="70" />
+    <task id="LOCAL-00070" summary="sta设定">
+      <option name="closed" value="true" />
+      <created>1786890952890</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1786890952890</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -663,6 +665,7 @@
     <MESSAGE value="拍照模式" />
     <MESSAGE value="高级拍照软件包" />
     <MESSAGE value="高级拍照web" />
-    <option name="LAST_COMMIT_MESSAGE" value="高级拍照web" />
+    <MESSAGE value="sta设定" />
+    <option name="LAST_COMMIT_MESSAGE" value="sta设定" />
   </component>
 </project>

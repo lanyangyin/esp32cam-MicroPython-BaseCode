@@ -9,9 +9,11 @@ import time
 import camera
 import uos
 import json
+import network  # 新增
+import ujson    # 新增（MicroPython JSON 模块）
 
 from advanced_photo import take_advanced_photo, burst_capture
-from easyweb import EasyWeb, make_response, send_file, render_template
+from easyweb import EasyWeb, make_response
 from photo import take_smart_photo, gray_quick_capture, gray_analyzer_capture
 from video import RecorderTime
 from sd_card import get_sd_card
@@ -85,6 +87,55 @@ def _render_html(template_name, **kwargs):
         print("[Web] 读取模板失败:", e)
         return "<h1>Error loading page</h1><p>{}</p>".format(e)
 
+# ---------- Wi-Fi 配置 ----------
+WIFI_CONFIG_FILE = "/sd/wifi_config.json"
+_current_ip = "0.0.0.0"  # 存储当前 IP
+
+def _load_wifi_config():
+    """从 SD 卡加载 Wi-Fi 配置，返回 (ssid, password)"""
+    try:
+        with open(WIFI_CONFIG_FILE, "r") as f:
+            config = ujson.load(f)
+            return config.get("ssid", ""), config.get("password", "")
+    except:
+        return "", ""
+
+def _save_wifi_config(ssid, password):
+    """保存 Wi-Fi 配置到 SD 卡"""
+    try:
+        config = {"ssid": ssid, "password": password}
+        with open(WIFI_CONFIG_FILE, "w") as f:
+            ujson.dump(config, f)
+        return True
+    except Exception as e:
+        print("[Web] 保存 Wi-Fi 配置失败:", e)
+        return False
+
+def _connect_wifi(ssid, password):
+    """尝试连接 Wi-Fi，成功返回 True，并设置 _current_ip"""
+    global _current_ip
+    if not ssid:
+        return False
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    # 如果已连接且 SSID 相同，则直接返回
+    if wlan.isconnected():
+        if wlan.config('essid') == ssid:
+            _current_ip = wlan.ifconfig()[0]
+            return True
+        else:
+            wlan.disconnect()
+    # 开始连接
+    wlan.connect(ssid, password)
+    timeout = 10  # 等待 10 秒
+    while timeout > 0:
+        if wlan.isconnected():
+            _current_ip = wlan.ifconfig()[0]
+            return True
+        time.sleep(1)
+        timeout -= 1
+    return False
+
 # ---------- 路由 ----------
 @app.route("/")
 def index(request):
@@ -111,7 +162,6 @@ def index(request):
 # 注意：只接受 POST 方法
 @app.route("/set_mode", methods=["POST"])
 def set_mode(request):
-    # 使用 request.form 获取表单数据
     mode = request.form.get("mode") if request.form else None
     print("[Web] /set_mode 收到 mode: {}".format(mode))
     if mode in ("拍照", "录制", "视频"):
@@ -148,11 +198,10 @@ def load_config(request):
             print("[Web] 配置已加载")
             return make_response(config, 200)
         except OSError:
-            # 文件不存在，返回默认配置（与前端默认值对齐）
             default_config = {
                 "flash_mode": "auto",
-                "resolution": 1024,          # FRAME_XGA
-                "whitebalance": 2,           # WB_CLOUDY
+                "resolution": 1024,
+                "whitebalance": 2,
                 "mirror": 0,
                 "flip": 1,
                 "xclk_freq": 10000000,
@@ -165,7 +214,7 @@ def load_config(request):
                 "save_path": "/sd",
                 "black_retry": 3,
                 "analysis_retry": 3,
-                "analysis_resolution": 320,  # FRAME_QVGA
+                "analysis_resolution": 320,
                 "burst_count": 5,
                 "burst_flash": False,
                 "burst_prefix": "burst",
@@ -177,18 +226,22 @@ def load_config(request):
         sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
-# ---------- API：系统状态 ----------
+# ---------- API：系统状态（包含 IP） ----------
 @app.route("/api/status")
 def status(request):
     print("[Web] 请求: /api/status")
     try:
         sd = get_sd_card()
-        resolutions = _get_resolutions()   # 调用已有的分辨率获取函数
+        resolutions = _get_resolutions()
+        # 获取当前 IP
+        wlan = network.WLAN(network.STA_IF)
+        ip = wlan.ifconfig()[0] if wlan.isconnected() else "0.0.0.0"
         status_data = {
             "model": CAMERA_MODEL,
             "sd_mounted": sd.mounted if sd else False,
             "timestamp": time.time(),
-            "resolutions": resolutions,    # 添加这一行
+            "resolutions": resolutions,
+            "ip": ip,  # 添加 IP
         }
         return make_response(status_data, 200)
     except Exception as e:
@@ -218,7 +271,6 @@ def capture(request):
         black_retry = params.get("black_retry", 3)
         analysis_retry = params.get("analysis_retry", 3)
         analysis_resolution = params.get("analysis_resolution", camera.FRAME_QVGA)
-        # brightness_threshold 已被移除
 
         result = take_advanced_photo(
             flash_mode=flash_mode,
@@ -274,7 +326,6 @@ def burst(request):
         flash_on = params.get("flash_on", False)
         filename_prefix = params.get("filename_prefix", "burst")
         save_path = params.get("save_path", "/sd")
-        # 调用连拍函数
         elapsed = burst_capture(
             resolution=resolution,
             whitebalance=whitebalance,
@@ -345,7 +396,6 @@ def _get_files_recursive(path):
     files = []
     for name in items:
         full = path + '/' + name if path != '/' else '/' + name
-        # 判断是否为目录
         try:
             st = uos.stat(full)
             is_dir = (st[0] & 0x4000) != 0
@@ -384,15 +434,12 @@ def delete_file(request):
         file_path = params.get("file_path")
         if not file_path:
             return make_response({"success": False, "error": "Missing file_path"}, 400)
-        # 安全校验：必须是以 /sd/ 开头，且不包含 '..' 路径穿越
         if not file_path.startswith('/sd/') or '..' in file_path:
             return make_response({"success": False, "error": "Invalid file path"}, 400)
-        # 检查文件是否存在
         try:
             uos.stat(file_path)
         except:
             return make_response({"success": False, "error": "File not found"}, 404)
-        # 删除文件
         uos.remove(file_path)
         print("[Web] 已删除文件: {}".format(file_path))
         return make_response({"success": True}, 200)
@@ -404,7 +451,6 @@ def delete_file(request):
 # ---------- 路由：查看 SD 卡文件 ----------
 @app.route("/sd/<path>")
 def sd_file(request):
-    # 修复：request.match 可能是元组，确保转为字符串
     filename = request.match
     if isinstance(filename, tuple):
         filename = filename[0] if filename else ""
@@ -419,10 +465,8 @@ def sd_file(request):
         uos.stat(full_path)
         with open(full_path, "rb") as f:
             data = f.read()
-        # 手动检查后缀（不使用 endswith）
         f_lower = filename.lower()
         ct = "application/octet-stream"
-        # 图片扩展名
         img_exts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico']
         for ext in img_exts:
             if len(f_lower) >= len(ext) and f_lower[-len(ext):] == ext:
@@ -448,27 +492,18 @@ def sd_file(request):
 @app.route("/api/set_wifi", methods=["POST"])
 def set_wifi(request):
     try:
-        import network
         params = request.json if request.json else {}
         ssid = params.get("ssid", "").strip()
         password = params.get("password", "").strip()
         if not ssid:
             return make_response({"success": False, "error": "SSID is required"}, 400)
-        # 连接 Wi-Fi
-        wlan = network.WLAN(network.STA_IF)
-        wlan.active(True)
-        wlan.connect(ssid, password)
-        # 等待连接（最多10秒）
-        import time
-        timeout = 10
-        while timeout > 0:
-            if wlan.isconnected():
-                break
-            time.sleep(1)
-            timeout -= 1
-        if wlan.isconnected():
-            ip = wlan.ifconfig()[0]
-            print("[Web] Wi-Fi 连接成功，IP:", ip)
+        # 保存配置
+        if not _save_wifi_config(ssid, password):
+            return make_response({"success": False, "error": "Failed to save config"}, 500)
+        # 连接
+        success = _connect_wifi(ssid, password)
+        if success:
+            ip = _current_ip
             return make_response({"success": True, "ip": ip}, 200)
         else:
             return make_response({"success": False, "error": "Connection timeout"}, 200)
@@ -482,15 +517,8 @@ def set_wifi(request):
 def restart(request):
     try:
         import machine
-        # 先返回响应，再重启
-        response = make_response({"success": True, "message": "Restarting..."}, 200)
-        # 注意：需要异步发送响应后再重启，但 EasyWeb 是同步的，所以先发送再重启
-        # 但 make_response 只是构造响应，实际发送在框架内部，我们可以先返回，然后立即重启
-        # 但没法保证响应先发送，所以采用简单方式：直接触发重启，客户端会断开连接
-        # 但为了友好，我们可以在重启前打印日志
         print("[Web] 设备即将重启...")
-        # 延迟一点让响应发送出去
-        import time
+        # 先发送响应再重启
         time.sleep_ms(500)
         machine.reset()
     except Exception as e:
@@ -499,6 +527,16 @@ def restart(request):
 
 # ---------- 启动入口 ----------
 def start(host="0.0.0.0", port=80):
+    # 尝试加载并自动连接 Wi-Fi
+    ssid, password = _load_wifi_config()
+    if ssid:
+        print("[Web] 尝试自动连接 Wi-Fi: {}".format(ssid))
+        if _connect_wifi(ssid, password):
+            print("[Web] Wi-Fi 自动连接成功，IP: {}".format(_current_ip))
+        else:
+            print("[Web] Wi-Fi 自动连接失败")
+    else:
+        print("[Web] 未找到 Wi-Fi 配置，跳过自动连接")
     _clear_mode()
     print("Mode file cleared. Please select mode on first visit.")
     print("Starting EasyWeb server on http://{}:{}".format(host, port))

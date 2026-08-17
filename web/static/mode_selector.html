@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <title>选择工作模式</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: #f0f0f0; text-align: center; }
+        body { font-family: sans-serif; max-width: 700px; margin: 0 auto; padding: 40px; background: #f0f0f0; }
         h1 { color: #333; }
-        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        label { display: block; margin: 20px 0; font-size: 1.2em; }
-        input[type="radio"] { margin-right: 10px; }
-        button { padding: 15px 40px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 1.2em; cursor: pointer; }
+        h3 { color: #555; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .row { display: flex; align-items: center; margin: 10px 0; gap: 10px; }
+        .row label { min-width: 80px; font-weight: bold; }
+        input[type="text"], input[type="password"] { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
         button:hover { background: #0056b3; }
+        label { display: block; margin: 15px 0; font-size: 1.1em; }
+        input[type="radio"] { margin-right: 10px; }
         .disabled-option { opacity: 0.6; }
         .disabled-option input { cursor: not-allowed; }
+        #wifi_status { font-weight: bold; color: #28a745; }
     </style>
 </head>
 <body>
@@ -30,12 +35,18 @@
                 <input type="radio" name="mode" value="录制"> 🎥 录制模式
             </label>
             <br><br>
-            <button type="submit">确认选择</button>
+            <button type="submit" style="width:100%;">确认选择</button>
         </form>
     </div>
-    <div class="card" style="margin-top:20px;">
+
+    <div class="card">
+        <h3>📶 Wi-Fi 状态</h3>
+        <p id="wifi_status">加载中...</p>
+    </div>
+
+    <div class="card">
         <h3>📶 Wi-Fi 设置</h3>
-        <p>设置 ESP32-CAM 连接的 Wi-Fi 网络</p>
+        <p>设置 ESP32-CAM 连接的 Wi-Fi 网络（配置将自动保存）</p>
         <div class="row">
             <label>SSID：</label>
             <input type="text" id="wifi_ssid" placeholder="请输入 Wi-Fi 名称">
@@ -45,9 +56,24 @@
             <input type="password" id="wifi_password" placeholder="请输入 Wi-Fi 密码">
         </div>
         <button id="btn_wifi">连接</button>
-        <div id="wifi_result"></div>
+        <div id="wifi_result" style="margin-top:10px;"></div>
     </div>
+
     <script>
+        // 页面加载时获取状态并显示 IP
+        function fetchStatus() {
+            fetch('/api/status')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('wifi_status').innerHTML = '当前 IP：' + (data.ip || '未连接');
+            })
+            .catch(err => {
+                document.getElementById('wifi_status').innerHTML = '获取状态失败';
+            });
+        }
+        fetchStatus();
+
+        // 模式选择
         document.getElementById('modeForm').addEventListener('submit', function(e) {
             e.preventDefault();
             var mode = document.querySelector('input[name="mode"]:checked').value;
@@ -59,7 +85,6 @@
             })
             .then(function(response) {
                 console.log('[mode_selector] 响应状态:', response.status);
-                // 无论响应如何，都跳转到首页
                 window.location.href = '/';
             })
             .catch(function(err) {
@@ -67,6 +92,8 @@
                 window.location.href = '/';
             });
         });
+
+        // Wi-Fi 连接
         document.getElementById('btn_wifi').addEventListener('click', function() {
             var ssid = document.getElementById('wifi_ssid').value.trim();
             var password = document.getElementById('wifi_password').value.trim();
@@ -89,6 +116,8 @@
                 var resultDiv = document.getElementById('wifi_result');
                 if (data.success) {
                     resultDiv.innerHTML = '✅ 连接成功，IP：' + data.ip;
+                    // 更新状态显示
+                    fetchStatus();
                 } else {
                     resultDiv.innerHTML = '❌ 连接失败：' + data.error;
                 }

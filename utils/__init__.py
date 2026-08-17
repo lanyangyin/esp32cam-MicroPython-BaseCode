@@ -46,6 +46,10 @@ from .device_info import print_info, get_sd_info
 # ---------- 对比度分析 ----------
 from .contrast import compute_rms_contrast, compute_rms_contrast_and_mean
 
+# ---------- 归档/解压 ----------
+from .archiver import create_archive
+from .unarchiver import extract_archive
+
 # ---------- 公共 API 列表（支持 from utils import *） ----------
 __all__ = [
     # 亮度分析
@@ -80,4 +84,8 @@ __all__ = [
     # 对比度分析
     "compute_rms_contrast",
     "compute_rms_contrast_and_mean",
+
+    # 归档/解压功能
+    "create_archive",
+    "extract_archive",
 ]
