@@ -208,11 +208,11 @@
             console.log('[photo] ' + message);
         }
 
-        // ---------- 加载分辨率列表 ----------
+        // ---------- 加载分辨率列表（返回 Promise） ----------
         function loadResolutions() {
-            fetch('/api/status')
-                .then(res => res.json())
-                .then(data => {
+            return fetch('/api/status')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
                     var sel1 = document.getElementById('capture_res');
                     var sel2 = document.getElementById('analysis_res');
                     sel1.innerHTML = '';
@@ -225,14 +225,14 @@
                         var opt2 = opt1.cloneNode(true);
                         sel2.appendChild(opt2);
                     });
-                    sel1.value = 1024;
-                    sel2.value = 320;
+                    // 设置默认值（当配置未加载时使用）
+                    sel1.value = 1024;  // FRAME_XGA
+                    sel2.value = 320;   // FRAME_QVGA
                 })
                 .catch(function(err) {
                     console.error('加载分辨率失败', err);
                 });
         }
-        loadResolutions();
 
         // ---------- 滑块数值显示 ----------
         document.getElementById('saturation').addEventListener('input', function() {
@@ -382,7 +382,13 @@
             .then(function(res) { return res.json(); })
             .then(function(config) {
                 document.getElementById('flash_mode').value = config.flash_mode || 'auto';
-                document.getElementById('capture_res').value = config.resolution || 1024;
+                // 设置分辨率（如果配置中存在）
+                if (config.resolution) {
+                    document.getElementById('capture_res').value = config.resolution;
+                }
+                if (config.analysis_resolution) {
+                    document.getElementById('analysis_res').value = config.analysis_resolution;
+                }
                 document.getElementById('whitebalance').value = config.whitebalance || 2;
                 document.getElementById('mirror').checked = config.mirror === 1;
                 document.getElementById('flip').checked = config.flip === 1;
@@ -745,7 +751,11 @@
 
         // ---------- 页面加载完成后 ----------
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('btn_load_config').click();
+            // 先加载分辨率列表，再加载配置
+            loadResolutions().then(function() {
+                document.getElementById('btn_load_config').click();
+            });
+            // 同时加载目录（但依赖 currentPath 初始为 '/sd'）
             loadDirectory('/sd');
         });
     </script>

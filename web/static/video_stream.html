@@ -42,9 +42,18 @@
             <input type="number" id="video_quality" value="10" min="10" max="63">
         </div>
         <div class="row">
+            <label>闪光灯模式：</label>
+            <select id="video_flash_mode">
+                <option value="off">关闭</option>
+                <option value="on">开启</option>
+                <option value="auto" selected>自动（规则引擎）</option>
+                <option value="auto_quick">自动（快速阈值）</option>
+            </select>
+        </div>
+        <div class="row">
             <label>闪光灯亮度：</label>
-            <input type="range" id="video_flash_brightness" min="0" max="100" value="0" step="1" class="brightness-slider">
-            <span id="video_flash_brightness_val">0</span>%
+            <input type="range" id="video_flash_brightness" min="0" max="100" value="100" step="1" class="brightness-slider">
+            <span id="video_flash_brightness_val">100</span>%
         </div>
         <div class="row">
             <label>左右镜像：</label>
@@ -86,9 +95,9 @@
     <script>
         // ---------- 加载分辨率列表 ----------
         function loadResolutions() {
-            fetch('/api/status')
-                .then(res => res.json())
-                .then(data => {
+            return fetch('/api/status')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
                     var sel = document.getElementById('video_framesize');
                     sel.innerHTML = '';
                     data.resolutions.forEach(function(r) {
@@ -97,12 +106,12 @@
                         opt.text = r.name + ' (' + r.width + '×' + r.height + ')';
                         sel.appendChild(opt);
                     });
-                    // 默认选择 VGA
-                    sel.value = 640;  // FRAME_VGA
+                    sel.value = 640;
                 })
-                .catch(err => console.error('加载分辨率失败', err));
+                .catch(function(err) {
+                    console.error('加载分辨率失败', err);
+                });
         }
-        loadResolutions();
 
         // ---------- 滑块数值显示 ----------
         document.getElementById('video_flash_brightness').addEventListener('input', function() {
@@ -125,6 +134,7 @@
             return {
                 video_stream_framesize: parseInt(document.getElementById('video_framesize').value),
                 video_stream_quality: parseInt(document.getElementById('video_quality').value),
+                video_stream_flash_mode: document.getElementById('video_flash_mode').value,
                 video_stream_flash_brightness: parseInt(document.getElementById('video_flash_brightness').value),
                 video_stream_mirror: document.getElementById('video_mirror').checked ? 1 : 0,
                 video_stream_flip: document.getElementById('video_flip').checked ? 1 : 0,
@@ -134,10 +144,13 @@
 
         // ---------- 应用配置到控件 ----------
         function applyConfig(config) {
-            document.getElementById('video_framesize').value = config.video_stream_framesize || 640;
+            if (config.video_stream_framesize) {
+                document.getElementById('video_framesize').value = config.video_stream_framesize;
+            }
             document.getElementById('video_quality').value = config.video_stream_quality || 10;
-            document.getElementById('video_flash_brightness').value = config.video_stream_flash_brightness || 0;
-            document.getElementById('video_flash_brightness_val').textContent = config.video_stream_flash_brightness || 0;
+            document.getElementById('video_flash_mode').value = config.video_stream_flash_mode || 'auto';
+            document.getElementById('video_flash_brightness').value = config.video_stream_flash_brightness || 100;
+            document.getElementById('video_flash_brightness_val').textContent = config.video_stream_flash_brightness || 100;
             document.getElementById('video_mirror').checked = config.video_stream_mirror === 1;
             document.getElementById('video_flip').checked = config.video_stream_flip !== 0;
             document.getElementById('video_xclk').value = config.video_stream_xclk_freq || 10000000;
@@ -215,7 +228,8 @@
             var defaultConfig = {
                 video_stream_framesize: 640,
                 video_stream_quality: 10,
-                video_stream_flash_brightness: 0,
+                video_stream_flash_mode: 'auto',
+                video_stream_flash_brightness: 100,
                 video_stream_mirror: 0,
                 video_stream_flip: 1,
                 video_stream_xclk_freq: 10000000,
@@ -242,10 +256,10 @@
         // ---------- 开始预览 ----------
         document.getElementById('btn_start').addEventListener('click', function() {
             var params = getParams();
-            // 将参数转换为流接口需要的键名（flash_brightness, framesize, quality, mirror, flip, xclk_freq）
             var query = {
                 framesize: params.video_stream_framesize,
                 quality: params.video_stream_quality,
+                flash_mode: params.video_stream_flash_mode,
                 flash_brightness: params.video_stream_flash_brightness,
                 mirror: params.video_stream_mirror,
                 flip: params.video_stream_flip,
@@ -268,18 +282,18 @@
         // ---------- 停止预览 ----------
         document.getElementById('btn_stop').addEventListener('click', function() {
             fetch('/api/stop_stream', { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
                 if (data.success) {
                     console.log('[video_stream] 停止流成功');
                 } else {
                     console.warn('[video_stream] 停止流失败:', data.error);
                 }
             })
-            .catch(err => console.error('[video_stream] 停止流请求失败:', err))
-            .finally(() => {
+            .catch(function(err) { console.error('[video_stream] 停止流请求失败:', err); })
+            .finally(function() {
                 var img = document.getElementById('stream_img');
-                img.src = '';  // 断开连接
+                img.src = '';
                 img.style.display = 'none';
                 document.getElementById('placeholder').style.display = 'block';
                 setStatus('⏹️ 视频流已停止', 'info');
@@ -290,9 +304,9 @@
 
         // ---------- 页面加载 ----------
         document.addEventListener('DOMContentLoaded', function() {
-            // 先加载配置，再加载分辨率（或先加载分辨率）
-            loadResolutions();
-            document.getElementById('btn_load_config').click();
+            loadResolutions().then(function() {
+                document.getElementById('btn_load_config').click();
+            });
         });
     </script>
 </body>

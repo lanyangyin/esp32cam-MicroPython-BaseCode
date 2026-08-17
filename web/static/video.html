@@ -69,8 +69,13 @@
             </select>
         </div>
         <div class="row">
-            <label>闪光灯：</label>
-            <input type="checkbox" id="video_flash">
+            <label>闪光灯模式：</label>
+            <select id="video_flash_mode">
+                <option value="off">关闭</option>
+                <option value="on">开启</option>
+                <option value="auto" selected>自动（规则引擎）</option>
+                <option value="auto_quick">自动（快速阈值）</option>
+            </select>
         </div>
         <div class="row">
             <label>闪光灯亮度：</label>
@@ -113,7 +118,6 @@
         var currentPath = '/sd';
         var statusDiv = document.getElementById('status_msg');
 
-        // ---------- 状态显示函数 ----------
         function setStatus(message, type) {
             var colorClass = '';
             if (type === 'info') colorClass = 'status-info';
@@ -123,15 +127,23 @@
             console.log('[video] ' + message);
         }
 
-        // ---------- 加载分辨率 ----------
+        // ---------- 加载分辨率（返回 Promise） ----------
         var resolutions = {resolutions};
-        var sel = document.getElementById('video_res');
-        resolutions.forEach(function(r) {
-            var opt = document.createElement('option');
-            opt.value = r.value;
-            opt.text = r.name + ' (' + r.width + '×' + r.height + ')';
-            sel.appendChild(opt);
-        });
+        function loadResolutions() {
+            return new Promise(function(resolve) {
+                var sel = document.getElementById('video_res');
+                sel.innerHTML = '';
+                resolutions.forEach(function(r) {
+                    var opt = document.createElement('option');
+                    opt.value = r.value;
+                    opt.text = r.name + ' (' + r.width + '×' + r.height + ')';
+                    sel.appendChild(opt);
+                });
+                // 设置默认值
+                sel.value = 640;  // FRAME_VGA
+                resolve();
+            });
+        }
 
         // ---------- 滑块数值显示 ----------
         document.getElementById('video_flash_brightness').addEventListener('input', function() {
@@ -146,7 +158,7 @@
                 video_duration: parseInt(document.getElementById('video_duration').value),
                 video_save_dir: document.getElementById('video_save_dir').value,
                 video_xclk_freq: parseInt(document.getElementById('video_xclk').value),
-                video_flash: document.getElementById('video_flash').checked,
+                video_flash_mode: document.getElementById('video_flash_mode').value,
                 video_flash_brightness: parseInt(document.getElementById('video_flash_brightness').value),
                 video_mirror: document.getElementById('video_mirror').checked ? 1 : 0,
                 video_flip: document.getElementById('video_flip').checked ? 1 : 0,
@@ -154,12 +166,14 @@
         }
 
         function applyVideoConfig(config) {
-            document.getElementById('video_res').value = config.video_framesize || 640;
+            if (config.video_framesize) {
+                document.getElementById('video_res').value = config.video_framesize;
+            }
             document.getElementById('video_quality').value = config.video_quality || 10;
             document.getElementById('video_duration').value = config.video_duration || 5;
             document.getElementById('video_save_dir').value = config.video_save_dir || 'video_web';
             document.getElementById('video_xclk').value = config.video_xclk_freq || 10000000;
-            document.getElementById('video_flash').checked = config.video_flash || false;
+            document.getElementById('video_flash_mode').value = config.video_flash_mode || 'auto';
             document.getElementById('video_flash_brightness').value = config.video_flash_brightness || 100;
             document.getElementById('video_flash_brightness_val').textContent = config.video_flash_brightness || 100;
             document.getElementById('video_mirror').checked = config.video_mirror === 1;
@@ -240,7 +254,7 @@
                 video_duration: 5,
                 video_save_dir: 'video_web',
                 video_xclk_freq: 10000000,
-                video_flash: false,
+                video_flash_mode: 'auto',
                 video_flash_brightness: 100,
                 video_mirror: 0,
                 video_flip: 1,
@@ -256,7 +270,7 @@
             var duration = parseInt(document.getElementById('video_duration').value);
             var save_dir = document.getElementById('video_save_dir').value || 'video_web';
             var xclk_freq = parseInt(document.getElementById('video_xclk').value);
-            var flash_on = document.getElementById('video_flash').checked;
+            var flash_mode = document.getElementById('video_flash_mode').value;
             var flash_brightness = parseInt(document.getElementById('video_flash_brightness').value);
             var mirror = document.getElementById('video_mirror').checked ? 1 : 0;
             var flip = document.getElementById('video_flip').checked ? 1 : 0;
@@ -266,7 +280,7 @@
                 duration: duration,
                 xclk_freq: xclk_freq,
                 save_dir: save_dir,
-                flash_on: flash_on,
+                flash_mode: flash_mode,
                 flash_brightness: flash_brightness,
                 mirror: mirror,
                 flip: flip,
@@ -583,11 +597,12 @@
 
         // ---------- 页面加载 ----------
         document.addEventListener('DOMContentLoaded', function() {
-            // 先加载配置覆盖默认值，再加载目录
-            document.getElementById('btn_load_config').click();
+            loadResolutions().then(function() {
+                document.getElementById('btn_load_config').click();
+            });
             setTimeout(function() {
                 loadDirectory('/sd');
-            }, 100); // 稍微延迟确保配置加载完成
+            }, 200);
         });
     </script>
 </body>
