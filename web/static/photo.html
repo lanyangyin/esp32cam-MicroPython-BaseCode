@@ -5,7 +5,6 @@
     <title>拍照模式 - 高级</title>
     <style>
         body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f0f0f0; }
-        h1 { color: #333; }
         .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0; }
         .row label { min-width: 140px; font-weight: bold; }
@@ -24,7 +23,19 @@
         .button-group button { flex: 1; min-width: 120px; }
         #file_list li {border-bottom: 1px solid #eee; padding: 6px 0;}
         #file_list li:last-child {border-bottom: none;}
-        #file_list a { cursor: pointer; }
+        #file_list a { cursor: pointer; text-decoration: none; color: #0366d6; }
+        #file_list a:hover { text-decoration: underline; }
+        .btn-group { display: flex; gap: 6px; align-items: center; }
+        .btn-group button { background: none; border: none; cursor: pointer; font-size: 1.1em; padding: 0 4px; }
+        .btn-group button:hover { opacity: 0.7; }
+        .btn-group .del-btn { color: #d73a49; }
+        .btn-group .archive-btn { color: #6f42c1; }
+        .btn-group .extract-btn { color: #2c8b3a; }
+        .folder-btn { background: none; border: none; cursor: pointer; font-size: 1em; font-weight: bold; color: #0366d6; padding: 0; }
+        .folder-btn:hover { text-decoration: underline; }
+        #file_list li { display: flex; align-items: center; justify-content: space-between; }
+        #file_list .left { display: flex; align-items: center; gap: 10px; }
+        h1 { color: #333; }
     </style>
 </head>
 <body>
@@ -172,31 +183,36 @@
     </div>
 
     <script>
-        // 加载分辨率列表
+        // ---------- 全局变量 ----------
+        var currentPath = '/sd';
+
+        // ---------- 加载分辨率列表 ----------
         function loadResolutions() {
             fetch('/api/status')
                 .then(res => res.json())
                 .then(data => {
-                    const sel1 = document.getElementById('capture_res');
-                    const sel2 = document.getElementById('analysis_res');
+                    var sel1 = document.getElementById('capture_res');
+                    var sel2 = document.getElementById('analysis_res');
                     sel1.innerHTML = '';
                     sel2.innerHTML = '';
-                    data.resolutions.forEach(r => {
-                        const opt1 = document.createElement('option');
+                    data.resolutions.forEach(function(r) {
+                        var opt1 = document.createElement('option');
                         opt1.value = r.value;
-                        opt1.text = `${r.name} (${r.width}×${r.height})`;
+                        opt1.text = r.name + ' (' + r.width + '×' + r.height + ')';
                         sel1.appendChild(opt1);
-                        const opt2 = opt1.cloneNode(true);
+                        var opt2 = opt1.cloneNode(true);
                         sel2.appendChild(opt2);
                     });
                     sel1.value = 1024;
                     sel2.value = 320;
                 })
-                .catch(err => console.error('加载分辨率失败', err));
+                .catch(function(err) {
+                    console.error('加载分辨率失败', err);
+                });
         }
         loadResolutions();
 
-        // 滑块显示数值
+        // ---------- 滑块数值显示 ----------
         document.getElementById('saturation').addEventListener('input', function() {
             document.getElementById('saturation_val').textContent = this.value;
         });
@@ -207,6 +223,7 @@
             document.getElementById('contrast_adj_val').textContent = this.value;
         });
 
+        // ---------- 获取参数 ----------
         function getParams() {
             return {
                 flash_mode: document.getElementById('flash_mode').value,
@@ -231,36 +248,32 @@
             };
         }
 
-        // 拍照
+        // ---------- 拍照 ----------
         document.getElementById('btn_capture').addEventListener('click', function() {
-            const params = getParams();
+            var params = getParams();
             fetch('/api/capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(params)
             })
-            .then(res => res.json())
-            .then(data => {
-                const div = document.getElementById('result');
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var div = document.getElementById('result');
                 if (data.success) {
-                    const filename = data.path.split('/').pop();
-                    div.innerHTML = `
-                        ✅ 照片已保存：<a href="/sd/${filename}" target="_blank">查看</a>
-                        <br>尺寸: ${data.width}×${data.height}，亮度: ${data.brightness.toFixed(1)}
-                        <br><img src="/sd/${filename}" alt="photo" style="max-width:300px;">
-                    `;
+                    var filename = data.path.split('/').pop();
+                    div.innerHTML = '<p>✅ 照片已保存：<a href="/sd/' + filename + '" target="_blank">查看</a><br>尺寸: ' + data.width + '×' + data.height + '，亮度: ' + data.brightness.toFixed(1) + '<br><img src="/sd/' + filename + '" alt="photo" style="max-width:300px;"></p>';
                 } else {
-                    div.innerHTML = `❌ 拍照失败：${data.error}`;
+                    div.innerHTML = '<p>❌ 拍照失败：' + data.error + '</p>';
                 }
             })
-            .catch(err => {
+            .catch(function(err) {
                 document.getElementById('result').textContent = '请求失败：' + err;
             });
         });
 
-        // 连拍
+        // ---------- 连拍 ----------
         document.getElementById('btn_burst').addEventListener('click', function() {
-            const params = {
+            var params = {
                 resolution: parseInt(document.getElementById('capture_res').value),
                 whitebalance: parseInt(document.getElementById('whitebalance').value),
                 mirror: document.getElementById('mirror').checked ? 1 : 0,
@@ -275,7 +288,7 @@
                 filename_prefix: document.getElementById('burst_prefix').value,
                 save_path: document.getElementById('save_path').value,
             };
-            const btn = document.getElementById('btn_burst');
+            var btn = this;
             btn.disabled = true;
             btn.textContent = '⏳ 连拍中...';
             document.getElementById('burst_result').innerHTML = '正在连拍，请稍候...';
@@ -284,48 +297,47 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(params)
             })
-            .then(res => res.json())
-            .then(data => {
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
                 btn.disabled = false;
                 btn.textContent = '⏺️ 开始连拍';
-                const div = document.getElementById('burst_result');
+                var div = document.getElementById('burst_result');
                 if (data.success) {
-                    div.innerHTML = `✅ 连拍完成：${data.frames} 张，耗时 ${data.elapsed.toFixed(2)} 秒，平均 ${(data.frames/data.elapsed).toFixed(1)} 张/秒`;
+                    div.innerHTML = '✅ 连拍完成：' + data.frames + ' 张，耗时 ' + data.elapsed.toFixed(2) + ' 秒，平均 ' + (data.frames/data.elapsed).toFixed(1) + ' 张/秒';
                 } else {
-                    div.innerHTML = `❌ 连拍失败：${data.error}`;
+                    div.innerHTML = '❌ 连拍失败：' + data.error;
                 }
             })
-            .catch(err => {
+            .catch(function(err) {
                 btn.disabled = false;
                 btn.textContent = '⏺️ 开始连拍';
                 document.getElementById('burst_result').textContent = '请求失败：' + err;
             });
         });
 
-        // 保存配置
+        // ---------- 配置管理 ----------
         document.getElementById('btn_save_config').addEventListener('click', function() {
-            const params = getParams();
+            var params = getParams();
             fetch('/api/save_config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(params)
             })
-            .then(res => res.json())
-            .then(data => {
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
                 if (data.success) {
                     alert('✅ 配置已保存');
                 } else {
                     alert('❌ 保存失败：' + data.error);
                 }
             })
-            .catch(err => alert('❌ 保存失败：' + err));
+            .catch(function(err) { alert('❌ 保存失败：' + err); });
         });
 
-        // 加载配置
         document.getElementById('btn_load_config').addEventListener('click', function() {
             fetch('/api/load_config')
-            .then(res => res.json())
-            .then(config => {
+            .then(function(res) { return res.json(); })
+            .then(function(config) {
                 document.getElementById('flash_mode').value = config.flash_mode || 'auto';
                 document.getElementById('capture_res').value = config.resolution || 1024;
                 document.getElementById('whitebalance').value = config.whitebalance || 2;
@@ -349,12 +361,11 @@
                 document.getElementById('burst_flash').checked = config.burst_flash || false;
                 document.getElementById('burst_prefix').value = config.burst_prefix || 'burst';
             })
-            .catch(err => alert('❌ 加载配置失败：' + err));
+            .catch(function(err) { alert('❌ 加载配置失败：' + err); });
         });
 
-        // 恢复默认
         document.getElementById('btn_reset_default').addEventListener('click', function() {
-            const defaultConfig = {
+            var defaultConfig = {
                 flash_mode: 'auto',
                 resolution: 1024,
                 whitebalance: 2,
@@ -399,13 +410,12 @@
             document.getElementById('burst_prefix').value = defaultConfig.burst_prefix;
         });
 
-        // ---------- 目录浏览 ----------
-        var currentPath = '/sd';
-
+        // ---------- 目录浏览函数 ----------
         function loadDirectory(path) {
+            console.log('[photo] loadDirectory called with path:', path);
             fetch('/api/files?path=' + encodeURIComponent(path))
-            .then(res => res.json())
-            .then(data => {
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
                 if (data.error) {
                     alert('加载目录失败: ' + data.error);
                     return;
@@ -416,42 +426,99 @@
                 var list = document.getElementById('file_list');
                 list.innerHTML = '';
 
+                // 上级目录
                 if (currentPath !== '/sd') {
                     var parentLi = document.createElement('li');
-                    var parentLink = document.createElement('a');
-                    parentLink.href = '#';
-                    parentLink.textContent = '📁 ..';
-                    parentLink.style.fontWeight = 'bold';
-                    parentLink.addEventListener('click', function(e) {
-                        e.preventDefault();
+                    var parentBtn = document.createElement('button');
+                    parentBtn.textContent = '📁 ..';
+                    parentBtn.className = 'folder-btn';
+                    parentBtn.onclick = function() {
                         var parts = currentPath.split('/');
                         parts.pop();
                         var parentPath = parts.join('/');
                         if (!parentPath || parentPath === '') parentPath = '/sd';
                         loadDirectory(parentPath);
-                    });
-                    parentLi.appendChild(parentLink);
+                    };
+                    parentLi.appendChild(parentBtn);
                     list.appendChild(parentLi);
                 }
 
                 data.entries.forEach(function(entry) {
                     var li = document.createElement('li');
-                    li.style.display = 'flex';
-                    li.style.alignItems = 'center';
-                    li.style.justifyContent = 'space-between';
-                    li.style.padding = '4px 0';
+                    var leftDiv = document.createElement('span');
+                    leftDiv.className = 'left';
 
                     if (entry.is_dir) {
-                        var link = document.createElement('a');
-                        link.href = '#';
-                        link.textContent = '📁 ' + entry.name;
-                        link.style.fontWeight = 'bold';
-                        link.addEventListener('click', function(e) {
-                            e.preventDefault();
+                        // 文件夹：用按钮
+                        var dirBtn = document.createElement('button');
+                        dirBtn.textContent = '📁 ' + entry.name;
+                        dirBtn.className = 'folder-btn';
+                        dirBtn.onclick = function() {
+                            console.log('[photo] Clicked folder:', entry.path);
                             loadDirectory(entry.path);
-                        });
-                        li.appendChild(link);
+                        };
+                        leftDiv.appendChild(dirBtn);
+
+                        // 操作按钮组
+                        var btnGroup = document.createElement('span');
+                        btnGroup.className = 'btn-group';
+
+                        var archiveBtn = document.createElement('button');
+                        archiveBtn.textContent = '📦';
+                        archiveBtn.className = 'archive-btn';
+                        archiveBtn.title = '归档此文件夹';
+                        archiveBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            var deleteAfter = confirm('归档后是否删除原文件夹？');
+                            fetch('/api/archive_folder', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    folder_path: entry.path,
+                                    delete_after: deleteAfter
+                                })
+                            })
+                            .then(function(res) { return res.json(); })
+                            .then(function(data) {
+                                if (data.success) {
+                                    loadDirectory(currentPath);
+                                } else {
+                                    alert('归档失败：' + data.error);
+                                }
+                            })
+                            .catch(function(err) { alert('请求失败：' + err); });
+                        };
+                        btnGroup.appendChild(archiveBtn);
+
+                        var delBtn = document.createElement('button');
+                        delBtn.textContent = '🗑️';
+                        delBtn.className = 'del-btn';
+                        delBtn.title = '递归删除此文件夹';
+                        delBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            if (confirm('确定要递归删除文件夹 "' + entry.path + '" 及其所有内容吗？')) {
+                                fetch('/api/delete_folder', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ folder_path: entry.path })
+                                })
+                                .then(function(res) { return res.json(); })
+                                .then(function(data) {
+                                    if (data.success) {
+                                        loadDirectory(currentPath);
+                                    } else {
+                                        alert('删除失败：' + data.error);
+                                    }
+                                })
+                                .catch(function(err) { alert('请求失败：' + err); });
+                            }
+                        };
+                        btnGroup.appendChild(delBtn);
+
+                        li.appendChild(leftDiv);
+                        li.appendChild(btnGroup);
                     } else {
+                        // 文件
                         var relPath = entry.path;
                         if (relPath.startsWith('/sd/')) {
                             relPath = relPath.substring(4);
@@ -460,17 +527,47 @@
                         link.href = '/sd/' + relPath;
                         link.target = '_blank';
                         link.textContent = entry.name;
-                        link.style.marginRight = '10px';
-                        li.appendChild(link);
+                        leftDiv.appendChild(link);
 
+                        var btnGroup = document.createElement('span');
+                        btnGroup.className = 'btn-group';
+
+                        // .arc 文件解压按钮
+                        if (entry.name.toLowerCase().endsWith('.arc')) {
+                            var extractBtn = document.createElement('button');
+                            extractBtn.textContent = '📂';
+                            extractBtn.className = 'extract-btn';
+                            extractBtn.title = '解压此归档文件';
+                            extractBtn.onclick = function(e) {
+                                e.stopPropagation();
+                                var deleteAfter = confirm('解压后是否删除归档文件？');
+                                fetch('/api/extract_archive', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        archive_path: entry.path,
+                                        delete_after: deleteAfter
+                                    })
+                                })
+                                .then(function(res) { return res.json(); })
+                                .then(function(data) {
+                                    if (data.success) {
+                                        loadDirectory(currentPath);
+                                    } else {
+                                        alert('解压失败：' + data.error);
+                                    }
+                                })
+                                .catch(function(err) { alert('请求失败：' + err); });
+                            };
+                            btnGroup.appendChild(extractBtn);
+                        }
+
+                        // 删除文件按钮
                         var delBtn = document.createElement('button');
                         delBtn.textContent = '🗑️';
-                        delBtn.style.background = 'none';
-                        delBtn.style.border = 'none';
-                        delBtn.style.cursor = 'pointer';
-                        delBtn.style.fontSize = '1.2em';
+                        delBtn.className = 'del-btn';
                         delBtn.title = '删除此文件';
-                        delBtn.addEventListener('click', function(e) {
+                        delBtn.onclick = function(e) {
                             e.stopPropagation();
                             if (confirm('确定要删除文件 "' + entry.path + '" 吗？')) {
                                 fetch('/api/delete_file', {
@@ -478,45 +575,51 @@
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ file_path: entry.path })
                                 })
-                                .then(res => res.json())
-                                .then(data => {
+                                .then(function(res) { return res.json(); })
+                                .then(function(data) {
                                     if (data.success) {
                                         loadDirectory(currentPath);
                                     } else {
                                         alert('删除失败：' + data.error);
                                     }
                                 })
-                                .catch(err => alert('删除请求失败：' + err));
+                                .catch(function(err) { alert('删除请求失败：' + err); });
                             }
-                        });
-                        li.appendChild(delBtn);
+                        };
+                        btnGroup.appendChild(delBtn);
+
+                        li.appendChild(leftDiv);
+                        li.appendChild(btnGroup);
                     }
                     list.appendChild(li);
                 });
             })
-            .catch(err => {
-                console.error('加载目录失败', err);
+            .catch(function(err) {
+                console.error('[photo] 加载目录失败', err);
                 alert('加载目录失败: ' + err);
             });
         }
 
+        // ---------- 绑定刷新按钮 ----------
         document.getElementById('btn_files').addEventListener('click', function() {
             loadDirectory(currentPath);
         });
 
+        // ---------- 重启设备 ----------
         document.getElementById('btn_restart').addEventListener('click', function() {
             if (confirm('确定要重启设备吗？')) {
                 fetch('/api/restart', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
                     alert('设备正在重启...');
                 })
-                .catch(err => {
+                .catch(function(err) {
                     alert('设备正在重启...');
                 });
             }
         });
 
+        // ---------- 页面加载完成后 ----------
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('btn_load_config').click();
             loadDirectory('/sd');

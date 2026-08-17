@@ -9,16 +9,18 @@ import time
 import camera
 import uos
 import json
-import network  # 新增
-import ujson    # 新增（MicroPython JSON 模块）
+import network
+import ujson
 
 from advanced_photo import take_advanced_photo, burst_capture
 from easyweb import EasyWeb, make_response
 from photo import take_smart_photo, gray_quick_capture, gray_analyzer_capture
-from video import RecorderTime
+from video import RecorderTimestamp
 from sd_card import get_sd_card
 from config import set_debug, CAMERA_MODEL
 from config.camera_model import get_config_path
+from utils import create_archive
+from utils import extract_archive as extract_archive_util
 
 set_debug(True)
 
@@ -89,10 +91,9 @@ def _render_html(template_name, **kwargs):
 
 # ---------- Wi-Fi 配置 ----------
 WIFI_CONFIG_FILE = "/sd/wifi_config.json"
-_current_ip = "0.0.0.0"  # 存储当前 IP
+_current_ip = "0.0.0.0"
 
 def _load_wifi_config():
-    """从 SD 卡加载 Wi-Fi 配置，返回 (ssid, password)"""
     try:
         with open(WIFI_CONFIG_FILE, "r") as f:
             config = ujson.load(f)
@@ -101,7 +102,6 @@ def _load_wifi_config():
         return "", ""
 
 def _save_wifi_config(ssid, password):
-    """保存 Wi-Fi 配置到 SD 卡"""
     try:
         config = {"ssid": ssid, "password": password}
         with open(WIFI_CONFIG_FILE, "w") as f:
@@ -112,22 +112,19 @@ def _save_wifi_config(ssid, password):
         return False
 
 def _connect_wifi(ssid, password):
-    """尝试连接 Wi-Fi，成功返回 True，并设置 _current_ip"""
     global _current_ip
     if not ssid:
         return False
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    # 如果已连接且 SSID 相同，则直接返回
     if wlan.isconnected():
         if wlan.config('essid') == ssid:
             _current_ip = wlan.ifconfig()[0]
             return True
         else:
             wlan.disconnect()
-    # 开始连接
     wlan.connect(ssid, password)
-    timeout = 10  # 等待 10 秒
+    timeout = 10
     while timeout > 0:
         if wlan.isconnected():
             _current_ip = wlan.ifconfig()[0]
@@ -159,7 +156,6 @@ def index(request):
         _clear_mode()
         return make_response("Invalid mode, please reselect.", 302, {"Location": "/"})
 
-# 注意：只接受 POST 方法
 @app.route("/set_mode", methods=["POST"])
 def set_mode(request):
     mode = request.form.get("mode") if request.form else None
@@ -218,6 +214,12 @@ def load_config(request):
                 "burst_count": 5,
                 "burst_flash": False,
                 "burst_prefix": "burst",
+                # 录制参数
+                "video_framesize": 640,   # FRAME_VGA
+                "video_quality": 10,
+                "video_duration": 5,
+                "video_save_dir": "video_web",
+                "video_xclk_freq": 10000000,
             }
             print("[Web] 配置不存在，返回默认")
             return make_response(default_config, 200)
@@ -226,14 +228,13 @@ def load_config(request):
         sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
-# ---------- API：系统状态（包含 IP） ----------
+# ---------- API：系统状态 ----------
 @app.route("/api/status")
 def status(request):
     print("[Web] 请求: /api/status")
     try:
         sd = get_sd_card()
         resolutions = _get_resolutions()
-        # 获取当前 IP
         wlan = network.WLAN(network.STA_IF)
         ip = wlan.ifconfig()[0] if wlan.isconnected() else "0.0.0.0"
         status_data = {
@@ -241,7 +242,7 @@ def status(request):
             "sd_mounted": sd.mounted if sd else False,
             "timestamp": time.time(),
             "resolutions": resolutions,
-            "ip": ip,  # 添加 IP
+            "ip": ip,
         }
         return make_response(status_data, 200)
     except Exception as e:
@@ -361,8 +362,8 @@ def video(request):
         duration = params.get("duration", 5)
         xclk_freq = params.get("xclk_freq", camera.XCLK_10MHz)
         save_dir = params.get("save_dir", "video_web")
-        print("[Web] 参数: framesize={}, duration={}s, xclk={}".format(framesize, duration, xclk_freq))
-        recorder = RecorderTime(
+        print("[Web] 参数: framesize={}, duration={}s, xclk={}, save_dir={}".format(framesize, duration, xclk_freq, save_dir))
+        recorder = RecorderTimestamp(
             framesize=framesize,
             quality=quality,
             xclk_freq=xclk_freq,
@@ -383,44 +384,96 @@ def video(request):
         sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
-# ---------- 辅助函数：递归获取图片文件 ----------
-def _get_files_recursive(path):
+# ---------- 文件与目录操作 ----------
+ALLOWED_EXTS = ('.jpg', '.jpeg', '.ppm', '.bmp', '.raw', '.arc', '.tar', '.gz', '.zip')
+
+def _list_directory(path):
     """
-    递归遍历目录，返回所有图片文件的完整路径。
-    支持扩展名：.jpg, .jpeg, .ppm, .bmp, .raw
+    返回目录下的条目，文件夹总是显示，文件只显示扩展名在 ALLOWED_EXTS 中的。
     """
     try:
         items = uos.listdir(path)
     except Exception:
         return []
-    files = []
+    entries = []
     for name in items:
-        full = path + '/' + name if path != '/' else '/' + name
+        full_path = path + '/' + name if path != '/' else '/' + name
         try:
-            st = uos.stat(full)
+            st = uos.stat(full_path)
             is_dir = (st[0] & 0x4000) != 0
         except Exception:
             continue
         if is_dir:
-            files.extend(_get_files_recursive(full))
+            entries.append({
+                "name": name,
+                "is_dir": True,
+                "path": full_path
+            })
         else:
-            ext = name.split('.')[-1].lower()
-            if ext in ('jpg', 'jpeg', 'ppm', 'bmp', 'raw'):
-                files.append(full)
-    return files
+            # 检查扩展名
+            lower_name = name.lower()
+            if lower_name.endswith('.tar.gz'):
+                ext_ok = True
+            else:
+                ext = lower_name.split('.')[-1]
+                ext_ok = '.' + ext in ALLOWED_EXTS
+            if ext_ok:
+                entries.append({
+                    "name": name,
+                    "is_dir": False,
+                    "path": full_path
+                })
+    entries.sort(key=lambda e: (not e["is_dir"], e["name"].lower()))
+    return entries
 
 # ---------- API：文件列表 ----------
+# 辅助函数：URL解码（改进版，支持 %2F 等）
+def _url_decode(s):
+    result = ''
+    i = 0
+    while i < len(s):
+        if s[i] == '%' and i + 2 < len(s):
+            try:
+                hex_val = int(s[i+1:i+3], 16)
+                result += chr(hex_val)
+                i += 3
+            except:
+                result += s[i]
+                i += 1
+        else:
+            result += s[i]
+            i += 1
+    return result
+
 @app.route("/api/files")
 def files(request):
     print("[Web] 请求: /api/files")
     try:
-        sd = get_sd_card()
-        file_list = []
-        if sd and sd.mounted:
-            root = sd.mount_point
-            file_list = _get_files_recursive(root)
-        print("[Web] 获取到 {} 个文件".format(len(file_list)))
-        return make_response({"files": file_list}, 200)
+        # 解析 query_string
+        path = "/sd"
+        if hasattr(request, 'query_string') and request.query_string:
+            qs = request.query_string
+            for part in qs.split('&'):
+                if part.startswith('path='):
+                    path = part[5:]
+                    break
+        # URL解码
+        decoded_path = _url_decode(path)
+        print("[Web] 原始路径: {}, 解码后: {}".format(path, decoded_path))
+        # 安全校验
+        if not decoded_path.startswith('/sd/') and decoded_path != '/sd':
+            return make_response({"error": "Invalid path"}, 400)
+        if '..' in decoded_path:
+            return make_response({"error": "Invalid path"}, 400)
+        try:
+            uos.stat(decoded_path)
+        except:
+            return make_response({"error": "Directory not found"}, 404)
+        entries = _list_directory(decoded_path)
+        return make_response({
+            "current_path": decoded_path,
+            "entries": entries
+        }, 200)
     except Exception as e:
         print("[Web] /api/files 异常:", e)
         sys.print_exception(e)
@@ -448,6 +501,124 @@ def delete_file(request):
         sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
+# ---------- API：递归删除文件夹 ----------
+@app.route("/api/delete_folder", methods=["POST"])
+def delete_folder(request):
+    try:
+        params = request.json if request.json else {}
+        folder_path = params.get("folder_path")
+        if not folder_path:
+            return make_response({"success": False, "error": "Missing folder_path"}, 400)
+        if not folder_path.startswith('/sd/') or '..' in folder_path:
+            return make_response({"success": False, "error": "Invalid folder path"}, 400)
+        # 检查是否存在且是目录
+        try:
+            st = uos.stat(folder_path)
+            if not (st[0] & 0x4000):
+                return make_response({"success": False, "error": "Not a directory"}, 400)
+        except:
+            return make_response({"success": False, "error": "Folder not found"}, 404)
+        # 递归删除
+        def rmtree(path):
+            try:
+                items = uos.listdir(path)
+            except:
+                return
+            for name in items:
+                full = path + '/' + name
+                try:
+                    st2 = uos.stat(full)
+                    if st2[0] & 0x4000:
+                        rmtree(full)
+                    else:
+                        uos.remove(full)
+                except:
+                    pass
+            try:
+                uos.rmdir(path)
+            except:
+                pass
+        rmtree(folder_path)
+        print("[Web] 已删除文件夹: {}".format(folder_path))
+        return make_response({"success": True}, 200)
+    except Exception as e:
+        print("[Web] 删除文件夹失败:", e)
+        sys.print_exception(e)
+        return make_response({"success": False, "error": str(e)}, 500)
+
+# ---------- API：归档文件夹 ----------
+@app.route("/api/archive_folder", methods=["POST"])
+def archive_folder(request):
+    try:
+        params = request.json if request.json else {}
+        folder_path = params.get("folder_path")
+        delete_after = params.get("delete_after", False)
+        if not folder_path:
+            return make_response({"success": False, "error": "Missing folder_path"}, 400)
+        if not folder_path.startswith('/sd/') or '..' in folder_path:
+            return make_response({"success": False, "error": "Invalid folder path"}, 400)
+        # 检查是否存在且是目录
+        try:
+            st = uos.stat(folder_path)
+            if not (st[0] & 0x4000):
+                return make_response({"success": False, "error": "Not a directory"}, 400)
+        except:
+            return make_response({"success": False, "error": "Folder not found"}, 404)
+        # 生成归档文件名（与文件夹同名，加上 .arc）
+        if folder_path.endswith('/'):
+            folder_path = folder_path[:-1]
+        archive_path = folder_path + '.arc'
+        # 调用归档函数
+        success = create_archive(folder_path, archive_path, delete_source=delete_after)
+        if success:
+            print("[Web] 归档成功: {} -> {}".format(folder_path, archive_path))
+            return make_response({"success": True, "archive_path": archive_path}, 200)
+        else:
+            return make_response({"success": False, "error": "Archive failed"}, 500)
+    except Exception as e:
+        print("[Web] 归档失败:", e)
+        sys.print_exception(e)
+        return make_response({"success": False, "error": str(e)}, 500)
+
+# ---------- API：解压归档文件 ----------
+@app.route("/api/extract_archive", methods=["POST"])
+def extract_archive(request):
+    try:
+        params = request.json if request.json else {}
+        archive_path = params.get("archive_path")
+        delete_after = params.get("delete_after", False)
+        if not archive_path:
+            return make_response({"success": False, "error": "Missing archive_path"}, 400)
+        if not archive_path.startswith('/sd/') or '..' in archive_path:
+            return make_response({"success": False, "error": "Invalid archive path"}, 400)
+        # 检查文件是否存在
+        try:
+            uos.stat(archive_path)
+        except:
+            return make_response({"success": False, "error": "Archive not found"}, 404)
+        # 确定目标目录（去掉 .arc 后缀，如果存在则用原名，否则用 原文件名_extracted）
+        if archive_path.endswith('.arc'):
+            target_dir = archive_path[:-4]
+        else:
+            target_dir = archive_path + '_extracted'
+        # 调用解压函数
+        extracted_files = extract_archive_util(archive_path, target_dir)
+        if extracted_files:
+            # 如果 delete_after 为 True，删除归档文件
+            if delete_after:
+                try:
+                    uos.remove(archive_path)
+                except:
+                    pass
+            print("[Web] 解压成功: {} -> {} ({} files)".format(archive_path, target_dir, len(extracted_files)))
+            return make_response({"success": True, "target_dir": target_dir, "files_count": len(extracted_files)}, 200)
+        else:
+            return make_response({"success": False, "error": "Extract failed"}, 500)
+    except Exception as e:
+        print("[Web] 解压失败:", e)
+        sys.print_exception(e)
+        return make_response({"success": False, "error": str(e)}, 500)
+
 # ---------- 路由：查看 SD 卡文件 ----------
 @app.route("/sd/<path>")
 def sd_file(request):
@@ -461,8 +632,15 @@ def sd_file(request):
         if '..' in filename or filename.startswith('/'):
             return make_response("Invalid path", 403)
         full_path = "/sd/" + filename
+        # 检查是否为目录，如果是则不允许访问
+        try:
+            st = uos.stat(full_path)
+            if st[0] & 0x4000:  # 是目录
+                print("[Web] 拒绝访问目录: {}".format(full_path))
+                return make_response("Cannot access directory", 403)
+        except:
+            pass
         print("[Web] 尝试读取文件: {}".format(full_path))
-        uos.stat(full_path)
         with open(full_path, "rb") as f:
             data = f.read()
         f_lower = filename.lower()
@@ -497,10 +675,8 @@ def set_wifi(request):
         password = params.get("password", "").strip()
         if not ssid:
             return make_response({"success": False, "error": "SSID is required"}, 400)
-        # 保存配置
         if not _save_wifi_config(ssid, password):
             return make_response({"success": False, "error": "Failed to save config"}, 500)
-        # 连接
         success = _connect_wifi(ssid, password)
         if success:
             ip = _current_ip
@@ -518,7 +694,6 @@ def restart(request):
     try:
         import machine
         print("[Web] 设备即将重启...")
-        # 先发送响应再重启
         time.sleep_ms(500)
         machine.reset()
     except Exception as e:
@@ -527,7 +702,6 @@ def restart(request):
 
 # ---------- 启动入口 ----------
 def start(host="0.0.0.0", port=80):
-    # 尝试加载并自动连接 Wi-Fi
     ssid, password = _load_wifi_config()
     if ssid:
         print("[Web] 尝试自动连接 Wi-Fi: {}".format(ssid))

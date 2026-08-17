@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b0a8a354-5315-411e-9814-d02de2cf6096" name="更改" comment="sta设定">
-      <change afterPath="$PROJECT_DIR$/utils/archiver.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/unarchiver.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/web/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/static/mode_selector.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/mode_selector.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/static/photo.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/photo.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/static/video.html" beforeDir="false" afterPath="$PROJECT_DIR$/web/static/video.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -231,30 +229,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749768217230</updated>
-    </task>
-    <task id="LOCAL-00022" summary="分辨率检测">
-      <option name="closed" value="true" />
-      <created>1786152397780</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1786152397780</updated>
-    </task>
-    <task id="LOCAL-00023" summary="高级拍照函数">
-      <option name="closed" value="true" />
-      <created>1786159966266</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
-      <option name="project" value="LOCAL" />
-      <updated>1786159966266</updated>
-    </task>
-    <task id="LOCAL-00024" summary="高级拍照函数">
-      <option name="closed" value="true" />
-      <created>1786161181019</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1786161181019</updated>
     </task>
     <task id="LOCAL-00025" summary="视频模块">
       <option name="closed" value="true" />
@@ -624,7 +598,31 @@
       <option name="project" value="LOCAL" />
       <updated>1786890952890</updated>
     </task>
-    <option name="localTasksCounter" value="71" />
+    <task id="LOCAL-00071" summary="sta设定">
+      <option name="closed" value="true" />
+      <created>1786927682420</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1786927682420</updated>
+    </task>
+    <task id="LOCAL-00072" summary="sta设定">
+      <option name="closed" value="true" />
+      <created>1786931692191</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1786931692191</updated>
+    </task>
+    <task id="LOCAL-00073" summary="sta设定">
+      <option name="closed" value="true" />
+      <created>1786932181278</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1786932181278</updated>
+    </task>
+    <option name="localTasksCounter" value="74" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

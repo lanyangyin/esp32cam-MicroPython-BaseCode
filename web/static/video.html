@@ -5,7 +5,6 @@
     <title>录制模式</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f0f0f0; }
-        h1 { color: #333; }
         .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; }
         label { width: 100px; font-weight: bold; }
@@ -15,7 +14,25 @@
         #result { margin-top: 10px; }
         #file_list li {border-bottom: 1px solid #eee; padding: 6px 0;}
         #file_list li:last-child {border-bottom: none;}
-        #file_list a { cursor: pointer; }
+        #file_list a { cursor: pointer; text-decoration: none; color: #0366d6; }
+        #file_list a:hover { text-decoration: underline; }
+        .btn-group { display: flex; gap: 6px; align-items: center; }
+        .btn-group button { background: none; border: none; cursor: pointer; font-size: 1.1em; padding: 0 4px; }
+        .btn-group button:hover { opacity: 0.7; }
+        .btn-group .del-btn { color: #d73a49; }
+        .btn-group .archive-btn { color: #6f42c1; }
+        .btn-group .extract-btn { color: #2c8b3a; }
+        .folder-btn { background: none; border: none; cursor: pointer; font-size: 1em; font-weight: bold; color: #0366d6; padding: 0; }
+        .folder-btn:hover { text-decoration: underline; }
+        #file_list li { display: flex; align-items: center; justify-content: space-between; }
+        #file_list .left { display: flex; align-items: center; gap: 10px; }
+        h1 { color: #333; }
+        .btn-save { background: #007bff; color: white; }
+        .btn-save:hover { background: #0056b3; }
+        .btn-load { background: #17a2b8; color: white; }
+        .btn-load:hover { background: #138496; }
+        .btn-reset { background: #6c757d; color: white; }
+        .btn-reset:hover { background: #545b62; }
     </style>
 </head>
 <body>
@@ -46,6 +63,11 @@
         </div>
         <button id="btn_video">⏺️ 开始录像</button>
         <div id="result"></div>
+        <div style="margin-top: 15px;">
+            <button id="btn_save_config" class="btn-save">💾 保存录制配置</button>
+            <button id="btn_load_config" class="btn-load">📂 加载配置</button>
+            <button id="btn_reset_default" class="btn-reset">↩️ 恢复默认</button>
+        </div>
     </div>
 
     <div class="card">
@@ -62,6 +84,10 @@
     </div>
 
     <script>
+        // ---------- 全局变量 ----------
+        var currentPath = '/sd';
+
+        // ---------- 加载分辨率 ----------
         var resolutions = {resolutions};
         var sel = document.getElementById('video_res');
         resolutions.forEach(function(r) {
@@ -71,14 +97,77 @@
             sel.appendChild(opt);
         });
 
-        // 录像
+        // ---------- 配置管理 ----------
+        function getVideoParams() {
+            return {
+                video_framesize: parseInt(document.getElementById('video_res').value),
+                video_quality: parseInt(document.getElementById('video_quality').value),
+                video_duration: parseInt(document.getElementById('video_duration').value),
+                video_save_dir: document.getElementById('video_save_dir').value,
+                video_xclk_freq: parseInt(document.getElementById('video_xclk').value),
+            };
+        }
+
+        function applyVideoConfig(config) {
+            document.getElementById('video_res').value = config.video_framesize || 640;
+            document.getElementById('video_quality').value = config.video_quality || 10;
+            document.getElementById('video_duration').value = config.video_duration || 5;
+            document.getElementById('video_save_dir').value = config.video_save_dir || 'video_web';
+            document.getElementById('video_xclk').value = config.video_xclk_freq || 10000000;
+        }
+
+        document.getElementById('btn_save_config').addEventListener('click', function() {
+            fetch('/api/load_config')
+            .then(function(res) { return res.json(); })
+            .then(function(config) {
+                var videoParams = getVideoParams();
+                var newConfig = Object.assign({}, config, videoParams);
+                fetch('/api/save_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newConfig)
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        alert('✅ 配置已保存');
+                    } else {
+                        alert('❌ 保存失败：' + data.error);
+                    }
+                })
+                .catch(function(err) { alert('❌ 保存失败：' + err); });
+            })
+            .catch(function(err) { alert('加载配置失败：' + err); });
+        });
+
+        document.getElementById('btn_load_config').addEventListener('click', function() {
+            fetch('/api/load_config')
+            .then(function(res) { return res.json(); })
+            .then(function(config) {
+                applyVideoConfig(config);
+            })
+            .catch(function(err) { alert('加载配置失败：' + err); });
+        });
+
+        document.getElementById('btn_reset_default').addEventListener('click', function() {
+            var defaultConfig = {
+                video_framesize: 640,
+                video_quality: 10,
+                video_duration: 5,
+                video_save_dir: 'video_web',
+                video_xclk_freq: 10000000,
+            };
+            applyVideoConfig(defaultConfig);
+        });
+
+        // ---------- 录像 ----------
         document.getElementById('btn_video').addEventListener('click', function() {
             var framesize = parseInt(document.getElementById('video_res').value);
             var quality = parseInt(document.getElementById('video_quality').value);
             var duration = parseInt(document.getElementById('video_duration').value);
             var save_dir = document.getElementById('video_save_dir').value || 'video_web';
             var xclk_freq = parseInt(document.getElementById('video_xclk').value);
-            var body = { framesize: framesize, quality: quality, duration: duration, xclk_freq: xclk_freq, save_dir: save_dir};
+            var body = { framesize: framesize, quality: quality, duration: duration, xclk_freq: xclk_freq, save_dir: save_dir };
             var btn = this;
             btn.disabled = true;
             btn.textContent = '⏳ 录制中...';
@@ -87,7 +176,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             })
-            .then(res => res.json())
+            .then(function(res) { return res.json(); })
             .then(function(data) {
                 btn.disabled = false;
                 btn.textContent = '⏺️ 开始录像';
@@ -105,13 +194,12 @@
             });
         });
 
-        // ---------- 目录浏览 ----------
-        var currentPath = '/sd';
-
+        // ---------- 目录浏览函数 ----------
         function loadDirectory(path) {
+            console.log('[video] loadDirectory called with path:', path);
             fetch('/api/files?path=' + encodeURIComponent(path))
-            .then(res => res.json())
-            .then(data => {
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
                 if (data.error) {
                     alert('加载目录失败: ' + data.error);
                     return;
@@ -122,42 +210,99 @@
                 var list = document.getElementById('file_list');
                 list.innerHTML = '';
 
+                // 上级目录
                 if (currentPath !== '/sd') {
                     var parentLi = document.createElement('li');
-                    var parentLink = document.createElement('a');
-                    parentLink.href = '#';
-                    parentLink.textContent = '📁 ..';
-                    parentLink.style.fontWeight = 'bold';
-                    parentLink.addEventListener('click', function(e) {
-                        e.preventDefault();
+                    var parentBtn = document.createElement('button');
+                    parentBtn.textContent = '📁 ..';
+                    parentBtn.className = 'folder-btn';
+                    parentBtn.onclick = function() {
                         var parts = currentPath.split('/');
                         parts.pop();
                         var parentPath = parts.join('/');
                         if (!parentPath || parentPath === '') parentPath = '/sd';
                         loadDirectory(parentPath);
-                    });
-                    parentLi.appendChild(parentLink);
+                    };
+                    parentLi.appendChild(parentBtn);
                     list.appendChild(parentLi);
                 }
 
                 data.entries.forEach(function(entry) {
                     var li = document.createElement('li');
-                    li.style.display = 'flex';
-                    li.style.alignItems = 'center';
-                    li.style.justifyContent = 'space-between';
-                    li.style.padding = '4px 0';
+                    var leftDiv = document.createElement('span');
+                    leftDiv.className = 'left';
 
                     if (entry.is_dir) {
-                        var link = document.createElement('a');
-                        link.href = '#';
-                        link.textContent = '📁 ' + entry.name;
-                        link.style.fontWeight = 'bold';
-                        link.addEventListener('click', function(e) {
-                            e.preventDefault();
+                        // 文件夹：用按钮
+                        var dirBtn = document.createElement('button');
+                        dirBtn.textContent = '📁 ' + entry.name;
+                        dirBtn.className = 'folder-btn';
+                        dirBtn.onclick = function() {
+                            console.log('[video] Clicked folder:', entry.path);
                             loadDirectory(entry.path);
-                        });
-                        li.appendChild(link);
+                        };
+                        leftDiv.appendChild(dirBtn);
+
+                        // 操作按钮组
+                        var btnGroup = document.createElement('span');
+                        btnGroup.className = 'btn-group';
+
+                        var archiveBtn = document.createElement('button');
+                        archiveBtn.textContent = '📦';
+                        archiveBtn.className = 'archive-btn';
+                        archiveBtn.title = '归档此文件夹';
+                        archiveBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            var deleteAfter = confirm('归档后是否删除原文件夹？');
+                            fetch('/api/archive_folder', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    folder_path: entry.path,
+                                    delete_after: deleteAfter
+                                })
+                            })
+                            .then(function(res) { return res.json(); })
+                            .then(function(data) {
+                                if (data.success) {
+                                    loadDirectory(currentPath);
+                                } else {
+                                    alert('归档失败：' + data.error);
+                                }
+                            })
+                            .catch(function(err) { alert('请求失败：' + err); });
+                        };
+                        btnGroup.appendChild(archiveBtn);
+
+                        var delBtn = document.createElement('button');
+                        delBtn.textContent = '🗑️';
+                        delBtn.className = 'del-btn';
+                        delBtn.title = '递归删除此文件夹';
+                        delBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            if (confirm('确定要递归删除文件夹 "' + entry.path + '" 及其所有内容吗？')) {
+                                fetch('/api/delete_folder', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ folder_path: entry.path })
+                                })
+                                .then(function(res) { return res.json(); })
+                                .then(function(data) {
+                                    if (data.success) {
+                                        loadDirectory(currentPath);
+                                    } else {
+                                        alert('删除失败：' + data.error);
+                                    }
+                                })
+                                .catch(function(err) { alert('请求失败：' + err); });
+                            }
+                        };
+                        btnGroup.appendChild(delBtn);
+
+                        li.appendChild(leftDiv);
+                        li.appendChild(btnGroup);
                     } else {
+                        // 文件
                         var relPath = entry.path;
                         if (relPath.startsWith('/sd/')) {
                             relPath = relPath.substring(4);
@@ -166,35 +311,101 @@
                         link.href = '/sd/' + relPath;
                         link.target = '_blank';
                         link.textContent = entry.name;
-                        li.appendChild(link);
+                        leftDiv.appendChild(link);
+
+                        var btnGroup = document.createElement('span');
+                        btnGroup.className = 'btn-group';
+
+                        // .arc 文件解压
+                        if (entry.name.toLowerCase().endsWith('.arc')) {
+                            var extractBtn = document.createElement('button');
+                            extractBtn.textContent = '📂';
+                            extractBtn.className = 'extract-btn';
+                            extractBtn.title = '解压此归档文件';
+                            extractBtn.onclick = function(e) {
+                                e.stopPropagation();
+                                var deleteAfter = confirm('解压后是否删除归档文件？');
+                                fetch('/api/extract_archive', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        archive_path: entry.path,
+                                        delete_after: deleteAfter
+                                    })
+                                })
+                                .then(function(res) { return res.json(); })
+                                .then(function(data) {
+                                    if (data.success) {
+                                        loadDirectory(currentPath);
+                                    } else {
+                                        alert('解压失败：' + data.error);
+                                    }
+                                })
+                                .catch(function(err) { alert('请求失败：' + err); });
+                            };
+                            btnGroup.appendChild(extractBtn);
+                        }
+
+                        // 删除文件
+                        var delBtn = document.createElement('button');
+                        delBtn.textContent = '🗑️';
+                        delBtn.className = 'del-btn';
+                        delBtn.title = '删除此文件';
+                        delBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            if (confirm('确定要删除文件 "' + entry.path + '" 吗？')) {
+                                fetch('/api/delete_file', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ file_path: entry.path })
+                                })
+                                .then(function(res) { return res.json(); })
+                                .then(function(data) {
+                                    if (data.success) {
+                                        loadDirectory(currentPath);
+                                    } else {
+                                        alert('删除失败：' + data.error);
+                                    }
+                                })
+                                .catch(function(err) { alert('删除请求失败：' + err); });
+                            }
+                        };
+                        btnGroup.appendChild(delBtn);
+
+                        li.appendChild(leftDiv);
+                        li.appendChild(btnGroup);
                     }
                     list.appendChild(li);
                 });
             })
-            .catch(err => {
-                console.error('加载目录失败', err);
+            .catch(function(err) {
+                console.error('[video] 加载目录失败', err);
                 alert('加载目录失败: ' + err);
             });
         }
 
+        // ---------- 绑定刷新 ----------
         document.getElementById('btn_files').addEventListener('click', function() {
             loadDirectory(currentPath);
         });
 
+        // ---------- 重启 ----------
         document.getElementById('btn_restart').addEventListener('click', function() {
             if (confirm('确定要重启设备吗？')) {
                 fetch('/api/restart', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
                     alert('设备正在重启...');
                 })
-                .catch(err => {
+                .catch(function(err) {
                     alert('设备正在重启...');
                 });
             }
         });
 
+        // ---------- 页面加载 ----------
         document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('btn_load_config').click();
             loadDirectory('/sd');
         });
     </script>
