@@ -40,6 +40,7 @@
         .status-info { color: #0056b3; }
         .status-success { color: #28a745; }
         .status-error { color: #dc3545; }
+        .brightness-slider { width: 200px; }
     </style>
 </head>
 <body>
@@ -71,6 +72,11 @@
                 <option value="auto" selected>自动（规则引擎）</option>
                 <option value="auto_quick">自动（快速阈值）</option>
             </select>
+        </div>
+        <div class="row">
+            <label>闪光灯亮度：</label>
+            <input type="range" id="photo_flash_brightness" min="0" max="100" value="100" step="1" class="brightness-slider">
+            <span id="photo_flash_brightness_val">100</span>%
         </div>
 
         <!-- 图像调节 -->
@@ -238,6 +244,9 @@
         document.getElementById('contrast_adj').addEventListener('input', function() {
             document.getElementById('contrast_adj_val').textContent = this.value;
         });
+        document.getElementById('photo_flash_brightness').addEventListener('input', function() {
+            document.getElementById('photo_flash_brightness_val').textContent = this.value;
+        });
 
         // ---------- 获取参数 ----------
         function getParams() {
@@ -261,6 +270,7 @@
                 burst_count: parseInt(document.getElementById('burst_count').value),
                 burst_flash: document.getElementById('burst_flash').checked,
                 burst_prefix: document.getElementById('burst_prefix').value,
+                photo_flash_brightness: parseInt(document.getElementById('photo_flash_brightness').value),
             };
         }
 
@@ -309,6 +319,7 @@
                 flash_on: document.getElementById('burst_flash').checked,
                 filename_prefix: document.getElementById('burst_prefix').value,
                 save_path: document.getElementById('save_path').value,
+                flash_brightness: parseInt(document.getElementById('photo_flash_brightness').value),
             };
             var btn = this;
             btn.disabled = true;
@@ -392,6 +403,8 @@
                 document.getElementById('burst_count').value = config.burst_count || 5;
                 document.getElementById('burst_flash').checked = config.burst_flash || false;
                 document.getElementById('burst_prefix').value = config.burst_prefix || 'burst';
+                document.getElementById('photo_flash_brightness').value = config.photo_flash_brightness || 100;
+                document.getElementById('photo_flash_brightness_val').textContent = config.photo_flash_brightness || 100;
                 setStatus('✅ 配置加载成功', 'success');
             })
             .catch(function(err) {
@@ -421,6 +434,7 @@
                 burst_count: 5,
                 burst_flash: false,
                 burst_prefix: 'burst',
+                photo_flash_brightness: 100,
             };
             document.getElementById('flash_mode').value = defaultConfig.flash_mode;
             document.getElementById('capture_res').value = defaultConfig.resolution;
@@ -444,6 +458,8 @@
             document.getElementById('burst_count').value = defaultConfig.burst_count;
             document.getElementById('burst_flash').checked = defaultConfig.burst_flash;
             document.getElementById('burst_prefix').value = defaultConfig.burst_prefix;
+            document.getElementById('photo_flash_brightness').value = defaultConfig.photo_flash_brightness;
+            document.getElementById('photo_flash_brightness_val').textContent = defaultConfig.photo_flash_brightness;
             setStatus('↩️ 已恢复默认配置', 'info');
         });
 

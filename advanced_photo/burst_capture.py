@@ -4,6 +4,7 @@
 
 提供连续拍摄多张照片的功能，可控制闪光灯，并记录总耗时。
 所有照片保存到 SD 卡，文件名自动添加序号。
+支持闪光灯亮度控制。
 """
 
 import time
@@ -31,6 +32,7 @@ def burst_capture(
     flash_pin=4,
     flash_on_value=1,
     pre_flash_delay=200,
+    flash_brightness=100,
 ):
     """
     连拍多张照片，并返回总耗时。
@@ -53,6 +55,7 @@ def burst_capture(
         flash_pin (int): 闪光灯 GPIO 引脚号。
         flash_on_value (int): 点亮闪光灯的电平值。
         pre_flash_delay (int): 闪光灯开启后到拍摄的延时（毫秒）。
+        flash_brightness (int): 闪光灯亮度百分比（0~100），默认100。
 
     返回：
         float: 连拍总耗时（秒）。若发生严重错误，返回 -1.0。
@@ -92,15 +95,15 @@ def burst_capture(
 
     flash = get_flash(pin=flash_pin, on_value=flash_on_value)
     if flash_on:
-        flash.on()
-        time.sleep_ms(pre_flash_delay)  # 预闪
+        # 直接设置亮度（替代 flash.on()）
+        flash.set_brightness(flash_brightness)
+        time.sleep_ms(pre_flash_delay)
 
     start_time = time.time()
     success_count = 0
     try:
         for i in range(1, burst_count + 1):
             debug_log("拍摄第 {} 张".format(i), level=LEVEL_INFO, module="BurstCapture")
-            # 捕获
             try:
                 for _ in range(brightness+2):
                     cam.capture()
@@ -147,7 +150,8 @@ if __name__ == "__main__":
     elapsed = burst_capture(
         resolution=camera.FRAME_HD,
         burst_count=6,
-        flash_on=False,
+        flash_on=True,
+        flash_brightness=80,
         filename_prefix="test_burst",
         save_path="/sd"
     )

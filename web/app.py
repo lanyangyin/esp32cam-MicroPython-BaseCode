@@ -179,7 +179,7 @@ def save_config(request):
         config = request.json
         if not config:
             return make_response({"success": False, "error": "No config data"}, 400)
-        print("[Web] 保存配置内容:", config)  # 添加这行
+        print("[Web] 保存配置内容:", config)
         with open(CONFIG_FILE, "w") as f:
             json.dump(config, f)
         print("[Web] 配置已保存至 {}".format(CONFIG_FILE))
@@ -219,7 +219,7 @@ def load_config(request):
                 "burst_flash": False,
                 "burst_prefix": "burst",
                 # 录制参数
-                "video_framesize": 640,   # FRAME_VGA
+                "video_framesize": 640,
                 "video_quality": 10,
                 "video_duration": 5,
                 "video_save_dir": "video_web",
@@ -227,6 +227,8 @@ def load_config(request):
                 "video_flash": False,
                 "video_mirror": 0,
                 "video_flip": 1,
+                "photo_flash_brightness": 100,
+                "video_flash_brightness": 100,
             }
             print("[Web] 配置不存在，返回默认")
             return make_response(default_config, 200)
@@ -280,6 +282,19 @@ def capture(request):
         analysis_retry = params.get("analysis_retry", 3)
         analysis_resolution = params.get("analysis_resolution", camera.FRAME_QVGA)
 
+        # 兼容两种键名：flash_brightness 或 photo_flash_brightness
+        flash_brightness = params.get("flash_brightness")
+        if flash_brightness is None:
+            flash_brightness = params.get("photo_flash_brightness", 100)
+        # 限制范围
+        if flash_brightness < 0:
+            flash_brightness = 0
+        elif flash_brightness > 100:
+            flash_brightness = 100
+
+        flash = get_flash()
+        flash.set_brightness(flash_brightness)
+
         result = take_advanced_photo(
             flash_mode=flash_mode,
             resolution=resolution,
@@ -297,6 +312,7 @@ def capture(request):
             black_retry=black_retry,
             analysis_retry=analysis_retry,
             analysis_resolution=analysis_resolution,
+            flash_brightness=flash_brightness,
         )
 
         if result is None:
@@ -334,6 +350,15 @@ def burst(request):
         flash_on = params.get("flash_on", False)
         filename_prefix = params.get("filename_prefix", "burst")
         save_path = params.get("save_path", "/sd")
+        # 兼容两种键名
+        flash_brightness = params.get("flash_brightness")
+        if flash_brightness is None:
+            flash_brightness = params.get("photo_flash_brightness", 100)
+        if flash_brightness < 0:
+            flash_brightness = 0
+        elif flash_brightness > 100:
+            flash_brightness = 100
+
         elapsed = burst_capture(
             resolution=resolution,
             whitebalance=whitebalance,
@@ -348,6 +373,7 @@ def burst(request):
             flash_on=flash_on,
             filename_prefix=filename_prefix,
             save_path=save_path,
+            flash_brightness=flash_brightness,
         )
         if elapsed < 0:
             return make_response({"success": False, "error": "Burst capture failed"}, 200)
@@ -369,24 +395,32 @@ def video(request):
         duration = params.get("duration", 5)
         xclk_freq = params.get("xclk_freq", camera.XCLK_10MHz)
         save_dir = params.get("save_dir", "video_web")
-        flash_on = params.get("flash_on", False)
         mirror = params.get("mirror", 0)
         flip = params.get("flip", 1)
+        # 获取亮度，优先使用 flash_brightness，若不存在则使用 video_flash_brightness
+        flash_brightness = params.get("flash_brightness")
+        if flash_brightness is None:
+            flash_brightness = params.get("video_flash_brightness", 100)
+        if flash_brightness < 0:
+            flash_brightness = 0
+        elif flash_brightness > 100:
+            flash_brightness = 100
 
-        print("[Web] 录像参数: framesize={}, duration={}s, xclk={}, save_dir={}, flash={}, mirror={}, flip={}".format(
-            framesize, duration, xclk_freq, save_dir, flash_on, mirror, flip))
+        # 关键修改：如果亮度 > 0 则自动开启闪光灯，无需依赖 flash_on
+        flash_on = flash_brightness > 0
 
-        # ---------- 闪光灯初始化 ----------
-        flash = get_flash(pin=4, on_value=1)  # 默认 GPIO4
+        print("[Web] 录像参数: framesize={}, duration={}s, xclk={}, save_dir={}, flash={}, mirror={}, flip={}, brightness={}".format(
+            framesize, duration, xclk_freq, save_dir, flash_on, mirror, flip, flash_brightness))
+
+        flash = get_flash(pin=4, on_value=1)
         if flash_on:
-            flash.on()
-            print("[Web] 闪光灯已开启")
-            time.sleep_ms(200)  # 预闪
+            flash.set_brightness(flash_brightness)
+            print("[Web] 闪光灯已开启（亮度{}%）".format(flash_brightness))
+            time.sleep_ms(200)
 
         # ---------- 创建保存目录 ----------
         sd = get_sd_card()
         full_dir = sd.mount_point + "/" + save_dir
-        # 自动创建不存在的目录（如果已存在则添加序号）
         dir_counter = 1
         test_dir = full_dir
         while True:
@@ -394,7 +428,6 @@ def video(request):
                 uos.mkdir(test_dir)
                 break
             except OSError:
-                # 目录已存在，尝试添加序号
                 test_dir = full_dir + "_{}".format(dir_counter)
                 dir_counter += 1
                 if dir_counter > 100:
@@ -426,7 +459,7 @@ def video(request):
         end_time = time.ticks_add(start_time, int(duration * 1000))
         frame_count = 0
         last_gc_time = start_time
-        GC_INTERVAL = 14000  # 14秒
+        GC_INTERVAL = 14000
 
         indicator = get_indicator()
         indicator.on()
@@ -451,11 +484,12 @@ def video(request):
             pass
         finally:
             indicator.off()
-            # 关闭闪光灯（无论是否异常）
-            if flash_on:
+            # 无条件关闭闪光灯
+            try:
                 flash.off()
-                print("[Web] 闪光灯已关闭")
-            # 释放摄像头
+                print("[Web] 闪光灯已强制关闭")
+            except Exception as e:
+                print("[Web] 关闭闪光灯失败:", e)
             try:
                 camera.deinit()
             except:
@@ -474,7 +508,6 @@ def video(request):
     except Exception as e:
         print("[Web] /api/video 异常:", e)
         sys.print_exception(e)
-        # 确保闪光灯关闭
         try:
             flash = get_flash()
             flash.off()
@@ -510,7 +543,6 @@ def _list_directory(path):
                 "path": full_path
             })
         else:
-            # 检查扩展名
             lower_name = name.lower()
             if lower_name.endswith('.tar.gz'):
                 ext_ok = True
@@ -527,7 +559,6 @@ def _list_directory(path):
     return entries
 
 # ---------- API：文件列表 ----------
-# 辅助函数：URL解码（改进版，支持 %2F 等）
 def _url_decode(s):
     result = ''
     i = 0
@@ -545,16 +576,13 @@ def _url_decode(s):
             i += 1
     return result
 
-# ---------- API：测试流式响应（指定大小） ----------
 @app.route("/api/test_stream_size")
 def test_stream_size(request):
     print("[Web] 请求: /api/test_stream_size")
     try:
-        # 从 args 获取 size 参数
         if hasattr(request, 'args') and request.args:
             size_str = request.args.get('size', '1024')
         else:
-            # 回退到解析 query_string
             size_str = '1024'
             if hasattr(request, 'query_string') and request.query_string:
                 qs = request.query_string
@@ -566,25 +594,22 @@ def test_stream_size(request):
             total_size = int(size_str)
             if total_size <= 0:
                 total_size = 1024
-            elif total_size > 10 * 1024 * 1024:  # 限制最大 10MB
+            elif total_size > 10 * 1024 * 1024:
                 total_size = 10 * 1024 * 1024
         except:
             total_size = 1024
 
         print("[Web] 生成测试数据流，大小: {} 字节".format(total_size))
 
-        # 生成器：逐块产生数据
         def generate_data():
             CHUNK_SIZE = 1024
             remaining = total_size
             while remaining > 0:
                 chunk_size = CHUNK_SIZE if remaining >= CHUNK_SIZE else remaining
-                # 生成一个固定模式的块（便于观察）
                 chunk = b'A' * chunk_size
                 yield chunk
                 remaining -= chunk_size
 
-        # 返回流式响应
         return make_response(generate_data(), 200, {
             "Content-Type": "application/octet-stream",
             "X-Total-Size": str(total_size)
@@ -594,17 +619,14 @@ def test_stream_size(request):
         sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
-# ---------- API：文件列表 ----------
 @app.route("/api/files")
 def files(request):
     print("[Web] 请求: /api/files")
     try:
-        # 尝试从 request.params 获取 path（EasyWeb 通常支持）
         if hasattr(request, 'params') and request.params:
             path = request.params.get('path', '/sd')
             print("[Web] 从 params 获取路径:", path)
         else:
-            # 回退到 query_string
             path = "/sd"
             if hasattr(request, 'query_string') and request.query_string:
                 qs = request.query_string
@@ -613,10 +635,8 @@ def files(request):
                     if part.startswith('path='):
                         path = part[5:]
                         break
-        # URL解码
         decoded_path = _url_decode(path)
         print("[Web] 原始路径: {}, 解码后: {}".format(path, decoded_path))
-        # 安全校验
         if not decoded_path.startswith('/sd/') and decoded_path != '/sd':
             return make_response({"error": "Invalid path"}, 400)
         if '..' in decoded_path:
@@ -635,8 +655,6 @@ def files(request):
         sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
-
-# ---------- API：文件夹专用路由 ----------
 @app.route("/api/folder")
 def folder(request):
     print("[Web] 请求: /api/folder")
@@ -645,15 +663,12 @@ def folder(request):
 
     try:
         path = None
-        # 尝试从 args 获取
         if hasattr(request, 'args') and request.args:
             path = request.args.get('path')
             print("[Web] 从 args 获取 path:", path)
-        # 若失败，从 _args 获取
         if path is None and hasattr(request, '_args') and request._args:
             path = request._args.get('path')
             print("[Web] 从 _args 获取 path:", path)
-        # 回退
         if path is None:
             print("[Web] 未获取到 path，使用默认 /sd")
             path = "/sd"
@@ -661,7 +676,6 @@ def folder(request):
             path = _url_decode(path)
             print("[Web] 解码后的路径:", path)
 
-        # 安全校验
         if not path.startswith('/sd/') and path != '/sd':
             return make_response({"error": "Invalid path"}, 400)
         if '..' in path:

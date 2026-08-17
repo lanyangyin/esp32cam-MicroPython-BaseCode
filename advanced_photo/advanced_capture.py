@@ -3,11 +3,12 @@
 高级拍照模块
 
 提供单张高级拍照功能，支持：
-    - 闪光灯模式：开启、关闭、自动（规则引擎）、自动（快速阈值）
+    - 闪光灯模式：开启、关闭、自动（完整亮度分析）、自动（快速估计）
     - 可配置的分辨率、白平衡、翻转、镜像、图像参数
     - 黑照检测与重试
     - 亮度分析重试
     - 可选择保存到 SD 卡或仅返回 JPEG 数据
+    - 闪光灯亮度控制（0~100）
 
 依赖 photo 包中的 gray_analyzer_capture、gray_quick_capture，
 camera_driver.capture_image，decision.flash.should_use_flash，
@@ -45,6 +46,7 @@ def take_advanced_photo(
     analysis_resolution=camera.FRAME_QVGA,
     flash_pin=4,
     flash_on_value=1,
+    flash_brightness=100,
 ):
     """
     高级拍照函数，支持自动闪光灯决策（基于配置文件）和黑照重试。
@@ -76,6 +78,7 @@ def take_advanced_photo(
         analysis_resolution (int): 亮度分析时使用的分辨率，通常低于拍照分辨率以加快速度。
         flash_pin (int): 闪光灯 GPIO 引脚号。
         flash_on_value (int): 点亮闪光灯的电平值（1 或 0）。
+        flash_brightness (int): 闪光灯亮度百分比（0~100），仅在闪光灯开启时有效，默认100。
 
     返回：
         dict or None: 成功时返回包含以下键的字典：
@@ -99,7 +102,6 @@ def take_advanced_photo(
             debug_log("亮度分析尝试 {}/{}".format(attempt, analysis_retry),
                       level=LEVEL_INFO, module="AdvancedPhoto")
             if flash_mode == 'auto':
-                # 使用完整亮度分析，返回详细字典
                 info = gray_analyzer_capture(
                     framesize=analysis_resolution,
                     whitebalance=whitebalance,
@@ -108,7 +110,6 @@ def take_advanced_photo(
                 )
                 if info is not None:
                     avg_brightness_val = info.get('average_brightness')
-                    # 调用规则引擎决策
                     use_flash = should_use_flash(info)
                     debug_log("规则引擎决策: flash={}".format(use_flash),
                               level=LEVEL_INFO, module="AdvancedPhoto")
@@ -122,7 +123,6 @@ def take_advanced_photo(
                 )
                 if avg is not None:
                     avg_brightness_val = avg
-                    # 使用快速阈值决策
                     use_flash = quick_should_use_flash(avg)
                     debug_log("快速阈值决策: flash={}".format(use_flash),
                               level=LEVEL_INFO, module="AdvancedPhoto")
@@ -133,7 +133,7 @@ def take_advanced_photo(
             debug_log("亮度分析失败，使用保守默认（关闭闪光灯）",
                       level=LEVEL_WARNING, module="AdvancedPhoto")
             avg_brightness_val = 0
-            use_flash = False  # 保守关闭闪光灯
+            use_flash = False
 
         debug_log("最终平均亮度: {:.1f}, 决策: {}".format(
             avg_brightness_val, "开启" if use_flash else "关闭"),
@@ -153,7 +153,8 @@ def take_advanced_photo(
                   level=LEVEL_INFO, module="AdvancedPhoto")
 
         if use_flash:
-            flash.on()
+            # 直接设置亮度（替代 flash.on()）
+            flash.set_brightness(flash_brightness)
             time.sleep_ms(200)
         else:
             flash.off()
@@ -241,6 +242,7 @@ if __name__ == "__main__":
             black_retry=1,
             analysis_retry=1,
             analysis_resolution=camera.FRAME_QVGA,
+            flash_brightness=50,  # 测试亮度
         )
         if result:
             print("✅ 成功: 路径={}, 亮度={:.1f}, 尺寸={}x{}".format(
