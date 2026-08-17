@@ -59,6 +59,18 @@
         <div id="wifi_result" style="margin-top:10px;"></div>
     </div>
 
+    <div class="card">
+        <h3>🧪 流式响应测试（自定义大小）</h3>
+        <p>输入要生成的测试数据大小（字节），点击测试</p>
+        <div class="row">
+            <label>大小（字节）：</label>
+            <input type="number" id="test_size" value="102400" min="1" max="10485760" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
+            <span style="font-size:0.8em; color:#888;">最大 10MB</span>
+        </div>
+        <button id="btn_test_stream_size">开始测试流式响应</button>
+        <div id="stream_size_result" style="margin-top:10px; font-size:0.9em;"></div>
+    </div>
+
     <script>
         // 页面加载时获取状态并显示 IP
         function fetchStatus() {
@@ -126,6 +138,74 @@
                 btn.disabled = false;
                 btn.textContent = '连接';
                 document.getElementById('wifi_result').textContent = '请求失败：' + err;
+            });
+        });
+
+        // 流式响应测试（自定义大小）
+        document.getElementById('btn_test_stream_size').addEventListener('click', function() {
+            var btn = this;
+            var resultDiv = document.getElementById('stream_size_result');
+            var sizeInput = document.getElementById('test_size');
+            var size = parseInt(sizeInput.value);
+            if (isNaN(size) || size < 1) {
+                alert('请输入有效的大小（至少 1 字节）');
+                return;
+            }
+            if (size > 10 * 1024 * 1024) {
+                alert('大小不能超过 10MB');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '测试中...';
+            resultDiv.innerHTML = '正在请求数据（' + size + ' 字节）...';
+
+            var startTime = Date.now();
+            var receivedBytes = 0;
+            var expectedSize = size;
+
+            var url = '/api/test_stream_size?size=' + size;
+            fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ' ' + response.statusText);
+                }
+                // 从响应头获取预期大小
+                var total = parseInt(response.headers.get('X-Total-Size')) || expectedSize;
+                resultDiv.innerHTML = '预期大小: ' + total + ' 字节，开始接收...';
+                const reader = response.body.getReader();
+                return new Promise((resolve, reject) => {
+                    function pump() {
+                        reader.read().then(({done, value}) => {
+                            if (done) {
+                                resolve(receivedBytes);
+                                return;
+                            }
+                            receivedBytes += value.length;
+                            var progress = ((receivedBytes / total) * 100).toFixed(1) + '%';
+                            resultDiv.innerHTML = '已接收: ' + progress + ' (' + receivedBytes + '/' + total + ' 字节)';
+                            pump();
+                        }).catch(reject);
+                    }
+                    pump();
+                });
+            })
+            .then(totalBytes => {
+                var elapsed = (Date.now() - startTime) / 1000;
+                var speed = totalBytes / elapsed / 1024; // KB/s
+                resultDiv.innerHTML = '✅ 流式传输成功！<br>' +
+                                      '预期大小: ' + expectedSize + ' 字节<br>' +
+                                      '实际接收: ' + totalBytes + ' 字节<br>' +
+                                      '耗时: ' + elapsed.toFixed(2) + ' 秒<br>' +
+                                      '速度: ' + speed.toFixed(2) + ' KB/s';
+                btn.disabled = false;
+                btn.textContent = '开始测试流式响应';
+            })
+            .catch(err => {
+                resultDiv.innerHTML = '❌ 测试失败：' + err.message;
+                btn.disabled = false;
+                btn.textContent = '开始测试流式响应';
+                console.error(err);
             });
         });
     </script>

@@ -11,6 +11,7 @@ import uos
 import json
 import network
 import ujson
+import easyweb
 
 from advanced_photo import take_advanced_photo, burst_capture
 from easyweb import EasyWeb, make_response
@@ -404,6 +405,8 @@ def _list_directory(path):
         except Exception:
             continue
         if is_dir:
+            if name == "System Volume Information":
+                continue
             entries.append({
                 "name": name,
                 "is_dir": True,
@@ -444,6 +447,55 @@ def _url_decode(s):
             result += s[i]
             i += 1
     return result
+
+# ---------- API：测试流式响应（指定大小） ----------
+@app.route("/api/test_stream_size")
+def test_stream_size(request):
+    print("[Web] 请求: /api/test_stream_size")
+    try:
+        # 从 args 获取 size 参数
+        if hasattr(request, 'args') and request.args:
+            size_str = request.args.get('size', '1024')
+        else:
+            # 回退到解析 query_string
+            size_str = '1024'
+            if hasattr(request, 'query_string') and request.query_string:
+                qs = request.query_string
+                for part in qs.split('&'):
+                    if part.startswith('size='):
+                        size_str = part[5:]
+                        break
+        try:
+            total_size = int(size_str)
+            if total_size <= 0:
+                total_size = 1024
+            elif total_size > 10 * 1024 * 1024:  # 限制最大 10MB
+                total_size = 10 * 1024 * 1024
+        except:
+            total_size = 1024
+
+        print("[Web] 生成测试数据流，大小: {} 字节".format(total_size))
+
+        # 生成器：逐块产生数据
+        def generate_data():
+            CHUNK_SIZE = 1024
+            remaining = total_size
+            while remaining > 0:
+                chunk_size = CHUNK_SIZE if remaining >= CHUNK_SIZE else remaining
+                # 生成一个固定模式的块（便于观察）
+                chunk = b'A' * chunk_size
+                yield chunk
+                remaining -= chunk_size
+
+        # 返回流式响应
+        return make_response(generate_data(), 200, {
+            "Content-Type": "application/octet-stream",
+            "X-Total-Size": str(total_size)
+        })
+    except Exception as e:
+        print("[Web] /api/test_stream_size 异常:", e)
+        sys.print_exception(e)
+        return make_response({"error": str(e)}, 500)
 
 # ---------- API：文件列表 ----------
 @app.route("/api/files")
@@ -687,17 +739,16 @@ def sd_file(request):
         if '..' in filename or filename.startswith('/'):
             return make_response("Invalid path", 403)
         full_path = "/sd/" + filename
-        # 检查是否为目录，如果是则不允许访问
+        # 检查是否为目录
         try:
             st = uos.stat(full_path)
-            if st[0] & 0x4000:  # 是目录
+            if st[0] & 0x4000:
                 print("[Web] 拒绝访问目录: {}".format(full_path))
                 return make_response("Cannot access directory", 403)
         except:
             pass
-        print("[Web] 尝试读取文件: {}".format(full_path))
-        with open(full_path, "rb") as f:
-            data = f.read()
+
+        # 确定 Content-Type
         f_lower = filename.lower()
         ct = "application/octet-stream"
         img_exts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico']
@@ -714,8 +765,12 @@ def sd_file(request):
                 elif ext == '.ico':
                     ct = "image/x-icon"
                 break
-        print("[Web] 文件大小: {} bytes, Content-Type: {}".format(len(data), ct))
-        return make_response(data, 200, {"Content-Type": ct})
+
+        # 使用 easyweb.send_file 流式传输，显式传递 mimetype
+        print("[Web] 流式发送文件: {} (Content-Type: {})".format(full_path, ct))
+        generator = easyweb.send_file(full_path, mimetype=ct)
+        return make_response(generator, 200, {"Content-Type": ct})
+
     except Exception as e:
         print("[Web] 文件读取失败: {}".format(e))
         sys.print_exception(e)
