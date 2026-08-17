@@ -153,8 +153,8 @@ def index(request):
         resolutions = _get_resolutions()
         return make_response(_render_html("video.html", resolutions=resolutions), 200)
     elif mode == "视频":
-        print("[Web] 当前模式: 视频 (未实现)")
-        return make_response("<h1>视频模式即将上线</h1><p><a href='/set_mode?mode=拍照'>切换到拍照</a> | <a href='/set_mode?mode=录制'>切换到录制</a></p>", 200)
+        print("[Web] 当前模式: 视频")
+        return make_response(_render_html("video_stream.html"), 200)
     else:
         _clear_mode()
         return make_response("Invalid mode, please reselect.", 302, {"Location": "/"})
@@ -229,6 +229,12 @@ def load_config(request):
                 "video_flip": 1,
                 "photo_flash_brightness": 100,
                 "video_flash_brightness": 100,
+                "video_stream_framesize": 640,
+                "video_stream_quality": 10,
+                "video_stream_flash_brightness": 0,
+                "video_stream_mirror": 0,
+                "video_stream_flip": 1,
+                "video_stream_xclk_freq": 10000000,
             }
             print("[Web] 配置不存在，返回默认")
             return make_response(default_config, 200)
@@ -513,6 +519,125 @@ def video(request):
             flash.off()
         except:
             pass
+        return make_response({"success": False, "error": str(e)}, 500)
+
+# ---------- API：视频流（MJPEG） ----------
+@app.route("/api/stream")
+def stream(request):
+    print("[Web] 请求: /api/stream")
+    try:
+        args = request.args if hasattr(request, 'args') else {}
+        framesize = int(args.get('framesize', camera.FRAME_VGA))
+        quality = int(args.get('quality', 10))
+        flash_brightness = int(args.get('flash_brightness', 0))
+        mirror = int(args.get('mirror', 0))
+        flip = int(args.get('flip', 1))
+        xclk_freq = int(args.get('xclk_freq', camera.XCLK_10MHz))
+
+        print("[Web] 视频流参数: framesize={}, quality={}, flash_brightness={}, mirror={}, flip={}, xclk={}".format(
+            framesize, quality, flash_brightness, mirror, flip, xclk_freq))
+
+        flash = get_flash()
+        flash.set_brightness(flash_brightness)
+        if flash_brightness > 0:
+            print("[Web] 闪光灯已开启（亮度{}%）".format(flash_brightness))
+        else:
+            print("[Web] 闪光灯已关闭（亮度0）")
+
+        def generate():
+            # 初始化摄像头（带重试）
+            retry = 3
+            initialized = False
+            for attempt in range(retry):
+                try:
+                    camera.deinit()
+                except:
+                    pass
+                time.sleep_ms(100)
+                try:
+                    camera.init(0,
+                                format=camera.JPEG,
+                                fb_location=camera.PSRAM,
+                                framesize=framesize,
+                                xclk_freq=xclk_freq)
+                    initialized = True
+                    break
+                except Exception as e:
+                    print("[Web] 摄像头初始化失败 (尝试 {}/{}): {}".format(attempt + 1, retry, e))
+            if not initialized:
+                yield b'--frame\r\nContent-Type: text/plain\r\n\r\n摄像头初始化失败，请检查硬件\r\n'
+                return
+
+            camera.flip(flip)
+            camera.mirror(mirror)
+            camera.saturation(0)
+            camera.brightness(0)
+            camera.contrast(0)
+            camera.whitebalance(camera.WB_CLOUDY)
+            camera.speffect(camera.EFFECT_NONE)
+            camera.quality(quality)
+
+            fail_count = 0
+            try:
+                while True:
+                    buf = camera.capture()
+                    if buf is not None and buf is not False:
+                        fail_count = 0  # 重置失败计数
+                        yield b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buf + b'\r\n'
+                    else:
+                        fail_count += 1
+                        print("[Web] 捕获失败，连续失败 {} 次".format(fail_count))
+                        if fail_count >= 5:
+                            print("[Web] 连续捕获失败超过5次，退出视频流")
+                            break
+                        # 等待一下再重试
+                        time.sleep_ms(100)
+                    # 控制帧率
+                    time.sleep_ms(100)
+            except Exception as e:
+                print("[Web] 视频流生成异常:", e)
+            finally:
+                try:
+                    camera.deinit()
+                except:
+                    pass
+                try:
+                    flash.off()
+                    print("[Web] 视频流结束，闪光灯已关闭")
+                except:
+                    pass
+
+        return make_response(generate(), 200, {
+            'Content-Type': 'multipart/x-mixed-replace; boundary=frame'
+        })
+
+    except Exception as e:
+        print("[Web] /api/stream 异常:", e)
+        sys.print_exception(e)
+        try:
+            flash = get_flash()
+            flash.off()
+        except:
+            pass
+        return make_response({"error": str(e)}, 500)
+
+# ---------- API：停止视频流（关闭摄像头和闪光灯） ----------
+@app.route("/api/stop_stream", methods=["POST"])
+def stop_stream(request):
+    print("[Web] 请求: /api/stop_stream")
+    try:
+        flash = get_flash()
+        flash.off()
+        print("[Web] 闪光灯已关闭")
+        try:
+            camera.deinit()
+        except Exception as e:
+            print("[Web] 摄像头释放异常:", e)
+        time.sleep_ms(200)  # 硬件复位
+        return make_response({"success": True}, 200)
+    except Exception as e:
+        print("[Web] 停止流失败:", e)
+        sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
 # ---------- 文件与目录操作 ----------

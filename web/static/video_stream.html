@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>视频模式</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f0f0f0; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; }
+        label { width: 100px; font-weight: bold; }
+        select, input { padding: 8px; width: 200px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button.stop { background: #dc3545; }
+        button.stop:hover { background: #bd2130; }
+        button.config-btn { background: #6c757d; }
+        button.config-btn:hover { background: #5a6268; }
+        #stream_container { text-align: center; }
+        img { max-width: 100%; border: 1px solid #ccc; }
+        .status-info { color: #0056b3; }
+        .status-success { color: #28a745; }
+        .status-error { color: #dc3545; }
+        #status_msg { margin-top: 10px; padding: 8px; border-radius: 4px; background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; }
+        .brightness-slider { width: 200px; }
+        input[type="checkbox"] { width: 20px; height: 20px; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .button-group button { flex: 1; min-width: 120px; }
+        .btn-restart { background: #dc3545; }
+        .btn-restart:hover { background: #bd2130; }
+    </style>
+</head>
+<body>
+    <h1>🎬 视频模式（实时监控）</h1>
+    <div class="card">
+        <h3>参数设置</h3>
+        <div class="row">
+            <label>分辨率：</label>
+            <select id="video_framesize"></select>
+        </div>
+        <div class="row">
+            <label>质量：</label>
+            <input type="number" id="video_quality" value="10" min="10" max="63">
+        </div>
+        <div class="row">
+            <label>闪光灯亮度：</label>
+            <input type="range" id="video_flash_brightness" min="0" max="100" value="0" step="1" class="brightness-slider">
+            <span id="video_flash_brightness_val">0</span>%
+        </div>
+        <div class="row">
+            <label>左右镜像：</label>
+            <input type="checkbox" id="video_mirror">
+        </div>
+        <div class="row">
+            <label>上下翻转：</label>
+            <input type="checkbox" id="video_flip" checked>
+        </div>
+        <div class="row">
+            <label>时钟频率：</label>
+            <select id="video_xclk">
+                <option value="10000000">10 MHz</option>
+                <option value="20000000">20 MHz</option>
+            </select>
+        </div>
+        <div style="margin-top:15px;">
+            <button id="btn_start">▶️ 开始预览</button>
+            <button id="btn_stop" class="stop" disabled>⏹️ 停止预览</button>
+        </div>
+        <div id="status_msg"></div>
+
+        <div class="button-group">
+            <button id="btn_save_config" class="config-btn">💾 保存配置</button>
+            <button id="btn_load_config" class="config-btn">📂 加载配置</button>
+            <button id="btn_reset_default" class="config-btn">↩️ 恢复默认</button>
+        </div>
+        <div style="margin-top:10px;">
+            <button id="btn_restart" class="btn-restart">🔁 重启设备</button>
+        </div>
+    </div>
+
+    <div class="card" id="stream_container">
+        <h3>实时画面</h3>
+        <img id="stream_img" alt="视频流（加载中...）" style="display:none;">
+        <p id="placeholder">点击“开始预览”查看视频流</p>
+    </div>
+
+    <script>
+        // ---------- 加载分辨率列表 ----------
+        function loadResolutions() {
+            fetch('/api/status')
+                .then(res => res.json())
+                .then(data => {
+                    var sel = document.getElementById('video_framesize');
+                    sel.innerHTML = '';
+                    data.resolutions.forEach(function(r) {
+                        var opt = document.createElement('option');
+                        opt.value = r.value;
+                        opt.text = r.name + ' (' + r.width + '×' + r.height + ')';
+                        sel.appendChild(opt);
+                    });
+                    // 默认选择 VGA
+                    sel.value = 640;  // FRAME_VGA
+                })
+                .catch(err => console.error('加载分辨率失败', err));
+        }
+        loadResolutions();
+
+        // ---------- 滑块数值显示 ----------
+        document.getElementById('video_flash_brightness').addEventListener('input', function() {
+            document.getElementById('video_flash_brightness_val').textContent = this.value;
+        });
+
+        // ---------- 状态显示函数 ----------
+        function setStatus(message, type) {
+            var div = document.getElementById('status_msg');
+            var colorClass = '';
+            if (type === 'info') colorClass = 'status-info';
+            else if (type === 'success') colorClass = 'status-success';
+            else if (type === 'error') colorClass = 'status-error';
+            div.innerHTML = '<span class="' + colorClass + '">' + message + '</span>';
+            console.log('[video_stream] ' + message);
+        }
+
+        // ---------- 获取当前参数 ----------
+        function getParams() {
+            return {
+                video_stream_framesize: parseInt(document.getElementById('video_framesize').value),
+                video_stream_quality: parseInt(document.getElementById('video_quality').value),
+                video_stream_flash_brightness: parseInt(document.getElementById('video_flash_brightness').value),
+                video_stream_mirror: document.getElementById('video_mirror').checked ? 1 : 0,
+                video_stream_flip: document.getElementById('video_flip').checked ? 1 : 0,
+                video_stream_xclk_freq: parseInt(document.getElementById('video_xclk').value),
+            };
+        }
+
+        // ---------- 应用配置到控件 ----------
+        function applyConfig(config) {
+            document.getElementById('video_framesize').value = config.video_stream_framesize || 640;
+            document.getElementById('video_quality').value = config.video_stream_quality || 10;
+            document.getElementById('video_flash_brightness').value = config.video_stream_flash_brightness || 0;
+            document.getElementById('video_flash_brightness_val').textContent = config.video_stream_flash_brightness || 0;
+            document.getElementById('video_mirror').checked = config.video_stream_mirror === 1;
+            document.getElementById('video_flip').checked = config.video_stream_flip !== 0;
+            document.getElementById('video_xclk').value = config.video_stream_xclk_freq || 10000000;
+            console.log('[video_stream] 配置已应用:', config);
+        }
+
+        // ---------- 保存配置 ----------
+        document.getElementById('btn_save_config').addEventListener('click', function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '保存中...';
+            setStatus('正在保存配置...', 'info');
+
+            fetch('/api/load_config')
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(config) {
+                var videoParams = getParams();
+                var newConfig = Object.assign({}, config, videoParams);
+                console.log('[video_stream] 准备保存的配置:', newConfig);
+                return fetch('/api/save_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newConfig)
+                });
+            })
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                btn.disabled = false;
+                btn.textContent = '💾 保存配置';
+                if (data.success) {
+                    alert('✅ 配置已保存');
+                    setStatus('✅ 配置保存成功', 'success');
+                } else {
+                    alert('❌ 保存失败：' + data.error);
+                    setStatus('❌ 配置保存失败: ' + data.error, 'error');
+                }
+            })
+            .catch(function(err) {
+                btn.disabled = false;
+                btn.textContent = '💾 保存配置';
+                alert('❌ 保存失败：' + err.message);
+                setStatus('❌ 配置保存请求失败: ' + err.message, 'error');
+                console.error('[video_stream] 保存配置错误:', err);
+            });
+        });
+
+        // ---------- 加载配置 ----------
+        document.getElementById('btn_load_config').addEventListener('click', function() {
+            setStatus('正在加载配置...', 'info');
+            fetch('/api/load_config')
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(config) {
+                applyConfig(config);
+                setStatus('✅ 配置加载成功', 'success');
+                console.log('[video_stream] 加载配置成功');
+            })
+            .catch(function(err) {
+                alert('❌ 加载配置失败：' + err.message);
+                setStatus('❌ 配置加载失败: ' + err.message, 'error');
+                console.error('[video_stream] 加载配置错误:', err);
+            });
+        });
+
+        // ---------- 恢复默认 ----------
+        document.getElementById('btn_reset_default').addEventListener('click', function() {
+            var defaultConfig = {
+                video_stream_framesize: 640,
+                video_stream_quality: 10,
+                video_stream_flash_brightness: 0,
+                video_stream_mirror: 0,
+                video_stream_flip: 1,
+                video_stream_xclk_freq: 10000000,
+            };
+            applyConfig(defaultConfig);
+            setStatus('↩️ 已恢复默认配置', 'info');
+        });
+
+        // ---------- 重启设备 ----------
+        document.getElementById('btn_restart').addEventListener('click', function() {
+            if (confirm('确定要重启设备吗？')) {
+                setStatus('⏳ 设备正在重启...', 'info');
+                fetch('/api/restart', { method: 'POST' })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    alert('设备正在重启...');
+                })
+                .catch(function(err) {
+                    alert('设备正在重启...');
+                });
+            }
+        });
+
+        // ---------- 开始预览 ----------
+        document.getElementById('btn_start').addEventListener('click', function() {
+            var params = getParams();
+            // 将参数转换为流接口需要的键名（flash_brightness, framesize, quality, mirror, flip, xclk_freq）
+            var query = {
+                framesize: params.video_stream_framesize,
+                quality: params.video_stream_quality,
+                flash_brightness: params.video_stream_flash_brightness,
+                mirror: params.video_stream_mirror,
+                flip: params.video_stream_flip,
+                xclk_freq: params.video_stream_xclk_freq,
+            };
+            var queryStr = Object.keys(query).map(k => k + '=' + encodeURIComponent(query[k])).join('&');
+            var url = '/api/stream?' + queryStr;
+            var img = document.getElementById('stream_img');
+            var placeholder = document.getElementById('placeholder');
+
+            img.src = url;
+            img.style.display = 'block';
+            placeholder.style.display = 'none';
+            setStatus('✅ 视频流已启动，等待画面...', 'success');
+
+            document.getElementById('btn_start').disabled = true;
+            document.getElementById('btn_stop').disabled = false;
+        });
+
+        // ---------- 停止预览 ----------
+        document.getElementById('btn_stop').addEventListener('click', function() {
+            fetch('/api/stop_stream', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('[video_stream] 停止流成功');
+                } else {
+                    console.warn('[video_stream] 停止流失败:', data.error);
+                }
+            })
+            .catch(err => console.error('[video_stream] 停止流请求失败:', err))
+            .finally(() => {
+                var img = document.getElementById('stream_img');
+                img.src = '';  // 断开连接
+                img.style.display = 'none';
+                document.getElementById('placeholder').style.display = 'block';
+                setStatus('⏹️ 视频流已停止', 'info');
+                document.getElementById('btn_start').disabled = false;
+                document.getElementById('btn_stop').disabled = true;
+            });
+        });
+
+        // ---------- 页面加载 ----------
+        document.addEventListener('DOMContentLoaded', function() {
+            // 先加载配置，再加载分辨率（或先加载分辨率）
+            loadResolutions();
+            document.getElementById('btn_load_config').click();
+        });
+    </script>
+</body>
+</html>
