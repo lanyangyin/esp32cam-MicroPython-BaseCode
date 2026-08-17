@@ -177,6 +177,7 @@ def save_config(request):
         config = request.json
         if not config:
             return make_response({"success": False, "error": "No config data"}, 400)
+        print("[Web] 保存配置内容:", config)  # 添加这行
         with open(CONFIG_FILE, "w") as f:
             json.dump(config, f)
         print("[Web] 配置已保存至 {}".format(CONFIG_FILE))

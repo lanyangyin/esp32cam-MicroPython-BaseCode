@@ -115,39 +115,66 @@
             document.getElementById('video_duration').value = config.video_duration || 5;
             document.getElementById('video_save_dir').value = config.video_save_dir || 'video_web';
             document.getElementById('video_xclk').value = config.video_xclk_freq || 10000000;
+            console.log('[video] 配置已应用:', config);
         }
 
+        // 保存配置（合并到全局配置）
         document.getElementById('btn_save_config').addEventListener('click', function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = '保存中...';
+
             fetch('/api/load_config')
-            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
             .then(function(config) {
                 var videoParams = getVideoParams();
                 var newConfig = Object.assign({}, config, videoParams);
-                fetch('/api/save_config', {
+                console.log('[video] 准备保存的配置:', newConfig);
+                return fetch('/api/save_config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newConfig)
-                })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.success) {
-                        alert('✅ 配置已保存');
-                    } else {
-                        alert('❌ 保存失败：' + data.error);
-                    }
-                })
-                .catch(function(err) { alert('❌ 保存失败：' + err); });
+                });
             })
-            .catch(function(err) { alert('加载配置失败：' + err); });
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                btn.disabled = false;
+                btn.textContent = '💾 保存录制配置';
+                if (data.success) {
+                    alert('✅ 配置已保存');
+                } else {
+                    alert('❌ 保存失败：' + data.error);
+                }
+            })
+            .catch(function(err) {
+                btn.disabled = false;
+                btn.textContent = '💾 保存录制配置';
+                alert('❌ 保存失败：' + err.message);
+                console.error('[video] 保存配置错误:', err);
+            });
         });
 
+        // 加载配置
         document.getElementById('btn_load_config').addEventListener('click', function() {
             fetch('/api/load_config')
-            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
             .then(function(config) {
                 applyVideoConfig(config);
+                console.log('[video] 加载配置成功');
             })
-            .catch(function(err) { alert('加载配置失败：' + err); });
+            .catch(function(err) {
+                alert('❌ 加载配置失败：' + err.message);
+                console.error('[video] 加载配置错误:', err);
+            });
         });
 
         document.getElementById('btn_reset_default').addEventListener('click', function() {
@@ -185,7 +212,7 @@
                 if (data.success) {
                     div.innerHTML = '✅ 录像完成：' + data.frames + ' 帧，耗时 ' + data.elapsed.toFixed(2) + ' 秒，帧率 ' + data.fps.toFixed(1) + ' fps';
                 } else {
-                    div.innerHTML = '❌ 录像失败：' + data.error;
+                    div.innerHTML = '❌ 录像失败：' + (data.error || '未知错误');
                 }
             })
             .catch(function(err) {
