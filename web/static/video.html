@@ -196,10 +196,16 @@
 
         // ---------- 目录浏览函数 ----------
         function loadDirectory(path) {
-            console.log('[video] loadDirectory called with path:', path);
-            fetch('/api/files?path=' + encodeURIComponent(path))
-            .then(function(res) { return res.json(); })
+            console.log('[photo] loadDirectory called with path:', path);
+            var url = '/api/folder?path=' + encodeURIComponent(path);
+            console.log('[photo] 请求 URL:', url);
+            fetch(url)
+            .then(function(res) {
+                console.log('[photo] 响应状态:', res.status, res.statusText);
+                return res.json();
+            })
             .then(function(data) {
+                console.log('[photo] 响应数据:', data);
                 if (data.error) {
                     alert('加载目录失败: ' + data.error);
                     return;
@@ -221,6 +227,7 @@
                         parts.pop();
                         var parentPath = parts.join('/');
                         if (!parentPath || parentPath === '') parentPath = '/sd';
+                        console.log('[photo] 点击上级目录:', parentPath);
                         loadDirectory(parentPath);
                     };
                     parentLi.appendChild(parentBtn);
@@ -233,17 +240,17 @@
                     leftDiv.className = 'left';
 
                     if (entry.is_dir) {
-                        // 文件夹：用按钮
+                        // 文件夹
                         var dirBtn = document.createElement('button');
                         dirBtn.textContent = '📁 ' + entry.name;
                         dirBtn.className = 'folder-btn';
                         dirBtn.onclick = function() {
-                            console.log('[video] Clicked folder:', entry.path);
+                            console.log('[photo] 点击文件夹:', entry.path);
                             loadDirectory(entry.path);
                         };
                         leftDiv.appendChild(dirBtn);
 
-                        // 操作按钮组
+                        // 操作按钮组（归档、删除）
                         var btnGroup = document.createElement('span');
                         btnGroup.className = 'btn-group';
 
@@ -253,6 +260,7 @@
                         archiveBtn.title = '归档此文件夹';
                         archiveBtn.onclick = function(e) {
                             e.stopPropagation();
+                            console.log('[photo] 点击归档按钮，文件夹:', entry.path);
                             var deleteAfter = confirm('归档后是否删除原文件夹？');
                             fetch('/api/archive_folder', {
                                 method: 'POST',
@@ -264,6 +272,7 @@
                             })
                             .then(function(res) { return res.json(); })
                             .then(function(data) {
+                                console.log('[photo] 归档响应:', data);
                                 if (data.success) {
                                     loadDirectory(currentPath);
                                 } else {
@@ -280,6 +289,7 @@
                         delBtn.title = '递归删除此文件夹';
                         delBtn.onclick = function(e) {
                             e.stopPropagation();
+                            console.log('[photo] 点击删除文件夹按钮，文件夹:', entry.path);
                             if (confirm('确定要递归删除文件夹 "' + entry.path + '" 及其所有内容吗？')) {
                                 fetch('/api/delete_folder', {
                                     method: 'POST',
@@ -288,6 +298,7 @@
                                 })
                                 .then(function(res) { return res.json(); })
                                 .then(function(data) {
+                                    console.log('[photo] 删除文件夹响应:', data);
                                     if (data.success) {
                                         loadDirectory(currentPath);
                                     } else {
@@ -311,12 +322,15 @@
                         link.href = '/sd/' + relPath;
                         link.target = '_blank';
                         link.textContent = entry.name;
+                        link.onclick = function() {
+                            console.log('[photo] 点击文件:', entry.path);
+                        };
                         leftDiv.appendChild(link);
 
                         var btnGroup = document.createElement('span');
                         btnGroup.className = 'btn-group';
 
-                        // .arc 文件解压
+                        // .arc 文件解压按钮
                         if (entry.name.toLowerCase().endsWith('.arc')) {
                             var extractBtn = document.createElement('button');
                             extractBtn.textContent = '📂';
@@ -324,6 +338,7 @@
                             extractBtn.title = '解压此归档文件';
                             extractBtn.onclick = function(e) {
                                 e.stopPropagation();
+                                console.log('[photo] 点击解压按钮，归档文件:', entry.path);
                                 var deleteAfter = confirm('解压后是否删除归档文件？');
                                 fetch('/api/extract_archive', {
                                     method: 'POST',
@@ -335,6 +350,7 @@
                                 })
                                 .then(function(res) { return res.json(); })
                                 .then(function(data) {
+                                    console.log('[photo] 解压响应:', data);
                                     if (data.success) {
                                         loadDirectory(currentPath);
                                     } else {
@@ -346,13 +362,14 @@
                             btnGroup.appendChild(extractBtn);
                         }
 
-                        // 删除文件
+                        // 删除文件按钮
                         var delBtn = document.createElement('button');
                         delBtn.textContent = '🗑️';
                         delBtn.className = 'del-btn';
                         delBtn.title = '删除此文件';
                         delBtn.onclick = function(e) {
                             e.stopPropagation();
+                            console.log('[photo] 点击删除文件按钮，文件:', entry.path);
                             if (confirm('确定要删除文件 "' + entry.path + '" 吗？')) {
                                 fetch('/api/delete_file', {
                                     method: 'POST',
@@ -361,6 +378,7 @@
                                 })
                                 .then(function(res) { return res.json(); })
                                 .then(function(data) {
+                                    console.log('[photo] 删除文件响应:', data);
                                     if (data.success) {
                                         loadDirectory(currentPath);
                                     } else {
@@ -379,7 +397,7 @@
                 });
             })
             .catch(function(err) {
-                console.error('[video] 加载目录失败', err);
+                console.error('[photo] 加载目录失败', err);
                 alert('加载目录失败: ' + err);
             });
         }

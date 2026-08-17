@@ -445,18 +445,25 @@ def _url_decode(s):
             i += 1
     return result
 
+# ---------- API：文件列表 ----------
 @app.route("/api/files")
 def files(request):
     print("[Web] 请求: /api/files")
     try:
-        # 解析 query_string
-        path = "/sd"
-        if hasattr(request, 'query_string') and request.query_string:
-            qs = request.query_string
-            for part in qs.split('&'):
-                if part.startswith('path='):
-                    path = part[5:]
-                    break
+        # 尝试从 request.params 获取 path（EasyWeb 通常支持）
+        if hasattr(request, 'params') and request.params:
+            path = request.params.get('path', '/sd')
+            print("[Web] 从 params 获取路径:", path)
+        else:
+            # 回退到 query_string
+            path = "/sd"
+            if hasattr(request, 'query_string') and request.query_string:
+                qs = request.query_string
+                print("[Web] query_string:", qs)
+                for part in qs.split('&'):
+                    if part.startswith('path='):
+                        path = part[5:]
+                        break
         # URL解码
         decoded_path = _url_decode(path)
         print("[Web] 原始路径: {}, 解码后: {}".format(path, decoded_path))
@@ -476,6 +483,54 @@ def files(request):
         }, 200)
     except Exception as e:
         print("[Web] /api/files 异常:", e)
+        sys.print_exception(e)
+        return make_response({"error": str(e)}, 500)
+
+
+# ---------- API：文件夹专用路由 ----------
+@app.route("/api/folder")
+def folder(request):
+    print("[Web] 请求: /api/folder")
+    print("[Web] request.args:", getattr(request, 'args', None))
+    print("[Web] request._args:", getattr(request, '_args', None))
+
+    try:
+        path = None
+        # 尝试从 args 获取
+        if hasattr(request, 'args') and request.args:
+            path = request.args.get('path')
+            print("[Web] 从 args 获取 path:", path)
+        # 若失败，从 _args 获取
+        if path is None and hasattr(request, '_args') and request._args:
+            path = request._args.get('path')
+            print("[Web] 从 _args 获取 path:", path)
+        # 回退
+        if path is None:
+            print("[Web] 未获取到 path，使用默认 /sd")
+            path = "/sd"
+        else:
+            path = _url_decode(path)
+            print("[Web] 解码后的路径:", path)
+
+        # 安全校验
+        if not path.startswith('/sd/') and path != '/sd':
+            return make_response({"error": "Invalid path"}, 400)
+        if '..' in path:
+            return make_response({"error": "Invalid path"}, 400)
+
+        try:
+            uos.stat(path)
+        except:
+            return make_response({"error": "Directory not found"}, 404)
+
+        entries = _list_directory(path)
+        print("[Web] 目录条目数:", len(entries))
+        return make_response({
+            "current_path": path,
+            "entries": entries
+        }, 200)
+    except Exception as e:
+        print("[Web] /api/folder 异常:", e)
         sys.print_exception(e)
         return make_response({"error": str(e)}, 500)
 
