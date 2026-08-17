@@ -15,6 +15,7 @@
         button:hover { background: #0056b3; }
         img { max-width: 100%; height: auto; border: 1px solid #ccc; margin-top: 10px; max-height: 600px; }
         #result { margin-top: 10px; }
+        #status_msg { margin-top: 10px; padding: 8px; border-radius: 4px; background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; }
         .inline-group { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
         .inline-group .row { flex: 1; min-width: 200px; }
         .section-title { font-weight: bold; color: #555; margin-top: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
@@ -36,6 +37,9 @@
         #file_list li { display: flex; align-items: center; justify-content: space-between; }
         #file_list .left { display: flex; align-items: center; gap: 10px; }
         h1 { color: #333; }
+        .status-info { color: #0056b3; }
+        .status-success { color: #28a745; }
+        .status-error { color: #dc3545; }
     </style>
 </head>
 <body>
@@ -176,6 +180,7 @@
             <span id="current_path_display" style="font-weight:bold;">/sd</span>
             <button id="btn_files" style="margin-left:10px; padding:5px 15px;">🔄 刷新</button>
         </div>
+        <div id="status_msg"></div>
         <ul id="file_list"></ul>
     </div>
     <div style="margin-top:10px;">
@@ -185,6 +190,17 @@
     <script>
         // ---------- 全局变量 ----------
         var currentPath = '/sd';
+        var statusDiv = document.getElementById('status_msg');
+
+        // ---------- 状态显示函数 ----------
+        function setStatus(message, type) {
+            var colorClass = '';
+            if (type === 'info') colorClass = 'status-info';
+            else if (type === 'success') colorClass = 'status-success';
+            else if (type === 'error') colorClass = 'status-error';
+            statusDiv.innerHTML = '<span class="' + colorClass + '">' + message + '</span>';
+            console.log('[photo] ' + message);
+        }
 
         // ---------- 加载分辨率列表 ----------
         function loadResolutions() {
@@ -250,6 +266,7 @@
 
         // ---------- 拍照 ----------
         document.getElementById('btn_capture').addEventListener('click', function() {
+            setStatus('正在拍照...', 'info');
             var params = getParams();
             fetch('/api/capture', {
                 method: 'POST',
@@ -260,21 +277,24 @@
             .then(function(data) {
                 var div = document.getElementById('result');
                 if (data.success) {
-                    // 安全处理亮度值
                     var brightness = (data.brightness !== null && data.brightness !== undefined) ? data.brightness.toFixed(1) : 'N/A';
                     var filepath = data.path ? '/sd/' + data.path.split('/').pop() : '';
                     div.innerHTML = '<p>✅ 照片已保存：<a href="' + filepath + '" target="_blank">查看</a><br>尺寸: ' + (data.width || 0) + '×' + (data.height || 0) + '，亮度: ' + brightness + '<br><img src="' + filepath + '" alt="photo" style="max-width:300px;"></p>';
+                    setStatus('✅ 拍照成功，已保存: ' + data.path, 'success');
                 } else {
                     div.innerHTML = '<p>❌ 拍照失败：' + (data.error || '未知错误') + '</p>';
+                    setStatus('❌ 拍照失败: ' + (data.error || '未知错误'), 'error');
                 }
             })
             .catch(function(err) {
                 document.getElementById('result').textContent = '请求失败：' + err;
+                setStatus('❌ 拍照请求失败: ' + err, 'error');
             });
         });
 
         // ---------- 连拍 ----------
         document.getElementById('btn_burst').addEventListener('click', function() {
+            setStatus('正在连拍...', 'info');
             var params = {
                 resolution: parseInt(document.getElementById('capture_res').value),
                 whitebalance: parseInt(document.getElementById('whitebalance').value),
@@ -306,20 +326,24 @@
                 var div = document.getElementById('burst_result');
                 if (data.success) {
                     div.innerHTML = '✅ 连拍完成：' + data.frames + ' 张，耗时 ' + data.elapsed.toFixed(2) + ' 秒，平均 ' + (data.frames/data.elapsed).toFixed(1) + ' 张/秒';
+                    setStatus('✅ 连拍完成: ' + data.frames + ' 张', 'success');
                 } else {
                     div.innerHTML = '❌ 连拍失败：' + (data.error || '未知错误');
+                    setStatus('❌ 连拍失败: ' + (data.error || '未知错误'), 'error');
                 }
             })
             .catch(function(err) {
                 btn.disabled = false;
                 btn.textContent = '⏺️ 开始连拍';
                 document.getElementById('burst_result').textContent = '请求失败：' + err;
+                setStatus('❌ 连拍请求失败: ' + err, 'error');
             });
         });
 
         // ---------- 配置管理 ----------
         document.getElementById('btn_save_config').addEventListener('click', function() {
             var params = getParams();
+            setStatus('正在保存配置...', 'info');
             fetch('/api/save_config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -329,14 +353,20 @@
             .then(function(data) {
                 if (data.success) {
                     alert('✅ 配置已保存');
+                    setStatus('✅ 配置保存成功', 'success');
                 } else {
                     alert('❌ 保存失败：' + data.error);
+                    setStatus('❌ 配置保存失败: ' + data.error, 'error');
                 }
             })
-            .catch(function(err) { alert('❌ 保存失败：' + err); });
+            .catch(function(err) {
+                alert('❌ 保存失败：' + err);
+                setStatus('❌ 配置保存请求失败: ' + err, 'error');
+            });
         });
 
         document.getElementById('btn_load_config').addEventListener('click', function() {
+            setStatus('正在加载配置...', 'info');
             fetch('/api/load_config')
             .then(function(res) { return res.json(); })
             .then(function(config) {
@@ -362,8 +392,12 @@
                 document.getElementById('burst_count').value = config.burst_count || 5;
                 document.getElementById('burst_flash').checked = config.burst_flash || false;
                 document.getElementById('burst_prefix').value = config.burst_prefix || 'burst';
+                setStatus('✅ 配置加载成功', 'success');
             })
-            .catch(function(err) { alert('❌ 加载配置失败：' + err); });
+            .catch(function(err) {
+                alert('❌ 加载配置失败：' + err);
+                setStatus('❌ 配置加载失败: ' + err, 'error');
+            });
         });
 
         document.getElementById('btn_reset_default').addEventListener('click', function() {
@@ -410,6 +444,7 @@
             document.getElementById('burst_count').value = defaultConfig.burst_count;
             document.getElementById('burst_flash').checked = defaultConfig.burst_flash;
             document.getElementById('burst_prefix').value = defaultConfig.burst_prefix;
+            setStatus('↩️ 已恢复默认配置', 'info');
         });
 
         // ---------- 目录浏览函数 ----------
@@ -426,6 +461,7 @@
                 console.log('[photo] 响应数据:', data);
                 if (data.error) {
                     alert('加载目录失败: ' + data.error);
+                    setStatus('❌ 加载目录失败: ' + data.error, 'error');
                     return;
                 }
                 currentPath = data.current_path;
@@ -479,6 +515,7 @@
                         archiveBtn.onclick = function(e) {
                             e.stopPropagation();
                             console.log('[photo] 点击归档按钮，文件夹:', entry.path);
+                            setStatus('⏳ 正在归档文件夹: ' + entry.path + ' ...', 'info');
                             var deleteAfter = confirm('归档后是否删除原文件夹？');
                             fetch('/api/archive_folder', {
                                 method: 'POST',
@@ -492,12 +529,17 @@
                             .then(function(data) {
                                 console.log('[photo] 归档响应:', data);
                                 if (data.success) {
+                                    setStatus('✅ 归档成功: ' + entry.path + ' -> ' + data.archive_path, 'success');
                                     loadDirectory(currentPath);
                                 } else {
+                                    setStatus('❌ 归档失败: ' + data.error, 'error');
                                     alert('归档失败：' + data.error);
                                 }
                             })
-                            .catch(function(err) { alert('请求失败：' + err); });
+                            .catch(function(err) {
+                                setStatus('❌ 归档请求失败: ' + err, 'error');
+                                alert('请求失败：' + err);
+                            });
                         };
                         btnGroup.appendChild(archiveBtn);
 
@@ -508,6 +550,7 @@
                         delBtn.onclick = function(e) {
                             e.stopPropagation();
                             console.log('[photo] 点击删除文件夹按钮，文件夹:', entry.path);
+                            setStatus('⏳ 正在删除文件夹: ' + entry.path + ' ...', 'info');
                             if (confirm('确定要递归删除文件夹 "' + entry.path + '" 及其所有内容吗？')) {
                                 fetch('/api/delete_folder', {
                                     method: 'POST',
@@ -518,12 +561,19 @@
                                 .then(function(data) {
                                     console.log('[photo] 删除文件夹响应:', data);
                                     if (data.success) {
+                                        setStatus('✅ 文件夹已删除: ' + entry.path, 'success');
                                         loadDirectory(currentPath);
                                     } else {
+                                        setStatus('❌ 删除失败: ' + data.error, 'error');
                                         alert('删除失败：' + data.error);
                                     }
                                 })
-                                .catch(function(err) { alert('请求失败：' + err); });
+                                .catch(function(err) {
+                                    setStatus('❌ 删除请求失败: ' + err, 'error');
+                                    alert('请求失败：' + err);
+                                });
+                            } else {
+                                setStatus('已取消删除操作', 'info');
                             }
                         };
                         btnGroup.appendChild(delBtn);
@@ -579,6 +629,7 @@
                             extractBtn.onclick = function(e) {
                                 e.stopPropagation();
                                 console.log('[photo] 点击解压按钮，归档文件:', entry.path);
+                                setStatus('⏳ 正在解压归档: ' + entry.path + ' ...', 'info');
                                 var deleteAfter = confirm('解压后是否删除归档文件？');
                                 fetch('/api/extract_archive', {
                                     method: 'POST',
@@ -592,12 +643,17 @@
                                 .then(function(data) {
                                     console.log('[photo] 解压响应:', data);
                                     if (data.success) {
+                                        setStatus('✅ 解压成功: ' + entry.path + ' -> ' + data.target_dir + ' (' + data.files_count + ' files)', 'success');
                                         loadDirectory(currentPath);
                                     } else {
+                                        setStatus('❌ 解压失败: ' + data.error, 'error');
                                         alert('解压失败：' + data.error);
                                     }
                                 })
-                                .catch(function(err) { alert('请求失败：' + err); });
+                                .catch(function(err) {
+                                    setStatus('❌ 解压请求失败: ' + err, 'error');
+                                    alert('请求失败：' + err);
+                                });
                             };
                             btnGroup.appendChild(extractBtn);
                         }
@@ -610,6 +666,7 @@
                         delBtn.onclick = function(e) {
                             e.stopPropagation();
                             console.log('[photo] 点击删除文件按钮，文件:', entry.path);
+                            setStatus('⏳ 正在删除文件: ' + entry.path + ' ...', 'info');
                             if (confirm('确定要删除文件 "' + entry.path + '" 吗？')) {
                                 fetch('/api/delete_file', {
                                     method: 'POST',
@@ -620,12 +677,19 @@
                                 .then(function(data) {
                                     console.log('[photo] 删除文件响应:', data);
                                     if (data.success) {
+                                        setStatus('✅ 文件已删除: ' + entry.path, 'success');
                                         loadDirectory(currentPath);
                                     } else {
+                                        setStatus('❌ 删除失败: ' + data.error, 'error');
                                         alert('删除失败：' + data.error);
                                     }
                                 })
-                                .catch(function(err) { alert('删除请求失败：' + err); });
+                                .catch(function(err) {
+                                    setStatus('❌ 删除请求失败: ' + err, 'error');
+                                    alert('请求失败：' + err);
+                                });
+                            } else {
+                                setStatus('已取消删除操作', 'info');
                             }
                         };
                         btnGroup.appendChild(delBtn);
@@ -638,6 +702,7 @@
             })
             .catch(function(err) {
                 console.error('[photo] 加载目录失败', err);
+                setStatus('❌ 加载目录失败: ' + err, 'error');
                 alert('加载目录失败: ' + err);
             });
         }
@@ -650,6 +715,7 @@
         // ---------- 重启设备 ----------
         document.getElementById('btn_restart').addEventListener('click', function() {
             if (confirm('确定要重启设备吗？')) {
+                setStatus('⏳ 设备正在重启...', 'info');
                 fetch('/api/restart', { method: 'POST' })
                 .then(function(res) { return res.json(); })
                 .then(function(data) {

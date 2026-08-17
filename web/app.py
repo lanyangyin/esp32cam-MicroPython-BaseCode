@@ -3,7 +3,7 @@
 使用 EasyWeb 框架的 Web 控制服务
 支持模式选择：拍照 / 录制（视频预留）
 """
-
+import gc
 import sys
 import time
 import camera
@@ -15,6 +15,8 @@ import easyweb
 
 from advanced_photo import take_advanced_photo, burst_capture
 from easyweb import EasyWeb, make_response
+from flash import get_flash
+from indicator import get_indicator
 from photo import take_smart_photo, gray_quick_capture, gray_analyzer_capture
 from video import RecorderTimestamp
 from sd_card import get_sd_card
@@ -222,6 +224,9 @@ def load_config(request):
                 "video_duration": 5,
                 "video_save_dir": "video_web",
                 "video_xclk_freq": 10000000,
+                "video_flash": False,
+                "video_mirror": 0,
+                "video_flip": 1,
             }
             print("[Web] 配置不存在，返回默认")
             return make_response(default_config, 200)
@@ -353,7 +358,7 @@ def burst(request):
         sys.print_exception(e)
         return make_response({"success": False, "error": str(e)}, 500)
 
-# ---------- API：录像 ----------
+# ---------- API：录像（自定义实现，支持闪光灯、镜像、翻转） ----------
 @app.route("/api/video", methods=["POST"])
 def video(request):
     print("[Web] 请求: /api/video")
@@ -364,26 +369,117 @@ def video(request):
         duration = params.get("duration", 5)
         xclk_freq = params.get("xclk_freq", camera.XCLK_10MHz)
         save_dir = params.get("save_dir", "video_web")
-        print("[Web] 参数: framesize={}, duration={}s, xclk={}, save_dir={}".format(framesize, duration, xclk_freq, save_dir))
-        recorder = RecorderTimestamp(
-            framesize=framesize,
-            quality=quality,
-            xclk_freq=xclk_freq,
-            save_dir=save_dir
-        )
-        frames, elapsed = recorder.start(duration_sec=duration)
-        recorder.close()
+        flash_on = params.get("flash_on", False)
+        mirror = params.get("mirror", 0)
+        flip = params.get("flip", 1)
+
+        print("[Web] 录像参数: framesize={}, duration={}s, xclk={}, save_dir={}, flash={}, mirror={}, flip={}".format(
+            framesize, duration, xclk_freq, save_dir, flash_on, mirror, flip))
+
+        # ---------- 闪光灯初始化 ----------
+        flash = get_flash(pin=4, on_value=1)  # 默认 GPIO4
+        if flash_on:
+            flash.on()
+            print("[Web] 闪光灯已开启")
+            time.sleep_ms(200)  # 预闪
+
+        # ---------- 创建保存目录 ----------
+        sd = get_sd_card()
+        full_dir = sd.mount_point + "/" + save_dir
+        # 自动创建不存在的目录（如果已存在则添加序号）
+        dir_counter = 1
+        test_dir = full_dir
+        while True:
+            try:
+                uos.mkdir(test_dir)
+                break
+            except OSError:
+                # 目录已存在，尝试添加序号
+                test_dir = full_dir + "_{}".format(dir_counter)
+                dir_counter += 1
+                if dir_counter > 100:
+                    raise RuntimeError("无法创建目录，重名太多")
+        full_dir = test_dir
+        print("[Web] 录像保存至: {}".format(full_dir))
+
+        # ---------- 摄像头初始化 ----------
+        try:
+            camera.deinit()
+        except:
+            pass
+        camera.init(0,
+                    format=camera.JPEG,
+                    fb_location=camera.PSRAM,
+                    framesize=framesize,
+                    xclk_freq=xclk_freq)
+        camera.flip(flip)
+        camera.mirror(mirror)
+        camera.saturation(0)
+        camera.brightness(0)
+        camera.contrast(0)
+        camera.whitebalance(camera.WB_CLOUDY)
+        camera.speffect(camera.EFFECT_NONE)
+        camera.quality(quality)
+
+        # ---------- 录制循环 ----------
+        start_time = time.ticks_ms()
+        end_time = time.ticks_add(start_time, int(duration * 1000))
+        frame_count = 0
+        last_gc_time = start_time
+        GC_INTERVAL = 14000  # 14秒
+
+        indicator = get_indicator()
+        indicator.on()
+
+        try:
+            while time.ticks_ms() < end_time:
+                buf = camera.capture()
+                if buf is not None and buf is not False:
+                    filename = "{}/f_{:06d}.jpg".format(full_dir, frame_count)
+                    try:
+                        with open(filename, "wb") as f:
+                            f.write(buf)
+                        frame_count += 1
+                    except:
+                        pass
+
+                now = time.ticks_ms()
+                if time.ticks_diff(now, last_gc_time) > GC_INTERVAL:
+                    gc.collect()
+                    last_gc_time = now
+        except KeyboardInterrupt:
+            pass
+        finally:
+            indicator.off()
+            # 关闭闪光灯（无论是否异常）
+            if flash_on:
+                flash.off()
+                print("[Web] 闪光灯已关闭")
+            # 释放摄像头
+            try:
+                camera.deinit()
+            except:
+                pass
+
+        elapsed = (time.ticks_ms() - start_time) / 1000.0
         result = {
             "success": True,
-            "frames": frames,
+            "frames": frame_count,
             "elapsed": elapsed,
-            "fps": frames / elapsed if elapsed > 0 else 0
+            "fps": frame_count / elapsed if elapsed > 0 else 0
         }
-        print("[Web] 录像完成: {}帧, {:.2f}s".format(frames, elapsed))
+        print("[Web] 录像完成: {}帧, {:.2f}s".format(frame_count, elapsed))
         return make_response(result, 200)
+
     except Exception as e:
         print("[Web] /api/video 异常:", e)
         sys.print_exception(e)
+        # 确保闪光灯关闭
+        try:
+            flash = get_flash()
+            flash.off()
+        except:
+            pass
         return make_response({"success": False, "error": str(e)}, 500)
 
 # ---------- 文件与目录操作 ----------
